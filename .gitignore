@@ -16,7 +16,6 @@ out/
 *.project
 *.settings/
 bin/
-.metadata
 
 # === OS Files ===
 .DS_Store
@@ -59,8 +58,6 @@ frontend/coverage/
 .env
 .env.*
 !.env.example
-leafwheels/.gitignore
-leafwheels/.gitattributes
 
 # === Logs ===
 logs/
