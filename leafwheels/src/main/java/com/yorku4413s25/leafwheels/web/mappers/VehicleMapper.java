@@ -1,0 +1,11 @@
+package com.yorku4413s25.leafwheels.web.mappers;
+
+import com.yorku4413s25.leafwheels.domain.Vehicle;
+import com.yorku4413s25.leafwheels.web.models.VehicleDto;
+import org.mapstruct.Mapper;
+
+@Mapper(uses = DateMapper.class)
+public interface VehicleMapper {
+    VehicleDto vehicleToVehicleDto(Vehicle vehicle);
+    Vehicle vehicleDtoToVehicle(VehicleDto vehicleDto);
+}
