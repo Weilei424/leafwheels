@@ -33,6 +33,4 @@ public class VehicleDto implements Serializable {
     Condition condition;
     String description;
     VehicleStatus status;
-
-
 }
