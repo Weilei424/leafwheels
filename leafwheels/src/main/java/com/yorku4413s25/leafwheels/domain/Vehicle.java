@@ -1,5 +1,9 @@
 package com.yorku4413s25.leafwheels.domain;
 
+import com.yorku4413s25.leafwheels.constants.BodyType;
+import com.yorku4413s25.leafwheels.constants.Condition;
+import com.yorku4413s25.leafwheels.constants.Make;
+import com.yorku4413s25.leafwheels.constants.VehicleStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -82,47 +86,4 @@ public class Vehicle {
     @Column(name = "updated_at")
     private Timestamp updatedAt;
 
-}
-
-enum Make {
-    TESLA,
-    NISSAN,
-    CHEVROLET,
-    FORD,
-    AUDI,
-    BMW,
-    HYUNDAI,
-    KIA,
-    VOLKSWAGEN,
-    PORSCHE,
-    JAGUAR,
-    RIVIAN,
-    LUCID,
-    MERCEDES_BENZ,
-    VOLVO,
-    POLESTAR,
-    OTHER
-}
-
-enum BodyType {
-    SEDAN,
-    SUV,
-    HATCHBACK,
-    COUPE,
-    CONVERTIBLE,
-    WAGON,
-    MINIVAN,
-    TRUCK
-}
-
-enum Condition {
-    NEW,
-    USED
-}
-
-enum VehicleStatus {
-    AVAILABLE,
-    SOLD,
-    DEMO,
-    INCOMING
 }
