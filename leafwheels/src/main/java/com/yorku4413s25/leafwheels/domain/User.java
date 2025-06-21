@@ -1,6 +1,5 @@
 package com.yorku4413s25.leafwheels.domain;
-
-
+import com.yorku4413s25.leafwheels.constants.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,6 +19,11 @@ public class User {
     @Column(nullable = false, columnDefinition = "BINARY(16)", updatable = false)
     private UUID id;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Role role;
+
+
     @Column(nullable = false, length = 50)
     private String firstName;
 
@@ -32,8 +36,6 @@ public class User {
     @Column(nullable = false, length =100)
     private String password;
 
-    @Column(length = 20)
-    private String role; // "Admin"? "Customer"?
 
 
     @Column(name = "created_at", nullable = false)
