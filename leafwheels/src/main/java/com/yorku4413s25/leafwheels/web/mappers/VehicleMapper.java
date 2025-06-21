@@ -5,7 +5,7 @@ import com.yorku4413s25.leafwheels.web.models.VehicleDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 
-@Mapper(uses = DateMapper.class)
+@Mapper(uses = DateMapper.class, componentModel = "spring")
 public interface VehicleMapper {
     VehicleDto vehicleToVehicleDto(Vehicle vehicle);
     Vehicle vehicleDtoToVehicle(VehicleDto vehicleDto);

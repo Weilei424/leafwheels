@@ -25,7 +25,7 @@ public class Vehicle {
     @Column(nullable = false, columnDefinition = "BINARY(16)", updatable = false)
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "`year`")
     private int year;
 
     @Enumerated(EnumType.STRING)
@@ -85,5 +85,15 @@ public class Vehicle {
 
     @Column(name = "updated_at")
     private Timestamp updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = new Timestamp(System.currentTimeMillis());
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = new Timestamp(System.currentTimeMillis());
+    }
 
 }
