@@ -20,7 +20,7 @@ public class User {
     @Column(nullable = false, columnDefinition = "BINARY(16)", updatable = false)
     private UUID id;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 50)
     private String firstName;
 
     @Column(nullable = false, length = 50)
