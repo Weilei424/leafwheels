@@ -4,6 +4,7 @@ import com.yorku4413s25.leafwheels.constants.BodyType;
 import com.yorku4413s25.leafwheels.constants.Condition;
 import com.yorku4413s25.leafwheels.constants.Make;
 import com.yorku4413s25.leafwheels.constants.VehicleStatus;
+import lombok.NonNull;
 import lombok.Value;
 
 import java.io.Serializable;
@@ -15,22 +16,46 @@ import java.util.UUID;
  */
 @Value
 public class VehicleDto implements Serializable {
+
     UUID id;
+
     int year;
+
+    @NonNull
     Make make;
+
+    @NonNull
     String model;
+
+    @NonNull
     BodyType bodyType;
+
     String exteriorColor;
+
     int doors;
+
     int seats;
+
     int mileage;
+
     int batteryRange;
+
     String trim;
+
+    @NonNull
     BigDecimal price;
+
     boolean onDeal;
+
+    @NonNull
     String vin;
+
     BigDecimal discountPercent;
+
+    @NonNull
     Condition condition;
+
     String description;
+
     VehicleStatus status;
 }
