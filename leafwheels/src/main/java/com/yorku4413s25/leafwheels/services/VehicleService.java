@@ -10,7 +10,7 @@ public interface VehicleService {
 
     VehicleDto create(VehicleDto vehicleDto);
 
-    void update(UUID vehicleId, VehicleDto vehicleDto);
+    VehicleDto updateById(UUID vehicleId, VehicleDto vehicleDto);
 
     void delete(UUID vehicleId);
 

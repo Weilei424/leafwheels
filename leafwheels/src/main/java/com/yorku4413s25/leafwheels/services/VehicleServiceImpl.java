@@ -42,13 +42,13 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     @Override
-    public void update(UUID vehicleId, VehicleDto vehicleDto) {
+    public VehicleDto updateById(UUID vehicleId, VehicleDto vehicleDto) {
         Vehicle existing = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new EntityNotFoundException(vehicleId, Vehicle.class));
 
         vehicleMapper.vehicleDtoToVehicleUpdate(vehicleDto, existing);
         existing.setUpdatedAt(dateMapper.asTimestamp(OffsetDateTime.now()));
-        vehicleRepository.save(existing);
+        return vehicleMapper.vehicleToVehicleDto(vehicleRepository.save(existing));
     }
 
     @Override
