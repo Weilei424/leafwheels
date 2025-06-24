@@ -37,7 +37,7 @@ public class VehicleServiceImpl implements VehicleService {
     @Override
     public VehicleDto create(VehicleDto vehicleDto) {
         Vehicle vehicle = vehicleMapper.vehicleDtoToVehicle(vehicleDto);
-        vehicleRepository.save(vehicle).setCreatedAt(dateMapper.asTimestamp(OffsetDateTime.now()));
+        vehicleRepository.save(vehicle);
         return vehicleMapper.vehicleToVehicleDto(vehicleRepository.save(vehicle));
     }
 
@@ -47,7 +47,6 @@ public class VehicleServiceImpl implements VehicleService {
                 .orElseThrow(() -> new EntityNotFoundException(vehicleId, Vehicle.class));
 
         vehicleMapper.vehicleDtoToVehicleUpdate(vehicleDto, existing);
-        existing.setUpdatedAt(dateMapper.asTimestamp(OffsetDateTime.now()));
         return vehicleMapper.vehicleToVehicleDto(vehicleRepository.save(existing));
     }
 
