@@ -15,15 +15,15 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-@Configuration
-@EnableWebSecurity // Enables Spring Security for the application.
+//@Configuration
+//@EnableWebSecurity // Enables Spring Security for the application.
 public class SecurityConfig {
 
 
 //    Authentication info is not stored in memory or session — it’s stateless, ideal for REST APIs.
 //    Users are loaded using your custom UserDetailsService, likely backed by a database.
 
-    @Autowired
+
     private UserDetailsService userDetailsService; // Service to load user data from DB or other source
 
     @Bean

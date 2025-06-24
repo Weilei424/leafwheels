@@ -11,9 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.stream.StreamSupport;
-import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -37,7 +35,7 @@ public class VehicleServiceImpl implements VehicleService {
     @Override
     public VehicleDto create(VehicleDto vehicleDto) {
         Vehicle vehicle = vehicleMapper.vehicleDtoToVehicle(vehicleDto);
-        vehicleRepository.save(vehicle).setCreatedAt(dateMapper.asTimestamp(OffsetDateTime.now()));
+        vehicleRepository.save(vehicle);
         return vehicleMapper.vehicleToVehicleDto(vehicleRepository.save(vehicle));
     }
 
@@ -47,7 +45,6 @@ public class VehicleServiceImpl implements VehicleService {
                 .orElseThrow(() -> new EntityNotFoundException(vehicleId, Vehicle.class));
 
         vehicleMapper.vehicleDtoToVehicleUpdate(vehicleDto, existing);
-        existing.setUpdatedAt(dateMapper.asTimestamp(OffsetDateTime.now()));
         return vehicleMapper.vehicleToVehicleDto(vehicleRepository.save(existing));
     }
 
