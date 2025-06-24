@@ -18,6 +18,7 @@ import java.util.UUID;
 @Setter
 @ToString
 @Builder
+@Table(name = "vehicles")
 public class Vehicle {
 
     @Id
@@ -79,21 +80,5 @@ public class Vehicle {
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private VehicleStatus status;
-
-    @Column(name = "created_at", nullable = false)
-    private Timestamp createdAt;
-
-    @Column(name = "updated_at")
-    private Timestamp updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = new Timestamp(System.currentTimeMillis());
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = new Timestamp(System.currentTimeMillis());
-    }
 
 }
