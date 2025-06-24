@@ -3,7 +3,6 @@ import com.yorku4413s25.leafwheels.constants.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.sql.Timestamp;
 import java.util.UUID;
 
 @Entity
