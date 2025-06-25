@@ -1,10 +1,7 @@
-
-
-
 function App() {
   return (
     <>
-        <p>Initialize frontend</p>
+        <p className="text-3xl font-bold underline">Initialize frontend</p>
     </>
   )
 }
