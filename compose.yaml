@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: leafwheels-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: leafwheels
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - leafwheels-net
+
+  app:
+    build: .
+    container_name: leafwheels-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/leafwheels
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+    depends_on:
+      - mysql
+    ports:
+      - "8080:8080"
+    networks:
+      - leafwheels-net
+
+volumes:
+  mysql_data:
+
+networks:
+  leafwheels-net:
