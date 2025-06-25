@@ -1,3 +1,151 @@
-:root {
+html {
+    scroll-behavior: smooth;
+}
 
+
+
+body {
+    background-color: #ffffff;
+    margin: 0;
+    font-family: "Lato", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body,
+html {
+    overflow-x: hidden !important;
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+/* Perfect spacing - navbar is 60px (h-15), section padding is 60px */
+section {
+    padding-top: 60px !important;
+    padding-bottom: 60px !important;
+}
+
+/* Global link styling that navbar inherits */
+a {
+    text-decoration: none;
+    color: black;
+}
+
+li {
+    list-style: none;
+}
+
+input,
+button {
+    border: none;
+    outline: none;
+    background-color: none;
+}
+
+.heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.heading h1 {
+    width: fit-content;
+    text-align: center;
+    margin: 20px auto 30px !important;
+}
+
+.images-container {
+    display: flex;
+}
+
+/*   ---Home Slider---   */
+
+.homeSlide {
+    display: flex;
+    justify-content: center;
+    background-color: #f6f9fc;
+    padding-bottom: 0 !important;
+}html {
+     scroll-behavior: smooth;
+ }
+
+body {
+    background-color: #ffffff;
+    margin: 0;
+    font-family: "Lato", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body,
+html {
+    overflow-x: hidden !important;
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+/* Fixed: Account for 64px navbar height */
+section {
+    padding-top: 80px !important;  /* Increased from 60px to 80px */
+    padding-bottom: 60px !important;
+}
+
+/* More specific link styling to avoid navbar conflicts */
+main a,
+.content a {
+    text-decoration: none;
+    color: black;
+}
+
+/* OR keep global but allow navbar to override */
+a {
+    text-decoration: none;
+    color: black;
+}
+
+/* Ensure navbar links can override global styles */
+nav a {
+    color: inherit;
+}
+
+li {
+    list-style: none;
+}
+
+input,
+button {
+    border: none;
+    outline: none;
+    background-color: none;
+}
+
+.heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.heading h1 {
+    width: fit-content;
+    text-align: center;
+    margin: 20px auto 30px !important;
+}
+
+.images-container {
+    display: flex;
+}
+
+/*   ---Home Slider---   */
+
+.homeSlide {
+    display: flex;
+    justify-content: center;
+    background-color: #f6f9fc;
+    padding-bottom: 0 !important;
 }
