@@ -99,7 +99,7 @@ const SignUpPage = () => {
                         {/* Submit button */}
                         <button
                             type='submit'
-                            className='w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium'
+                            className='w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium'
                             disabled={loading}
                         >
                             {loading ? "Creating Account..." : "Create Account"}
