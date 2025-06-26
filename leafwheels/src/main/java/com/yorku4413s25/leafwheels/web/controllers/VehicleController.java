@@ -1,12 +1,19 @@
 package com.yorku4413s25.leafwheels.web.controllers;
 
+import com.yorku4413s25.leafwheels.constants.BodyType;
+import com.yorku4413s25.leafwheels.constants.Condition;
+import com.yorku4413s25.leafwheels.constants.Make;
+import com.yorku4413s25.leafwheels.constants.VehicleStatus;
 import com.yorku4413s25.leafwheels.services.VehicleService;
 import com.yorku4413s25.leafwheels.web.models.VehicleDto;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,5 +49,31 @@ public class VehicleController {
     @GetMapping("/all")
     public ResponseEntity<List<VehicleDto>> getAllVehicles() {
         return new ResponseEntity<>(vehicleService.getAllVehicles(), HttpStatus.OK);
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<Page<VehicleDto>> filterVehicles(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Make make,
+            @RequestParam(required = false) String model,
+            @RequestParam(required = false) BodyType bodyType,
+            @RequestParam(required = false) String exteriorColor,
+            @RequestParam(required = false) Integer doors,
+            @RequestParam(required = false) Integer seats,
+            @RequestParam(required = false) Integer minMileage,
+            @RequestParam(required = false) Integer maxMileage,
+            @RequestParam(required = false) Integer minBatteryRange,
+            @RequestParam(required = false) Integer maxBatteryRange,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Boolean onDeal,
+            @RequestParam(required = false) Condition condition,
+            @RequestParam(required = false) VehicleStatus status,
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(vehicleService.filterVehicles(
+                year, make, model, bodyType, exteriorColor, doors, seats,
+                minMileage, maxMileage, minBatteryRange, maxBatteryRange,
+                minPrice, maxPrice, onDeal, condition, status, pageable));
     }
 }
