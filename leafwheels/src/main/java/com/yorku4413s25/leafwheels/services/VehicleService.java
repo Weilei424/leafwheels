@@ -24,7 +24,7 @@ public interface VehicleService {
 
     List<VehicleDto> getAllVehicles();
 
-    Page<VehicleDto> filterVehicles(
+    Page<Vehicle> filterVehicles(
             Integer year,
             Make make,
             String model,
