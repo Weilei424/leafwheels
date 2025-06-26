@@ -3,7 +3,7 @@ import com.yorku4413s25.leafwheels.domain.User;
 import com.yorku4413s25.leafwheels.constants.Role;
 
 import com.yorku4413s25.leafwheels.repositories.UserRepository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+//import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -13,7 +13,7 @@ public class AuthService {
 
 
     private UserRepository userRepository;
-    private BCryptPasswordEncoder passwordEncoder;
+//    private BCryptPasswordEncoder passwordEncoder;
 
     public String register(String email, String password) {
         if (userRepository.findByEmail(email).isPresent()) {
@@ -22,7 +22,7 @@ public class AuthService {
 
         User newUser = new User();
         newUser.setEmail(email);
-        newUser.setPassword(passwordEncoder.encode(password));
+//        newUser.setPassword(passwordEncoder.encode(password));
         newUser.setRole(Role.USER); // Default role
 
         userRepository.save(newUser);
@@ -37,9 +37,9 @@ public class AuthService {
 
         User user = userOpt.get();
 
-        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
-            return "Invalid password";
-        }
+//        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
+//            return "Invalid password";
+//        }
 
         return "Login successful!";
     }
