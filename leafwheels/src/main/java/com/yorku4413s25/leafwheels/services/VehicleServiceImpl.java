@@ -33,7 +33,6 @@ public class VehicleServiceImpl implements VehicleService {
 
     private final VehicleRepository vehicleRepository;
     private final VehicleMapper vehicleMapper;
-    private final DateMapper dateMapper;
 
     @Override
     public VehicleDto getById(UUID vehicleId) {
