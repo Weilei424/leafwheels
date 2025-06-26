@@ -1,35 +1,76 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import NavBar from "./components/common/Navigation/Navbar.jsx";
+import { Navigate, Route, Routes } from "react-router-dom";
+
+import HomePage from "./pages/Home/Home.jsx";
+import SignUpPage from "./pages/Auth/Signup.jsx";
+import LoginPage from "./pages/Auth/Login.jsx";
+// import AdminPage from "./pages/AdminPage";
+// import CategoryPage from "./pages/CategoryPage";
+
+import Navbar from "./components/common/Navigation/Navbar.jsx";
 import Footer from "./components/common/Footer/Footer.jsx";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import Home from "./pages/Home/Home.jsx"; // Direct import
+
+
+// import { useUserStore } from "./stores/useUserStore";
+import { useEffect } from "react";
+// import LoadingSpinner from "./components/LoadingSpinner";
+// import CartPage from "./pages/CartPage";
+// import { useCartStore } from "./stores/useCartStore";
+// import PurchaseSuccessPage from "./pages/PurchaseSuccessPage";
+// import PurchaseCancelPage from "./pages/PurchaseCancelPage";
+
+// Layout component for pages with navbar/footer
+const Layout = ({ children }) => (
+    <div className="flex flex-col min-h-screen">
+        <div className="absolute inset-0 -z-10">
+            <div className="w-full h-full" />
+        </div>
+        <header>
+            <Navbar />
+        </header>
+        <main className="flex-grow px-4 py-16 pt-32">
+            {children}
+        </main>
+        <footer>
+            <Footer />
+        </footer>
+    </div>
+);
 
 function App() {
+    // const { user, checkAuth, checkingAuth } = useUserStore();
+    // const { getCartItems } = useCartStore();
+
+    // useEffect(() => {
+    //     checkAuth();
+    // }, [checkAuth]);
+
+    // useEffect(() => {
+    //     if (user) getCartItems();
+    // }, [user, getCartItems]);
+
+    // if (checkingAuth) return <LoadingSpinner />;
+
     return (
-        <Router>
-            <ToastContainer
-                position="top-right"
-                autoClose={1000}
-                hideProgressBar={false}
-                newestOnTop={false}
-                closeOnClick
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="light"
-            />
-            <NavBar />
-            <Routes>
-                <Route path="/" element={<Home />} />
-                {/* Add other paths here */}
-                {/*    <Route path="/" element={<Home />} />*/}
-                {/*    <Route path="/Products" element={<Shop />} />*/}
-                {/*    <Route path="/Products/:id" element={<Product />} />*/}
-                {/*    <Route path="/cart" element={<Cart />} />*/}
-            </Routes>
-            <Footer />
-        </Router>
+        <Routes>
+            {/* Auth routes - no layout */}
+            <Route path="/login" element={<LoginPage />} />
+            /* <Route path="/signup" element={<SignUpPage />} />
+
+            {/* Store routes - with layout */}
+            <Route path="/" element={<Layout>
+                <HomePage />
+
+
+            </Layout>} />
+            {/* <Route path="/cart" element={<Layout><CartPage /></Layout>} /> */}
+            {/* <Route path="/category/:category" element={<Layout><CategoryPage /></Layout>} /> */}
+            {/* <Route path="/secret-dashboard" element={<Layout><AdminPage /></Layout>} /> */}
+            {/* <Route path="/purchase-success" element={<Layout><PurchaseSuccessPage /></Layout>} /> */}
+            {/* <Route path="/purchase-cancel" element={<Layout><PurchaseCancelPage /></Layout>} /> */}
+
+            {/* Notifications */}
+            {/* <Toaster position="top-right" reverseOrder={false} /> */}
+        </Routes>
     );
 }
 
