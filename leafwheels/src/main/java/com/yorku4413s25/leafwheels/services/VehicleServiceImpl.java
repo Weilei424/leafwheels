@@ -75,7 +75,7 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     @Override
-    public Page<Vehicle> filterVehicles(
+    public Page<VehicleDto> filterVehicles(
             Integer year,
             Make make,
             String model,
@@ -115,7 +115,8 @@ public class VehicleServiceImpl implements VehicleService {
         addIfNotNull(specs, status, VehicleSpecification::hasStatus);
 
         Specification<Vehicle> finalSpec = Specification.allOf(specs);
-        return vehicleRepository.findAll(finalSpec, pageable);
+        Page<Vehicle> vehicles = vehicleRepository.findAll(finalSpec, pageable);
+        return vehicles.map(vehicleMapper::vehicleToVehicleDto);
     }
 
     private <T> void addIfNotNull(List<Specification<Vehicle>> specs, T value, Function<T, Specification<Vehicle>> fn) {
