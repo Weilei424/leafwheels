@@ -28,22 +28,12 @@ section {
     padding-bottom: 60px !important;
 }
 
-/* Global link styling that navbar inherits */
-a {
-    text-decoration: none;
-    color: black;
-}
+
 
 li {
     list-style: none;
 }
 
-input,
-button {
-    border: none;
-    outline: none;
-    background-color: none;
-}
 
 .heading {
     display: flex;
@@ -96,18 +86,9 @@ section {
     padding-bottom: 60px !important;
 }
 
-/* More specific link styling to avoid navbar conflicts */
-main a,
-.content a {
-    text-decoration: none;
-    color: black;
-}
 
-/* OR keep global but allow navbar to override */
-a {
-    text-decoration: none;
-    color: black;
-}
+
+
 
 /* Ensure navbar links can override global styles */
 nav a {
@@ -118,12 +99,8 @@ li {
     list-style: none;
 }
 
-input,
-button {
-    border: none;
-    outline: none;
-    background-color: none;
-}
+
+
 
 .heading {
     display: flex;
