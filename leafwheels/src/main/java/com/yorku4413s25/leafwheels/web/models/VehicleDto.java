@@ -4,6 +4,7 @@ import com.yorku4413s25.leafwheels.constants.BodyType;
 import com.yorku4413s25.leafwheels.constants.Condition;
 import com.yorku4413s25.leafwheels.constants.Make;
 import com.yorku4413s25.leafwheels.constants.VehicleStatus;
+import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
  * DTO for {@link com.yorku4413s25.leafwheels.domain.Vehicle}
  */
 @Value
+@Builder
 public class VehicleDto implements Serializable {
 
     UUID id;

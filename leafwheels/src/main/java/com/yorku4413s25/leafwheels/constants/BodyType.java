@@ -8,5 +8,6 @@ public enum BodyType {
     CONVERTIBLE,
     WAGON,
     MINIVAN,
-    TRUCK
+    TRUCK,
+    CROSSOVER
 }
