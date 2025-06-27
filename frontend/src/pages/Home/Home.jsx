@@ -15,6 +15,7 @@ const Home = () => {
             {/*<Section title="Big Discount" products={products.slice(0, 4)} />*/}
             {/*<Section title="New Arrivals" products={newArrivals} />*/}
             {/*<Section title="Best Sales" products={bestSales} />*/}
+
         </>
     );
 };
