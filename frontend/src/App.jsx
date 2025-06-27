@@ -6,7 +6,7 @@ import LoginPage from "./pages/Auth/Login.jsx";
 // import AdminPage from "./pages/AdminPage";
 // import CategoryPage from "./pages/CategoryPage";
 import CartPage from "./pages/Cart/Cart.jsx";
-
+import StorePage from "./pages/Store/StorePage.jsx";
 import Navbar from "./components/common/Navigation/Navbar.jsx";
 import Footer from "./components/common/Footer/Footer.jsx";
 
@@ -64,6 +64,7 @@ function App() {
 
 
             <Route path="/cart" element={<Layout><CartPage /></Layout>} />
+            <Route path="/store" element={<Layout><StorePage/></Layout>} />
             {/* <Route path="/category/:category" element={<Layout><CategoryPage /></Layout>} /> */}
             {/* <Route path="/secret-dashboard" element={<Layout><AdminPage /></Layout>} /> */}
             {/* <Route path="/purchase-success" element={<Layout><PurchaseSuccessPage /></Layout>} /> */}
