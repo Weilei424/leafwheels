@@ -16,7 +16,7 @@ import java.util.UUID;
 public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(nullable = false, columnDefinition = "BINARY(16)", updatable = false)
+    @Column(nullable = false, updatable = false)
     private UUID id;
 
     @Enumerated(EnumType.STRING)

@@ -22,7 +22,7 @@ public class Vehicle {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(nullable = false, columnDefinition = "BINARY(16)", updatable = false)
+    @Column(nullable = false, updatable = false)
     private UUID id;
 
     @Column(nullable = false, name = "`year`")
