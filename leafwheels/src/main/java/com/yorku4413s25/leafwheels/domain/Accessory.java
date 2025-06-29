@@ -10,7 +10,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Accessory {
+public class Accessory extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
