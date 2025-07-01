@@ -1,6 +1,6 @@
 package com.yorku4413s25.leafwheels.domain;
 
-import com.yorku4413s25.leafwheels.constants.OrderItemType;
+import com.yorku4413s25.leafwheels.constants.ItemType;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -23,7 +23,7 @@ public class OrderItem extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private OrderItemType type;
+    private ItemType type;
 
     // only if OrderItemType is VEHICLE
     @ManyToOne(fetch = FetchType.LAZY)

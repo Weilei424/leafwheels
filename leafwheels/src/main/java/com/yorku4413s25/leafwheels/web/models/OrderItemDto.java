@@ -1,6 +1,6 @@
 package com.yorku4413s25.leafwheels.web.models;
 
-import com.yorku4413s25.leafwheels.constants.OrderItemType;
+import com.yorku4413s25.leafwheels.constants.ItemType;
 import com.yorku4413s25.leafwheels.domain.OrderItem;
 import lombok.*;
 
@@ -16,7 +16,7 @@ import java.util.UUID;
 @Builder
 public class OrderItemDto {
     UUID id;
-    OrderItemType type;
+    ItemType type;
     VehicleDto vehicle;
     AccessoryDto accessory;
     BigDecimal unitPrice;

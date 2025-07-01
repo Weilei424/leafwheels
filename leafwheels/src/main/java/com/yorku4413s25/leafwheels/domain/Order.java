@@ -1,5 +1,6 @@
 package com.yorku4413s25.leafwheels.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.yorku4413s25.leafwheels.constants.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -36,6 +37,7 @@ public class Order extends BaseEntity {
             fetch = FetchType.LAZY
     )
     @ToString.Exclude
+    @JsonIgnore
     private List<OrderItem> items = new ArrayList<>();
 
 }
