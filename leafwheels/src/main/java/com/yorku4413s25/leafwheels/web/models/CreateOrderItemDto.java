@@ -1,6 +1,6 @@
 package com.yorku4413s25.leafwheels.web.models;
 
-import com.yorku4413s25.leafwheels.constants.OrderItemType;
+import com.yorku4413s25.leafwheels.constants.ItemType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,7 +14,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class CreateOrderItemDto {
-    private OrderItemType type;
+    private ItemType type;
     private UUID vehicleId;
     private UUID accessoryId;     // For ACCESSORY
     private String accessoryName; // For ACCESSORY
