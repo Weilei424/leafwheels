@@ -31,4 +31,6 @@ public class Cart extends BaseEntity{
     )
     @JsonIgnore
     private List<CartItem> items = new ArrayList<>();
+
+    //todo: add ttl?
 }
