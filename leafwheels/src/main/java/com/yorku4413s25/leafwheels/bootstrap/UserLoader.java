@@ -62,6 +62,10 @@ public class UserLoader implements CommandLineRunner {
                     .email("admin2@example.com")
                     .password("adminpass")
                     .build());
+
+            System.out.println("Seeded 6 user records.");
+        } else {
+            System.out.println("User records already exist, skipping seeding.");
         }
     }
 }
