@@ -1,9 +1,6 @@
 package com.yorku4413s25.leafwheels.web.models;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -13,6 +10,9 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class CreateOrderRequestDto {
+
+    @NonNull
     private UUID userId;
+
     private List<CreateOrderItemDto> items;
 }

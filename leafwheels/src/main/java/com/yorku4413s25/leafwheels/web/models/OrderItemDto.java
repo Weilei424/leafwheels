@@ -15,10 +15,19 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class OrderItemDto {
+
+    @NonNull
     UUID id;
+
+    @NonNull
     ItemType type;
+
     VehicleDto vehicle;
     AccessoryDto accessory;
+
+    @NonNull
     BigDecimal unitPrice;
+
+    @NonNull
     int quantity;
 }
