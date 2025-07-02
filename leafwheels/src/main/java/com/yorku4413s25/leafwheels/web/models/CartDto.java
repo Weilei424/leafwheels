@@ -6,13 +6,16 @@ import java.util.List;
 import java.util.UUID;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class CreateOrderRequestDto {
+public class CartDto {
+
+    @NonNull
+    private UUID id;
 
     @NonNull
     private UUID userId;
 
-    private List<CreateOrderItemDto> items;
+    private List<CartItemDto> items;
 }

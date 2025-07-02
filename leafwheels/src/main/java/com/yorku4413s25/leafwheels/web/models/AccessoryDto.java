@@ -14,9 +14,18 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class AccessoryDto {
+
+    @NonNull
     UUID id;
+
+    @NonNull
     String name;
+
     String description;
+
+    @NonNull
     BigDecimal price;
+
+    @NonNull
     int quantity;
 }

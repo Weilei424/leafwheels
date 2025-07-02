@@ -1,33 +1,30 @@
 package com.yorku4413s25.leafwheels.web.models;
 
 import com.yorku4413s25.leafwheels.constants.ItemType;
-import com.yorku4413s25.leafwheels.domain.OrderItem;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
-/**
- * DTO for {@link OrderItem}
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OrderItemDto {
+public class CartItemDto {
 
     @NonNull
-    UUID id;
+    private UUID id;
 
     @NonNull
-    ItemType type;
+    private ItemType type;
 
-    VehicleDto vehicle;
-    AccessoryDto accessory;
+    private VehicleDto vehicle;
 
-    @NonNull
-    BigDecimal unitPrice;
+    private AccessoryDto accessory;
 
     @NonNull
-    int quantity;
+    private BigDecimal unitPrice;
+
+    @NonNull
+    private int quantity;
 }
