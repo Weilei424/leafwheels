@@ -2,9 +2,7 @@ package com.yorku4413s25.leafwheels.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +12,8 @@ import java.util.UUID;
 @Table(name = "carts")
 @NoArgsConstructor
 @AllArgsConstructor
+@Setter
+@Getter
 @Builder
 public class Cart extends BaseEntity{
     @Id

@@ -2,9 +2,7 @@ package com.yorku4413s25.leafwheels.domain;
 
 import com.yorku4413s25.leafwheels.constants.ItemType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -13,6 +11,8 @@ import java.util.UUID;
 @Table(name = "cart_items")
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 @Builder
 public class CartItem {
     @Id
