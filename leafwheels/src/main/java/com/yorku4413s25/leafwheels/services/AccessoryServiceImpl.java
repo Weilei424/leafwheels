@@ -44,4 +44,20 @@ public class AccessoryServiceImpl implements AccessoryService {
         Accessory saved = accessoryRepository.save(accessory);
         return accessoryMapper.accessoryToAccessoryDto(saved);
     }
+
+    @Override
+    public AccessoryDto updateById(UUID id, AccessoryDto dto) {
+        Accessory existing = accessoryRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(id, Accessory.class));
+
+        accessoryMapper.accessoryDtoToAccessoryUpdate(dto, existing);
+        return accessoryMapper.accessoryToAccessoryDto(accessoryRepository.save(existing));
+    }
+
+    @Override
+    public void deleteAccessory(UUID id) {
+        Accessory target = accessoryRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(id, Accessory.class));
+        accessoryRepository.delete(target);
+    }
 }

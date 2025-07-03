@@ -9,4 +9,6 @@ public interface AccessoryService {
     List<AccessoryDto> getAllAccessories();
     AccessoryDto getAccessoryById(UUID id);
     AccessoryDto createAccessory(AccessoryDto dto);
+    AccessoryDto updateById(UUID id, AccessoryDto dto);
+    void deleteAccessory(UUID id);
 }
