@@ -9,5 +9,5 @@ import org.mapstruct.MappingTarget;
 public interface AccessoryMapper {
     Accessory accessoryDtoToAccessory(AccessoryDto accessoryDto);
     AccessoryDto accessoryToAccessoryDto(Accessory accessory);
-    void accessoryDtoToAccessoryUpdate(AccessoryDto accessoryDto, @MappingTarget AccessoryDto existing);
+    void accessoryDtoToAccessoryUpdate(AccessoryDto accessoryDto, @MappingTarget Accessory existing);
 }
