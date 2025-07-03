@@ -10,4 +10,6 @@ public interface OrderService {
     OrderDto createOrder(UUID userId, CreateOrderRequestDto dto);
     OrderDto getOrderById(UUID orderId);
     List<OrderDto> getOrdersByUserId(UUID userId);
+    OrderDto createOrderFromCart(UUID userId);
+    void cancelOrder(UUID orderId);
 }
