@@ -4,5 +4,6 @@ public enum VehicleStatus {
     AVAILABLE,
     SOLD,
     DEMO,
+    PENDING,
     INCOMING
 }
