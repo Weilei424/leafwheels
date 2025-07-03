@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
+// TODO: Add api documentation annotations
 public class AuthController {
 
     private final AuthServiceImpl authServiceImpl;

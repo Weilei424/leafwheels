@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/payment")
+// TODO: Add api documentation annotations
 public class PaymentController {
 
     @PostMapping("/initiate")
