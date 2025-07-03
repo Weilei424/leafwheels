@@ -8,6 +8,7 @@ import com.yorku4413s25.leafwheels.domain.Vehicle;
 import com.yorku4413s25.leafwheels.repositories.VehicleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Order(3)
 public class VehicleLoader implements CommandLineRunner {
 
     private final VehicleRepository vehicleRepository;

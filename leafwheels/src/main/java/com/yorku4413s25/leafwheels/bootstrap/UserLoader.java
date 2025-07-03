@@ -5,10 +5,12 @@ import com.yorku4413s25.leafwheels.domain.User;
 import com.yorku4413s25.leafwheels.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Order(2)
 public class UserLoader implements CommandLineRunner {
     private final UserRepository userRepository;
 
@@ -62,6 +64,10 @@ public class UserLoader implements CommandLineRunner {
                     .email("admin2@example.com")
                     .password("adminpass")
                     .build());
+
+            System.out.println("Seeded 6 user records.");
+        } else {
+            System.out.println("User records already exist, skipping seeding.");
         }
     }
 }

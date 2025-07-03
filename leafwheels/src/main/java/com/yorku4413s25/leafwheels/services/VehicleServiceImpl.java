@@ -69,7 +69,7 @@ public class VehicleServiceImpl implements VehicleService {
     @Override
     @Transactional(readOnly = true)
     public List<VehicleDto> getAllVehicles() {
-        return StreamSupport.stream(vehicleRepository.findAll().spliterator(), false)
+        return vehicleRepository.findAll().stream()
                 .map(vehicleMapper::vehicleToVehicleDto)
                 .collect(Collectors.toList());
     }
