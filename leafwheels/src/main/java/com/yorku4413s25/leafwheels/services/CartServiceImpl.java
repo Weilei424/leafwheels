@@ -1,6 +1,7 @@
 package com.yorku4413s25.leafwheels.services;
 
 import com.yorku4413s25.leafwheels.constants.ItemType;
+import com.yorku4413s25.leafwheels.constants.VehicleStatus;
 import com.yorku4413s25.leafwheels.domain.Accessory;
 import com.yorku4413s25.leafwheels.domain.Cart;
 import com.yorku4413s25.leafwheels.domain.CartItem;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -43,21 +45,76 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public CartDto addItemToCart(UUID userId, CreateCartItemDto dto) {
-        Cart cart = cartRepository.findByUserId(userId).orElseGet(() -> createEmptyCart(userId));
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseGet(() -> {
+                    Cart newCart = Cart.builder().userId(userId).items(new ArrayList<>()).build();
+                    return cartRepository.save(newCart);
+                });
 
-        CartItem item = buildCartItem(dto, cart);
+        if (dto.getType() == ItemType.VEHICLE) {
+            Vehicle vehicle = vehicleRepository.findById(dto.getVehicleId())
+                    .orElseThrow(() -> new EntityNotFoundException(dto.getVehicleId(), Vehicle.class));
 
-        // If the same item (by vehicleId or accessoryId) already exists, update quantity instead
-        boolean updated = false;
-        for (CartItem ci : cart.getItems()) {
-            if (isSameCartItem(ci, item)) {
-                ci.setQuantity(ci.getQuantity() + item.getQuantity());
-                updated = true;
-                break;
+            if (vehicle.getStatus() != VehicleStatus.AVAILABLE) {
+                throw new RuntimeException("Vehicle is not available.");
             }
-        }
-        if (!updated) {
-            cart.getItems().add(item);
+
+            boolean alreadyInCart = cart.getItems().stream()
+                    .anyMatch(i -> i.getType() == ItemType.VEHICLE &&
+                            i.getVehicle() != null &&
+                            i.getVehicle().getId().equals(dto.getVehicleId()));
+            if (alreadyInCart) {
+                throw new RuntimeException("This vehicle is already in your cart.");
+            }
+
+            vehicle.setStatus(VehicleStatus.PENDING);
+            vehicleRepository.save(vehicle);
+
+            CartItem cartItem = CartItem.builder()
+                    .cart(cart)
+                    .type(ItemType.VEHICLE)
+                    .vehicle(vehicle)
+                    .unitPrice(vehicle.getPrice())
+                    .quantity(1) // always 1 for vehicles
+                    .build();
+
+            cart.getItems().add(cartItem);
+        } else if (dto.getType() == ItemType.ACCESSORY) {
+            Accessory accessory = accessoryRepository.findById(dto.getAccessoryId())
+                    .orElseThrow(() -> new RuntimeException("Accessory not found"));
+
+            if (dto.getQuantity() <= 0) {
+                throw new RuntimeException("Quantity must be greater than zero.");
+            }
+            if (dto.getQuantity() > accessory.getQuantity()) {
+                throw new RuntimeException("Not enough accessory stock available.");
+            }
+
+            Optional<CartItem> existing = cart.getItems().stream()
+                    .filter(i -> i.getType() == ItemType.ACCESSORY &&
+                            i.getAccessory() != null &&
+                            i.getAccessory().getId().equals(dto.getAccessoryId()))
+                    .findFirst();
+
+            if (existing.isPresent()) {
+                CartItem item = existing.get();
+                int newQuantity = item.getQuantity() + dto.getQuantity();
+                if (newQuantity > accessory.getQuantity()) {
+                    throw new RuntimeException("Not enough accessory stock available for the new quantity.");
+                }
+                item.setQuantity(newQuantity);
+            } else {
+                CartItem cartItem = CartItem.builder()
+                        .cart(cart)
+                        .type(ItemType.ACCESSORY)
+                        .accessory(accessory)
+                        .unitPrice(accessory.getPrice())
+                        .quantity(dto.getQuantity())
+                        .build();
+                cart.getItems().add(cartItem);
+            }
+        } else {
+            throw new RuntimeException("Invalid cart item type.");
         }
 
         cartRepository.save(cart);
@@ -67,14 +124,60 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public CartDto removeItemFromCart(UUID userId, UUID cartItemId) {
+    public CartDto incrementAccessoryInCart(UUID userId, UUID accessoryId) {
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException(userId, Cart.class));
+        CartItem cartItem = cart.getItems().stream()
+                .filter(i -> i.getType() == ItemType.ACCESSORY && i.getAccessory().getId().equals(accessoryId))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException(accessoryId, CartItem.class));
+        Accessory accessory = cartItem.getAccessory();
 
-        cart.getItems().removeIf(item -> item.getId().equals(cartItemId));
-
+        if (cartItem.getQuantity() + 1 > accessory.getQuantity()) {
+            throw new RuntimeException("Not enough accessory stock available.");
+        }
+        cartItem.setQuantity(cartItem.getQuantity() + 1);
         cartRepository.save(cart);
+        return cartMapper.cartToCartDto(cart);
+    }
 
+    @Override
+    @Transactional
+    public CartDto decrementAccessoryInCart(UUID userId, UUID accessoryId) {
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException(userId, Cart.class));
+        CartItem cartItem = cart.getItems().stream()
+                .filter(i -> i.getType() == ItemType.ACCESSORY && i.getAccessory().getId().equals(accessoryId))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException(accessoryId, CartItem.class));
+
+        if (cartItem.getQuantity() == 1) {
+            cart.getItems().remove(cartItem);
+        } else {
+            cartItem.setQuantity(cartItem.getQuantity() - 1);
+        }
+        cartRepository.save(cart);
+        return cartMapper.cartToCartDto(cart);
+    }
+
+    @Override
+    @Transactional
+    public CartDto removeItemFromCart(UUID userId, UUID itemId) {
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException(userId, Cart.class));
+        CartItem toRemove = cart.getItems().stream()
+                .filter(i -> i.getId().equals(itemId))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException(itemId, CartItem.class));
+
+        if (toRemove.getType() == ItemType.VEHICLE && toRemove.getVehicle() != null) {
+            Vehicle vehicle = toRemove.getVehicle();
+            vehicle.setStatus(VehicleStatus.AVAILABLE);
+            vehicleRepository.save(vehicle);
+        }
+
+        cart.getItems().remove(toRemove);
+        cartRepository.save(cart);
         return cartMapper.cartToCartDto(cart);
     }
 
