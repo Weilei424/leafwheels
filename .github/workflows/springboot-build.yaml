@@ -31,4 +31,10 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: Build with Maven
-        run: mvn -f leafwheels/pom.xml clean install -DskipTests
+        run: mvn -f leafwheels/pom.xml clean compile
+
+      - name: Run Tests
+        run: mvn -f leafwheels/pom.xml test
+
+      - name: Package
+        run: mvn -f leafwheels/pom.xml package -DskipTests
