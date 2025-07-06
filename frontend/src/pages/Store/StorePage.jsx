@@ -1,4 +1,7 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
+import usePagination from "../../hooks/UsePagination.js"; // Adjust this path if your hook file is named differently or located elsewhere.
+
+const PAGE_SIZE = 4;
 
 const products = [
     {
@@ -57,7 +60,6 @@ const products = [
 ];
 
 const categories = ["All", "Electric Cars", "Chargers", "Accessories"];
-const PAGE_SIZE = 4;
 
 const ProductCard = ({ product }) => (
     <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col">
@@ -95,45 +97,46 @@ const CategoryFilter = ({ categories, selectedCategory, onChangeCategory }) => (
     </div>
 );
 
-const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+const Pagination = ({ currentPage, totalPages, onPageChange, onNextPage, onPreviousPage }) => {
+
     if (totalPages <= 1) return null;
 
     const pages = [];
-    for (let i = 1; i <= totalPages; i++) {
+    for (let i = 0; i < totalPages; i++) { // Loop from 0 to totalPages - 1 (0-indexed)
         pages.push(i);
     }
 
     return (
         <nav aria-label="Pagination" className="flex justify-center mt-12 space-x-2">
             <button
-                onClick={() => onPageChange(currentPage - 1)}
-                disabled={currentPage === 1}
+                onClick={onPreviousPage} // Use the onPreviousPage function directly
+                disabled={currentPage === 0} // Disable if on the first (0-indexed) page
                 className="px-3 py-1 rounded border border-gray-300 bg-white disabled:opacity-50 hover:bg-green-100"
             >
                 Prev
             </button>
 
-            {pages.map((page) => {
-                const isActive = currentPage === page;
+            {pages.map((pageIndex) => { // pageIndex will be 0, 1, 2...
+                const isActive = currentPage === pageIndex;
                 const baseClasses = "px-3 py-1 rounded border";
                 const activeClasses = "bg-green-600 text-white border-green-600";
                 const inactiveClasses = "border-gray-300 bg-white hover:bg-green-100";
 
                 return (
                     <button
-                        key={page}
-                        onClick={() => onPageChange(page)}
+                        key={pageIndex}
+                        onClick={() => onPageChange(pageIndex)} // Pass the 0-indexed page number
                         aria-current={isActive ? "page" : undefined}
                         className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
                     >
-                        {page}
+                        {pageIndex + 1} {/* Display 1-indexed page number to the user */}
                     </button>
                 );
             })}
 
             <button
-                onClick={() => onPageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
+                onClick={onNextPage} // Use the onNextPage function directly
+                disabled={currentPage === totalPages - 1} // Disable if on the last (0-indexed) page
                 className="px-3 py-1 rounded border border-gray-300 bg-white disabled:opacity-50 hover:bg-green-100"
             >
                 Next
@@ -146,23 +149,8 @@ const StorePage = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [sortOrder, setSortOrder] = useState("newest");
-    const [currentPage, setCurrentPage] = useState(1);
 
-    const onSearchTermChange = (event) => {
-        setSearchTerm(event.target.value);
-        setCurrentPage(1);
-    };
-
-    const onCategoryChange = (category) => {
-        setSelectedCategory(category);
-        setCurrentPage(1);
-    };
-
-    const onSortOrderChange = (event) => {
-        setSortOrder(event.target.value);
-    };
-
-    const filterProducts = () => {
+    const filteredProducts = useMemo(() => {
         let filtered = products;
 
         if (selectedCategory !== "All") {
@@ -177,39 +165,32 @@ const StorePage = () => {
 
         switch (sortOrder) {
             case "priceLowHigh":
-                filtered.sort((a, b) => a.price - b.price);
+                // Create a shallow copy before sorting to avoid modifying the original array
+                filtered = [...filtered].sort((a, b) => a.price - b.price);
                 break;
             case "priceHighLow":
-                filtered.sort((a, b) => b.price - a.price);
+                filtered = [...filtered].sort((a, b) => b.price - a.price);
                 break;
             case "newest":
             default:
-                filtered.sort(
-                    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-                );
+                filtered = [...filtered].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 break;
         }
 
         return filtered;
-    };
+    }, [searchTerm, selectedCategory, sortOrder]);
 
-    const filteredProducts = useMemo(filterProducts, [
-        selectedCategory,
-        searchTerm,
-        sortOrder,
-    ]);
+    const {
+        pageNumber,
+        pageCount,
+        changePage,
+        pageData,       // pageData is now the memoized array itself
+        nextPage,
+        previousPage,
+    } = usePagination(filteredProducts, PAGE_SIZE);
 
-    const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
-
-    const paginatedProducts = filteredProducts.slice(
-        (currentPage - 1) * PAGE_SIZE,
-        currentPage * PAGE_SIZE
-    );
-
-    const onPageChange = (page) => {
-        if (page < 1 || page > totalPages) return;
-        setCurrentPage(page);
-    };
+    // Directly use pageData, as it's already the memoized array
+    const currentPageData = pageData;
 
     return (
         <div className="min-h-screen bg-gray-50 text-gray-900 py-16 px-4 max-w-7xl mx-auto">
@@ -220,7 +201,10 @@ const StorePage = () => {
                     type="search"
                     placeholder="Search products..."
                     value={searchTerm}
-                    onChange={onSearchTermChange}
+                    onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        changePage(0); // Reset to the first page (0-indexed)
+                    }}
                     className="w-full sm:max-w-xs rounded-md border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                     aria-label="Search products"
                 />
@@ -228,12 +212,18 @@ const StorePage = () => {
                 <CategoryFilter
                     categories={categories}
                     selectedCategory={selectedCategory}
-                    onChangeCategory={onCategoryChange}
+                    onChangeCategory={(category) => {
+                        setSelectedCategory(category);
+                        changePage(0); // Reset to the first page (0-indexed)
+                    }}
                 />
 
                 <select
                     value={sortOrder}
-                    onChange={onSortOrderChange}
+                    onChange={(e) => {
+                        setSortOrder(e.target.value);
+                        changePage(0); // Reset to the first page (0-indexed)
+                    }}
                     className="w-full sm:max-w-xs rounded-md border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                     aria-label="Sort products"
                 >
@@ -243,20 +233,22 @@ const StorePage = () => {
                 </select>
             </div>
 
-            {paginatedProducts.length === 0 ? (
+            {currentPageData.length === 0 ? (
                 <p className="text-center text-gray-500">No products found.</p>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {paginatedProducts.map((product) => (
+                    {currentPageData.map((product) => (
                         <ProductCard key={product._id} product={product} />
                     ))}
                 </div>
             )}
 
             <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={onPageChange}
+                currentPage={pageNumber} // Pass the 0-indexed pageNumber
+                totalPages={pageCount}
+                onPageChange={changePage} // Still used for direct page number clicks
+                onNextPage={nextPage}      // Pass the nextPage function from the hook
+                onPreviousPage={previousPage} // Pass the previousPage function from the hook
             />
         </div>
     );
