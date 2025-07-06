@@ -1,15 +1,15 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import {Route, Routes } from "react-router-dom";
 
 import HomePage from "./pages/Home/Home.jsx";
 import SignUpPage from "./pages/Auth/Signup.jsx";
 import LoginPage from "./pages/Auth/Login.jsx";
-// import AdminPage from "./pages/AdminPage";
+import AdminPage from "./pages/Admin/AdminPage.jsx";
 // import CategoryPage from "./pages/CategoryPage";
-import CartPage from "./pages/Cart/Cart.jsx";
+
 import StorePage from "./pages/Store/StorePage.jsx";
 import Navbar from "./components/common/Navigation/Navbar.jsx";
 import Footer from "./components/common/Footer/Footer.jsx";
-
+import CartPage from "./pages/Cart/Cart.jsx"
 
 // import { useUserStore } from "./stores/useUserStore";
 import { useEffect } from "react";
@@ -61,12 +61,12 @@ function App() {
 
             {/* Store routes - with layout */}
             <Route path="/" element={<Layout> <HomePage /></Layout>} />
-
-
             <Route path="/cart" element={<Layout><CartPage /></Layout>} />
             <Route path="/store" element={<Layout><StorePage/></Layout>} />
+             <Route path="/admin" element={<Layout><AdminPage /></Layout>} />
+
+
             {/* <Route path="/category/:category" element={<Layout><CategoryPage /></Layout>} /> */}
-            {/* <Route path="/secret-dashboard" element={<Layout><AdminPage /></Layout>} /> */}
             {/* <Route path="/purchase-success" element={<Layout><PurchaseSuccessPage /></Layout>} /> */}
             {/* <Route path="/purchase-cancel" element={<Layout><PurchaseCancelPage /></Layout>} /> */}
 
