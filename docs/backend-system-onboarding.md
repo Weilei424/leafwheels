@@ -138,8 +138,57 @@ Let’s explain why each dependency exists:
 
 App will start on: `http://localhost:8080`
 
-### Access API (example with curl):
+### Database Config 
 
+We have 2 sql databases at the moment, psql and h2, but only one can be enabled at one time,  go to `leafwheels/leafwheels/src/main/resources/application.properties`
+
+```
+spring.application.name=leafwheels
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.type.preferred_enum_type=STRING
+
+# =====================================
+#H2 (for local development/testing)
+#spring.datasource.url=jdbc:h2:mem:testdb
+#spring.datasource.driver-class-name=org.h2.Driver
+#spring.datasource.username=sa
+#spring.datasource.password=
+#spring.h2.console.enabled=true
+#spring.h2.console.path=/h2-console
+#spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect
+
+# =====================================
+# PostgreSQL (for Docker/production)
+#spring.datasource.url=jdbc:postgresql://localhost:5432/leafwheels
+#spring.datasource.driver-class-name=org.postgresql.Driver
+#spring.datasource.username=user
+#spring.datasource.password=password
+#spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+#spring.jpa.defer-datasource-initialization=true
+```
+
+When you are developing and want to use h2 db,
+comment out the psql part. uncomment the h2 part, rerun the project, and go to http://localhost:8080/h2-console
+
+
+When you want to use psql, go the backend root directory leafwheels/leafwheels (where dockerfile is located) in your command line, run:
+`docker compose up`
+
+> Note that changes made to database will persist on your local psql docker container.
+
+To reset/shutdown/clear psql, run:
+`docker compose down -v`
+
+To keep main branch clean, please dont push the h2 uncommented version of application.properties to remote.
+
+
+### Access API:
+
+## Postman Workspace:
+Copy and paste this link to your browser:
+`https://.postman.co/workspace/My-Workspace~a91ca899-a481-4511-8107-a0551c41164b/collection/27910194-343aad35-51e9-411b-839b-8ede0ec4510e?action=share&creator=27910194`
+
+## Example with curl:
 ```bash
 # Get all vehicles
 curl http://localhost:8080/api/v1/vehicle/all
