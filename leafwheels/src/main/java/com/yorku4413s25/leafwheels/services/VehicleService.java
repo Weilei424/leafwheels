@@ -41,6 +41,7 @@ public interface VehicleService {
             Boolean onDeal,
             Condition condition,
             VehicleStatus status,
+            Boolean hasAccidentHistory,
             Pageable pageable
     );
 }
