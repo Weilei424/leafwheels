@@ -9,6 +9,8 @@ import java.util.UUID;
 @Table(name = "accessories")
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 @Builder
 public class Accessory extends BaseEntity{
 

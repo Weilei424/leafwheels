@@ -25,7 +25,7 @@ const AdminPage = () => {
     // }, [fetchAllProducts]);
 
     return (
-        <div className="min-h-screen bg-[#F2F2F2] py-10">
+        <div className="min-h-screen bg-[#F2F2F2] py-20">
             <div className="container mx-auto px-4">
                 <h1 className="text-3xl font-bold mb-8 text-center">Admin Dashboard</h1>
 
@@ -84,5 +84,4 @@ const AdminPage = () => {
         </div>
     );
 };
-
 export default AdminPage;
