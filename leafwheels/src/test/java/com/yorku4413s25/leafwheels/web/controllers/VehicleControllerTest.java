@@ -1,12 +1,14 @@
 package com.yorku4413s25.leafwheels.web.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.yorku4413s25.leafwheels.constants.BodyType;
 import com.yorku4413s25.leafwheels.constants.Condition;
 import com.yorku4413s25.leafwheels.constants.Make;
 import com.yorku4413s25.leafwheels.constants.VehicleStatus;
 import com.yorku4413s25.leafwheels.services.VehicleService;
 import com.yorku4413s25.leafwheels.web.models.VehicleDto;
+import com.yorku4413s25.leafwheels.web.models.VehicleHistoryDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -20,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -46,6 +49,7 @@ class VehicleControllerTest {
         vehicleController = new VehicleController(vehicleService);
         mockMvc = MockMvcBuilders.standaloneSetup(vehicleController).build();
         objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
     }
 
     @Test
@@ -58,7 +62,9 @@ class VehicleControllerTest {
         mockMvc.perform(get("/api/v1/vehicle/{vehicleId}", vehicleId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.make").value(vehicleDto.getMake().toString()))
-                .andExpect(jsonPath("$.model").value(vehicleDto.getModel()));
+                .andExpect(jsonPath("$.model").value(vehicleDto.getModel()))
+                .andExpect(jsonPath("$.vehicleHistories").isArray())
+                .andExpect(jsonPath("$.vehicleHistories.length()").value(1));
 
         verify(vehicleService).getById(vehicleId);
     }
@@ -136,6 +142,17 @@ class VehicleControllerTest {
                 .condition(Condition.NEW)
                 .status(VehicleStatus.AVAILABLE)
                 .vin("TEST123456789")
+                .vehicleHistories(Arrays.asList(createSampleVehicleHistoryDto()))
+                .build();
+    }
+
+    private VehicleHistoryDto createSampleVehicleHistoryDto() {
+        return VehicleHistoryDto.builder()
+                .id(UUID.randomUUID())
+                .accidentDate(Instant.now())
+                .repairCost(new BigDecimal("2500.00"))
+                .accidentDescription("Minor fender bender")
+                .vehicleId(UUID.randomUUID())
                 .build();
     }
 }
