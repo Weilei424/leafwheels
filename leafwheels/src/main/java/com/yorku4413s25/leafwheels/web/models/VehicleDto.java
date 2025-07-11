@@ -8,6 +8,7 @@ import lombok.*;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -59,4 +60,6 @@ public class VehicleDto implements Serializable {
     String description;
 
     VehicleStatus status;
+
+    List<VehicleHistoryDto> vehicleHistories;
 }

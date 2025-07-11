@@ -13,7 +13,7 @@ import java.util.*;
 
 @Component
 @RequiredArgsConstructor
-@org.springframework.core.annotation.Order(4)
+@org.springframework.core.annotation.Order(5)
 public class OrderLoader implements CommandLineRunner {
 
     private final OrderRepository orderRepository;
