@@ -11,10 +11,13 @@ import Navbar from "./components/common/Navigation/Navbar.jsx";
 import Footer from "./components/common/Footer/Footer.jsx";
 import CartPage from "./pages/Cart/Cart.jsx"
 
+import ProductPage from "./pages/Store/VehiclePage.jsx";
+
 // import { useUserStore } from "./stores/useUserStore";
 import { useEffect } from "react";
 // import LoadingSpinner from "./components/LoadingSpinner";
 import Cart from "./pages/Cart/Cart.jsx";
+import VehiclePage from "./pages/Store/VehiclePage.jsx";
 // import { useCartStore } from "./stores/useCartStore";
 // import PurchaseSuccessPage from "./pages/PurchaseSuccessPage";
 // import PurchaseCancelPage from "./pages/PurchaseCancelPage";
@@ -36,7 +39,6 @@ const Layout = ({ children }) => (
         </footer>
     </div>
 );
-
 
 
 function App() {
@@ -64,6 +66,8 @@ function App() {
             <Route path="/cart" element={<Layout><CartPage /></Layout>} />
             <Route path="/store" element={<Layout><StorePage/></Layout>} />
              <Route path="/admin" element={<Layout><AdminPage /></Layout>} />
+            <Route path="/vehicle/:id" element={<Layout> <VehiclePage /></Layout>} />
+            {/*<Route path="/accessory/:id" element={<Layout><AccessoryPage /></Layout>} />*/}
 
 
             {/* <Route path="/category/:category" element={<Layout><CategoryPage /></Layout>} /> */}

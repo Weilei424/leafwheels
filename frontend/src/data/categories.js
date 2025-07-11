@@ -1,2 +1,2 @@
-const categories = ["All", "Electric Cars", "Chargers", "Accessories"];
+const categories = ["All", "Vehicles", "Accessories"];
 export default categories;

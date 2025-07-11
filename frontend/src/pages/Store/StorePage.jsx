@@ -1,21 +1,25 @@
-import React, { useState, useMemo } from "react";
+import React, {useMemo, useState} from "react";
 import usePagination from "../../hooks/UsePagination.js";
 import {SearchBar} from "../../components/common/SearchBar/SearchBar.jsx";
 import SortDropDown from "../../components/common/SortDropDown/SortDropDown.jsx";
 import CategoryFilter from "../../components/common/CategoryFilter/CategoryFilter.jsx";
-import ProductCard from "../../components/product/ProductCard.jsx";
-import products from "../../data/products.js";
+
+
+import VehicleCard from "../../components/vehicle/VehicleCard.jsx";
+import AccessoryCard from "../../components/accessory/AccessoryCard.jsx";
+import vehicles from "../../data/vehicles.js";
+import accessories from "../../data/accessories.js";
 import categories from "../../data/categories.js";
+
+
+const products = [
+    ...vehicles.map((vehicle) => ({...vehicle, category: "Vehicles"})),
+    ...accessories.map((accessory) => ({...accessory, category: "Accessories"})),
+]
 
 
 
 const PAGE_SIZE = 4;
-
-
-
-
-
-
 
 
 const Pagination = ({ currentPage, totalPages, onPageChange, onNextPage, onPreviousPage }) => {
@@ -79,9 +83,18 @@ const StorePage = () => {
         }
 
         if (searchTerm.trim() !== "") {
-            filtered = filtered.filter((p) =>
-                p.name.toLowerCase().includes(searchTerm.toLowerCase())
-            );
+            filtered = filtered.filter((p) => {
+                let nameToCheck;
+
+                if (p.category === "Vehicles") {
+                    nameToCheck =  p.year + " " + p.make + " " + p.model;
+                } else {
+                    nameToCheck = p.name || "";
+                }
+
+                return nameToCheck.toLowerCase().includes(searchTerm.toLowerCase());
+            });
+
         }
 
         switch (sortOrder) {
@@ -160,9 +173,13 @@ const StorePage = () => {
 
             {currentPageData.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {currentPageData.map((product) => (
-                        <ProductCard key={product._id} product={product} />
-                    ))}
+                    {currentPageData.map((product) =>
+                        product.category === "Vehicles" ? (
+                            <VehicleCard key={product.id} vehicle={product}/>
+                        ) : (
+                            <AccessoryCard key={product.id }accessory={product}/>
+                        )
+                    )}
                 </div>
             )}
 
