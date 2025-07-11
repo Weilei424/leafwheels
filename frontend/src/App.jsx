@@ -11,13 +11,11 @@ import Navbar from "./components/common/Navigation/Navbar.jsx";
 import Footer from "./components/common/Footer/Footer.jsx";
 import CartPage from "./pages/Cart/Cart.jsx"
 
-import ProductPage from "./pages/Store/VehiclePage.jsx";
+import VehiclePage from "./pages/Store/VehiclePage.jsx";
+import AccessoryPage from "./pages/Store/AccessoryPage.jsx";
+
 
 // import { useUserStore } from "./stores/useUserStore";
-import { useEffect } from "react";
-// import LoadingSpinner from "./components/LoadingSpinner";
-import Cart from "./pages/Cart/Cart.jsx";
-import VehiclePage from "./pages/Store/VehiclePage.jsx";
 // import { useCartStore } from "./stores/useCartStore";
 // import PurchaseSuccessPage from "./pages/PurchaseSuccessPage";
 // import PurchaseCancelPage from "./pages/PurchaseCancelPage";
@@ -67,6 +65,7 @@ function App() {
             <Route path="/store" element={<Layout><StorePage/></Layout>} />
              <Route path="/admin" element={<Layout><AdminPage /></Layout>} />
             <Route path="/vehicle/:id" element={<Layout> <VehiclePage /></Layout>} />
+            <Route path="/accessory/:id" element={<Layout><AccessoryPage /></Layout>} />
             {/*<Route path="/accessory/:id" element={<Layout><AccessoryPage /></Layout>} />*/}
 
 
