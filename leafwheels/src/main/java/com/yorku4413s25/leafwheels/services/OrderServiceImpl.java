@@ -147,9 +147,6 @@ public class OrderServiceImpl implements OrderService {
 
         Order savedOrder = orderRepository.save(order);
 
-        cart.getItems().clear();
-        cartRepository.save(cart);
-
         return orderMapper.orderToOrderDto(savedOrder);
     }
 
