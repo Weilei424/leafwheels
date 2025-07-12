@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -79,5 +80,8 @@ public class Vehicle extends BaseEntity{
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private VehicleStatus status;
+
+    @OneToMany(mappedBy = "vehicle", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<VehicleHistory> vehicleHistories;
 
 }

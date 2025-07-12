@@ -1,3 +1,4 @@
+@import "tailwindcss";
 html {
     scroll-behavior: smooth;
 }
@@ -10,6 +11,8 @@ body {
     font-family: "Lato", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    @apply font-sans;
+
 }
 
 body,

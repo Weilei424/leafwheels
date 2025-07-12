@@ -6,6 +6,7 @@ import com.yorku4413s25.leafwheels.constants.Make;
 import com.yorku4413s25.leafwheels.constants.VehicleStatus;
 import org.springframework.data.jpa.domain.Specification;
 
+import jakarta.persistence.criteria.JoinType;
 import java.math.BigDecimal;
 
 public class VehicleSpecification {
@@ -75,5 +76,14 @@ public class VehicleSpecification {
 
     public static Specification<Vehicle> hasStatus(VehicleStatus status) {
         return (root, query, cb) -> status == null ? null : cb.equal(root.get("status"), status);
+    }
+
+    public static Specification<Vehicle> hasAccidentHistory(Boolean hasAccidentHistory) {
+        return (root, query, cb) ->
+                hasAccidentHistory == null ? null :
+                        (hasAccidentHistory
+                                ? cb.isNotNull(root.join("vehicleHistories", JoinType.LEFT).get("id"))
+                                : cb.isNull(root.join("vehicleHistories", JoinType.LEFT).get("id"))
+                        );
     }
 }

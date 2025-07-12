@@ -92,6 +92,7 @@ public class VehicleServiceImpl implements VehicleService {
             Boolean onDeal,
             Condition condition,
             VehicleStatus status,
+            Boolean hasAccidentHistory,
             Pageable pageable
     ) {
         List<Specification<Vehicle>> specs = new ArrayList<>();
@@ -113,6 +114,7 @@ public class VehicleServiceImpl implements VehicleService {
         addIfNotNull(specs, onDeal, VehicleSpecification::hasOnDeal);
         addIfNotNull(specs, condition, VehicleSpecification::hasCondition);
         addIfNotNull(specs, status, VehicleSpecification::hasStatus);
+        addIfNotNull(specs, hasAccidentHistory, VehicleSpecification::hasAccidentHistory);
 
         Specification<Vehicle> finalSpec = Specification.allOf(specs);
         Page<Vehicle> vehicles = vehicleRepository.findAll(finalSpec, pageable);
