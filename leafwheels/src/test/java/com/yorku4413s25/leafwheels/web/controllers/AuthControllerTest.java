@@ -3,6 +3,7 @@ package com.yorku4413s25.leafwheels.web.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yorku4413s25.leafwheels.constants.Role;
 import com.yorku4413s25.leafwheels.services.UserService;
+import com.yorku4413s25.leafwheels.web.models.LoginRequestDto;
 import com.yorku4413s25.leafwheels.web.models.UserDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,13 +34,13 @@ class AuthControllerTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        authController = new AuthController(null, userService);
+        authController = new AuthController(userService);
         mockMvc = MockMvcBuilders.standaloneSetup(authController).build();
         objectMapper = new ObjectMapper();
     }
 
     @Test
-    void devRegisterShouldReturnUserWhenValidInput() throws Exception {
+    void devSignupShouldReturnUserWhenValidInput() throws Exception {
         UserDto inputDto = createSampleUserDto();
         UserDto createdUser = createSampleUserDto();
         createdUser.setId(UUID.randomUUID());
@@ -51,10 +52,10 @@ class AuthControllerTest {
                 eq(inputDto.getPassword())
         )).thenReturn(createdUser);
 
-        mockMvc.perform(post("/api/v1/auth/dev/register")
+        mockMvc.perform(post("/api/v1/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(inputDto)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.firstName").value(createdUser.getFirstName()))
                 .andExpect(jsonPath("$.lastName").value(createdUser.getLastName()))
                 .andExpect(jsonPath("$.email").value(createdUser.getEmail()));
@@ -69,28 +70,29 @@ class AuthControllerTest {
 
     @Test
     void devLoginShouldReturnUserWhenValidCredentials() throws Exception {
-        UserDto inputDto = createSampleUserDto();
+        LoginRequestDto loginRequest = new LoginRequestDto("john.doe@example.com", "password123");
         UserDto authenticatedUser = createSampleUserDto();
         authenticatedUser.setId(UUID.randomUUID());
 
         when(userService.login(
-                eq(inputDto.getEmail()),
-                eq(inputDto.getPassword())
+                eq(loginRequest.getEmail()),
+                eq(loginRequest.getPassword())
         )).thenReturn(authenticatedUser);
 
-        mockMvc.perform(post("/api/v1/auth/dev/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(inputDto)))
+                .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.firstName").value(authenticatedUser.getFirstName()))
                 .andExpect(jsonPath("$.lastName").value(authenticatedUser.getLastName()))
                 .andExpect(jsonPath("$.email").value(authenticatedUser.getEmail()));
 
         verify(userService).login(
-                eq(inputDto.getEmail()),
-                eq(inputDto.getPassword())
+                eq(loginRequest.getEmail()),
+                eq(loginRequest.getPassword())
         );
     }
+
 
     private UserDto createSampleUserDto() {
         return UserDto.builder()
