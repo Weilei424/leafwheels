@@ -3,8 +3,7 @@ import { Link } from "react-router-dom";
 
 const AccessoryCard = ({ accessory }) => (
     <Link to={`/accessory/${accessory.id}`}>
-        <div
-            className="
+        <div className="
         rounded-lg           /* Rounded corners */
         border               /* Border */
         border-gray-200      /* Light gray border */
@@ -32,15 +31,15 @@ const AccessoryCard = ({ accessory }) => (
                 />
             </div>
 
-            {/* Accessory details */}
+            {/* details */}
             <div className="mt-4 flex flex-col flex-grow">
                 <h3 className="text-gray-900 text-lg font-sans">{accessory.name}</h3>
 
-                <p className="text-gray-600 text-sm mt-1 line-clamp-3">
-                    {accessory.description}
-                </p>
+                {/*<p className="text-gray-600 text-sm mt-1 line-clamp-3">*/}
+                {/*    {accessory.description}*/}
+                {/*</p>*/}
 
-                <p className="text-black font-semibold mt-2">
+                <p className="text-black font-semibold mt-1">
                     ${accessory.price.toFixed(2)}
                 </p>
 

@@ -6,8 +6,7 @@ const VehicleCard = ({ vehicle }) => {
     return (
 
         <Link to={`/vehicle/${vehicle.id}`}>
-            <div
-                className="
+            <div className="
         rounded-lg
         border
         border-gray-200
@@ -50,7 +49,7 @@ const VehicleCard = ({ vehicle }) => {
             text-white
             font-semibold
             py-2 px-4
-            m-2 mt-4
+            mt-2
             rounded
             focus:outline-none
             focus:ring-2 focus:ring-green-500
