@@ -1,7 +1,7 @@
 package com.yorku4413s25.leafwheels.web.controllers;
 
 import com.yorku4413s25.leafwheels.services.UserService;
-import com.yorku4413s25.leafwheels.web.models.LoginRequest;
+import com.yorku4413s25.leafwheels.web.models.LoginRequestDto;
 import com.yorku4413s25.leafwheels.web.models.UserDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.ErrorResponse;
@@ -17,27 +17,11 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@RequiredArgsConstructor
 @Tag(name = "Authentication (Dev)", description = "Endpoints for development login and signup (no hashing, no tokens)")
 public class AuthController {
 
     private final UserService userService;
-
-    /**
-     * Primary constructor used by Spring for dependency injection.
-     */
-    @Autowired
-    public AuthController(UserService userService) {
-        this.userService = userService;
-    }
-
-    /**
-     * @deprecated Constructor only to support existing test code that passes two arguments.
-     * This constructor should not be used elsewhere.
-     */
-    @Deprecated
-    public AuthController(Object unused, UserService userService) {
-        this.userService = userService;
-    }
 
     @Operation(
             summary = "Login a user (dev only)",
@@ -50,7 +34,7 @@ public class AuthController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/login")
-    public ResponseEntity<UserDto> devLogin(@RequestBody LoginRequest request) {
+    public ResponseEntity<UserDto> devLogin(@RequestBody LoginRequestDto request) {
         return new ResponseEntity<>(userService.login(request.getEmail(), request.getPassword()), HttpStatus.OK);
     }
 
