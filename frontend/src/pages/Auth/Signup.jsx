@@ -1,21 +1,21 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-
+import {useUserStore} from "../../stores/useUserStore.js";
 const SignUpPage = () => {
     const [formData, setFormData] = useState({
-        name: "",
+        firstName: "",
+        lastName: "",
         email: "",
         password: "",
         confirmPassword: "",
     });
-    const [loading, setLoading] = useState(false);
 
-    // const { signup, loading } = useUserStore();
+        const { signup, loading } = useUserStore();
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log(formData);
-        // signup(formData);
+        const {firstName, lastName, email, password, confirmPassword} = formData
+        signup(firstName, lastName, email, password, confirmPassword)
     };
 
     return (
@@ -39,13 +39,28 @@ const SignUpPage = () => {
                         {/* Name field */}
                         <div>
                             <label className='block text-sm font-medium text-gray-700 mb-1'>
-                                Full Name
+                                First Name
                             </label>
                             <input
                                 type='text'
                                 required
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                value={formData.firstName}
+                                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                                className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                placeholder='John Doe'
+                            />
+                        </div>
+
+                        {/* Name field */}
+                        <div>
+                            <label className='block text-sm font-medium text-gray-700 mb-1'>
+                                Last Name
+                            </label>
+                            <input
+                                type='text'
+                                required
+                                value={formData.lastName}
+                                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                                 className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                                 placeholder='John Doe'
                             />

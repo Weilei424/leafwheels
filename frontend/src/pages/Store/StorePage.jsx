@@ -1,21 +1,18 @@
-import React, {useMemo, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import usePagination from "../../hooks/UsePagination.js";
 import {SearchBar} from "../../components/common/SearchBar/SearchBar.jsx";
 import SortDropDown from "../../components/common/SortDropDown/SortDropDown.jsx";
 import CategoryFilter from "../../components/common/CategoryFilter/CategoryFilter.jsx";
-
-
 import VehicleCard from "../../components/vehicle/VehicleCard.jsx";
 import AccessoryCard from "../../components/accessory/AccessoryCard.jsx";
-import vehicles from "../../data/vehicles.js";
-import accessories from "../../data/accessories.js";
 import categories from "../../data/categories.js";
+import {useVehicleStore} from "../../stores/useVehicleStore.js";
 
 
-const products = [
-    ...vehicles.map((vehicle) => ({...vehicle, category: "Vehicles"})),
-    ...accessories.map((accessory) => ({...accessory, category: "Accessories"})),
-]
+
+
+
+
 
 
 
@@ -74,6 +71,22 @@ const StorePage = () => {
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [sortOrder, setSortOrder] = useState("newest");
 
+    const { vehicles, getAllVehicles } = useVehicleStore();
+
+    useEffect(() => {
+        getAllVehicles()
+    }, [getAllVehicles]);
+
+
+
+
+
+    const products = useMemo(() => [
+        ...vehicles.map(vehicle => ({ ...vehicle, category: "Vehicles" })),
+        // ...accessories.map(accessory => ({ ...accessory, category: "Accessories" })),
+    ], [vehicles]);
+
+
     const filteredProducts = useMemo(() => {
         let filtered = products;
 
@@ -111,7 +124,7 @@ const StorePage = () => {
         }
 
         return filtered;
-    }, [searchTerm, selectedCategory, sortOrder]);
+    }, [products, searchTerm, selectedCategory, sortOrder]);
 
     const {
         pageNumber,
@@ -176,7 +189,7 @@ const StorePage = () => {
                         product.category === "Vehicles" ? (
                             <VehicleCard key={product.id} vehicle={product}/>
                         ) : (
-                            <AccessoryCard key={product.id }accessory={product}/>
+                            <AccessoryCard key={product.id} accessory={product}/>
                         )
                     )}
                 </div>

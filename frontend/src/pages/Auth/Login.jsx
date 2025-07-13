@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import {useUserStore} from "../../stores/useUserStore.js";
 
 const LoginPage = () => {
     const [formData, setFormData] = useState({
         email: "",
         password: "",
     });
-    const [loading, setLoading] = useState(false);
 
-    // const { login, loading } = useUserStore();
+     const { login, loading } = useUserStore();
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log(formData);
-        // login(formData);
+        const {email, password} = formData
+        login(email, password);
     };
 
     return (
