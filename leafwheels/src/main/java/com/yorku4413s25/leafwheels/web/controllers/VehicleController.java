@@ -84,7 +84,7 @@ public class VehicleController {
 
     @Operation(
             summary = "Filter vehicles",
-            description = "Filter vehicles by year, make, model, bodyType, color, doors, seats, mileage, battery range, price, deal status, condition, and status. Results are paginated."
+            description = "Filter vehicles by year, make, model, bodyType, color, doors, seats, mileage, battery range, price, deal status, condition, status, and accident history. Results are paginated."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Filtered vehicles found", content = @Content(schema = @Schema(implementation = VehicleDto.class)))
@@ -107,11 +107,12 @@ public class VehicleController {
             @RequestParam(required = false) Boolean onDeal,
             @RequestParam(required = false) Condition condition,
             @RequestParam(required = false) VehicleStatus status,
+            @RequestParam(required = false) Boolean hasAccidentHistory,
             Pageable pageable
     ) {
         return ResponseEntity.ok(vehicleService.filterVehicles(
                 year, make, model, bodyType, exteriorColor, doors, seats,
                 minMileage, maxMileage, minBatteryRange, maxBatteryRange,
-                minPrice, maxPrice, onDeal, condition, status, pageable));
+                minPrice, maxPrice, onDeal, condition, status, hasAccidentHistory, pageable));
     }
 }

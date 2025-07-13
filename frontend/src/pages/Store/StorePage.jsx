@@ -21,7 +21,6 @@ const products = [
 
 const PAGE_SIZE = 4;
 
-
 const Pagination = ({ currentPage, totalPages, onPageChange, onNextPage, onPreviousPage }) => {
 
     if (totalPages <= 1) return null;
