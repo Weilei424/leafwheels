@@ -1,5 +1,6 @@
 package com.yorku4413s25.leafwheels.repositories;
 
+import com.yorku4413s25.leafwheels.constants.VehicleStatus;
 import com.yorku4413s25.leafwheels.domain.Vehicle;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -17,5 +18,9 @@ public interface VehicleRepository extends JpaRepository<Vehicle, UUID>, JpaSpec
 
     @Query("SELECT DISTINCT v.exteriorColor FROM Vehicle v WHERE v.exteriorColor IS NOT NULL")
     List<String> findDistinctExteriorColor();
+
+    List<Vehicle> findByStatusIn(List<VehicleStatus> statuses);
+
+    List<Vehicle> findByStatusNotIn(List<VehicleStatus> statuses);
 
 }

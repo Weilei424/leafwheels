@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 import java.util.List;
@@ -91,7 +92,7 @@ public class VehicleServiceImpl implements VehicleService {
             BigDecimal maxPrice,
             Boolean onDeal,
             Condition condition,
-            VehicleStatus status,
+            List<VehicleStatus> statuses,
             Boolean hasAccidentHistory,
             Pageable pageable
     ) {
@@ -113,12 +114,39 @@ public class VehicleServiceImpl implements VehicleService {
             specs.add(VehicleSpecification.hasPriceBetween(minPrice, maxPrice));
         addIfNotNull(specs, onDeal, VehicleSpecification::hasOnDeal);
         addIfNotNull(specs, condition, VehicleSpecification::hasCondition);
-        addIfNotNull(specs, status, VehicleSpecification::hasStatus);
+        addIfNotNull(specs, statuses, VehicleSpecification::hasStatusIn);
         addIfNotNull(specs, hasAccidentHistory, VehicleSpecification::hasAccidentHistory);
 
         Specification<Vehicle> finalSpec = Specification.allOf(specs);
         Page<Vehicle> vehicles = vehicleRepository.findAll(finalSpec, pageable);
         return vehicles.map(vehicleMapper::vehicleToVehicleDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<VehicleDto> getVehiclesByStatus(List<VehicleStatus> statuses) {
+        return vehicleRepository.findByStatusIn(statuses).stream()
+                .map(vehicleMapper::vehicleToVehicleDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<VehicleDto> getVehiclesExcludingStatus(List<VehicleStatus> excludedStatuses) {
+        return vehicleRepository.findByStatusNotIn(excludedStatuses).stream()
+                .map(vehicleMapper::vehicleToVehicleDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<VehicleDto> getAvailableVehicles() {
+        List<VehicleStatus> availableStatuses = Arrays.asList(
+                VehicleStatus.AVAILABLE, 
+                VehicleStatus.DEMO, 
+                VehicleStatus.INCOMING
+        );
+        return getVehiclesByStatus(availableStatuses);
     }
 
     private <T> void addIfNotNull(List<Specification<Vehicle>> specs, T value, Function<T, Specification<Vehicle>> fn) {

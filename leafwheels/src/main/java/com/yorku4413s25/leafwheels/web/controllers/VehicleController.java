@@ -106,13 +106,44 @@ public class VehicleController {
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) Boolean onDeal,
             @RequestParam(required = false) Condition condition,
-            @RequestParam(required = false) VehicleStatus status,
+            @RequestParam(required = false) List<VehicleStatus> statuses,
             @RequestParam(required = false) Boolean hasAccidentHistory,
             Pageable pageable
     ) {
         return ResponseEntity.ok(vehicleService.filterVehicles(
                 year, make, model, bodyType, exteriorColor, doors, seats,
                 minMileage, maxMileage, minBatteryRange, maxBatteryRange,
-                minPrice, maxPrice, onDeal, condition, status, hasAccidentHistory, pageable));
+                minPrice, maxPrice, onDeal, condition, statuses, hasAccidentHistory, pageable));
+    }
+
+    @Operation(summary = "Get vehicles by status", description = "Retrieve vehicles that match any of the specified statuses.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Vehicles found", content = @Content(schema = @Schema(implementation = VehicleDto.class)))
+    })
+    @GetMapping("/by-status")
+    public ResponseEntity<List<VehicleDto>> getVehiclesByStatus(
+            @RequestParam List<VehicleStatus> statuses
+    ) {
+        return ResponseEntity.ok(vehicleService.getVehiclesByStatus(statuses));
+    }
+
+    @Operation(summary = "Get vehicles excluding specific statuses", description = "Retrieve vehicles that do not match any of the specified statuses.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Vehicles found", content = @Content(schema = @Schema(implementation = VehicleDto.class)))
+    })
+    @GetMapping("/excluding-status")
+    public ResponseEntity<List<VehicleDto>> getVehiclesExcludingStatus(
+            @RequestParam List<VehicleStatus> excludedStatuses
+    ) {
+        return ResponseEntity.ok(vehicleService.getVehiclesExcludingStatus(excludedStatuses));
+    }
+
+    @Operation(summary = "Get available vehicles", description = "Retrieve vehicles that are available for purchase (AVAILABLE, DEMO, INCOMING statuses only).")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Available vehicles found", content = @Content(schema = @Schema(implementation = VehicleDto.class)))
+    })
+    @GetMapping("/available")
+    public ResponseEntity<List<VehicleDto>> getAvailableVehicles() {
+        return ResponseEntity.ok(vehicleService.getAvailableVehicles());
     }
 }

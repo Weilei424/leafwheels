@@ -40,8 +40,14 @@ public interface VehicleService {
             BigDecimal maxPrice,
             Boolean onDeal,
             Condition condition,
-            VehicleStatus status,
+            List<VehicleStatus> statuses,
             Boolean hasAccidentHistory,
             Pageable pageable
     );
+
+    List<VehicleDto> getVehiclesByStatus(List<VehicleStatus> statuses);
+
+    List<VehicleDto> getVehiclesExcludingStatus(List<VehicleStatus> excludedStatuses);
+
+    List<VehicleDto> getAvailableVehicles();
 }
