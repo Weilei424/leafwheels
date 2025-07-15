@@ -15,12 +15,10 @@ import VehiclePage from "./pages/Store/VehiclePage.jsx";
 import AccessoryPage from "./pages/Store/AccessoryPage.jsx";
 import { ToastContainer, Bounce } from 'react-toastify';
 
-// import { useCartStore } from "./stores/useCartStore";
 // import PurchaseSuccessPage from "./pages/PurchaseSuccessPage";
 // import PurchaseCancelPage from "./pages/PurchaseCancelPage";
 
 import {useUserStore} from "./stores/useUserStore";
-
 // Layout component for pages with navbar/footer
 const Layout = ({ children }) => (
     <div className="flex flex-col min-h-screen">
@@ -42,6 +40,15 @@ const Layout = ({ children }) => (
 
 function App() {
     const {user} = useUserStore();
+
+
+    // useEffect(() => {
+    //     if (!user) return;
+    //
+    //     getCartItems();
+    // }, [getCartItems, user]);
+
+
     // const { user, checkAuth, checkingAuth } = useUserStore();
     // const { getCartItems } = useCartStore();
 
@@ -79,7 +86,7 @@ function App() {
             </Routes>
             <ToastContainer
                 position="top-right"
-                autoClose={5000}
+                autoClose={1000}
                 hideProgressBar={false}
                 newestOnTop={false}
                 closeOnClick={false}
