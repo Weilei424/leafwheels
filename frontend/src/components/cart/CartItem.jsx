@@ -1,9 +1,12 @@
-const CartItem = ({ item = {} }) => {
+const CartItem = ({ item = {}, onRemove  }) => {
     return (
         <div className='rounded-lg border border-gray-200 bg-white p-4 shadow-sm md:p-6'>
             <div className='space-y-4 md:flex md:items-center md:justify-between md:gap-6 md:space-y-0'>
                 <a href='#' className='shrink-0 md:order-1'>
-                    <img className='h-20 w-20 rounded-lg object-cover sm:h-24 sm:w-24' src={item.image} alt={item.name}/>
+                    <img className='h-20 w-20 rounded-lg object-cover sm:h-24 sm:w-24'
+                         src={item.image || '/images/placeholder.jpg'}
+                         alt={item.name}
+                    />
                 </a>
 
                 <div className='flex items-center justify-between md:order-3 md:justify-end'>
@@ -20,7 +23,7 @@ const CartItem = ({ item = {} }) => {
                         </button>
                     </div>
                     <div className='text-end md:order-4 md:w-32'>
-                        <p className='text-lg font-bold text-gray-900 sm:text-xl'>${item.price.toLocaleString()}</p>
+                        <p className='text-lg font-bold text-gray-900 sm:text-xl'> ${item.price ? item.price.toLocaleString() : '0'}</p>
                     </div>
                 </div>
 
@@ -28,7 +31,9 @@ const CartItem = ({ item = {} }) => {
                     <a href='#' className='text-base font-medium text-gray-900 hover:underline sm:text-lg'>{item.name}</a>
                     <div className='flex items-center gap-4'>
                         <button type='button'
-                                className='inline-flex items-center text-sm font-medium text-red-600 hover:underline'>
+                                className='inline-flex items-center text-sm font-medium text-red-600 hover:underline'
+                                onClick={() => onRemove?.(item._id)}
+                        >
                             Remove
                         </button>
                     </div>
