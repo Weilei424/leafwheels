@@ -7,11 +7,7 @@ import VehicleCard from "../../components/vehicle/VehicleCard.jsx";
 import AccessoryCard from "../../components/accessory/AccessoryCard.jsx";
 import categories from "../../data/categories.js";
 import {useVehicleStore} from "../../stores/useVehicleStore.js";
-
-
-
-
-
+import {handleAddToCart} from "../../hooks/handleAddToCart.js";
 
 
 
@@ -73,12 +69,15 @@ const StorePage = () => {
 
     const { vehicles, getAllVehicles } = useVehicleStore();
 
+    const onAddToCart = (product) => {
+        const type = product.category === "Vehicles" ? "VEHICLE" : "ACCESSORY";
+        handleAddToCart({ product, type });
+    };
+
+    // Renders all vehicles in Storepage
     useEffect(() => {
         getAllVehicles()
     }, [getAllVehicles]);
-
-
-
 
 
     const products = useMemo(() => [
@@ -187,7 +186,7 @@ const StorePage = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {currentPageData.map((product) =>
                         product.category === "Vehicles" ? (
-                            <VehicleCard key={product.id} vehicle={product}/>
+                            <VehicleCard key={product.id} vehicle={product} onAddToCart={onAddToCart}/>
                         ) : (
                             <AccessoryCard key={product.id} accessory={product}/>
                         )
