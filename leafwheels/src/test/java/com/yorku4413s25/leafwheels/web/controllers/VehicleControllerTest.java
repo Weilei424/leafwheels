@@ -129,6 +129,28 @@ class VehicleControllerTest {
         verify(vehicleService).getAllVehicles();
     }
 
+    @Test
+    void addImageUrlsShouldReturnUpdatedVehicleWhenValidInput() throws Exception {
+        UUID vehicleId = UUID.randomUUID();
+        List<String> imageUrls = Arrays.asList("https://example.com/image1.jpg", "https://example.com/image2.jpg");
+        VehicleDto updatedVehicle = createSampleVehicleDto();
+        updatedVehicle.setId(vehicleId);
+        updatedVehicle.setImageUrls(imageUrls);
+
+        when(vehicleService.addImageUrls(vehicleId, imageUrls)).thenReturn(updatedVehicle);
+
+        mockMvc.perform(post("/api/v1/vehicle/{vehicleId}/images", vehicleId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(imageUrls)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(vehicleId.toString()))
+                .andExpect(jsonPath("$.imageUrls").isArray())
+                .andExpect(jsonPath("$.imageUrls.length()").value(2))
+                .andExpect(jsonPath("$.imageUrls[0]").value("https://example.com/image1.jpg"));
+
+        verify(vehicleService).addImageUrls(vehicleId, imageUrls);
+    }
+
     private VehicleDto createSampleVehicleDto() {
         return VehicleDto.builder()
                 .make(Make.TESLA)

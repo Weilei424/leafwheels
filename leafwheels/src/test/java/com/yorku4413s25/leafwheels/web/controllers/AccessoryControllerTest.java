@@ -105,7 +105,7 @@ class AccessoryControllerTest {
         AccessoryDto inputDto = createSampleAccessoryDto();
         AccessoryDto updatedDto = createSampleAccessoryDto();
 
-        when(accessoryService.createAccessory(any(AccessoryDto.class))).thenReturn(updatedDto);
+        when(accessoryService.updateById(eq(accessoryId), any(AccessoryDto.class))).thenReturn(updatedDto);
 
         mockMvc.perform(put("/api/v1/accessories/{id}", accessoryId)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -113,7 +113,29 @@ class AccessoryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value(updatedDto.getName()));
 
-        verify(accessoryService).createAccessory(any(AccessoryDto.class));
+        verify(accessoryService).updateById(eq(accessoryId), any(AccessoryDto.class));
+    }
+
+    @Test
+    void addImageUrlsShouldReturnUpdatedAccessoryWhenValidInput() throws Exception {
+        UUID accessoryId = UUID.randomUUID();
+        List<String> imageUrls = Arrays.asList("https://example.com/accessory1.jpg", "https://example.com/accessory2.jpg");
+        AccessoryDto updatedAccessory = createSampleAccessoryDto();
+        updatedAccessory.setId(accessoryId);
+        updatedAccessory.setImageUrls(imageUrls);
+
+        when(accessoryService.addImageUrls(accessoryId, imageUrls)).thenReturn(updatedAccessory);
+
+        mockMvc.perform(post("/api/v1/accessories/{id}/images", accessoryId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(imageUrls)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(accessoryId.toString()))
+                .andExpect(jsonPath("$.imageUrls").isArray())
+                .andExpect(jsonPath("$.imageUrls.length()").value(2))
+                .andExpect(jsonPath("$.imageUrls[0]").value("https://example.com/accessory1.jpg"));
+
+        verify(accessoryService).addImageUrls(accessoryId, imageUrls);
     }
 
     private AccessoryDto createSampleAccessoryDto() {
