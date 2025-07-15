@@ -149,6 +149,19 @@ public class VehicleServiceImpl implements VehicleService {
         return getVehiclesByStatus(availableStatuses);
     }
 
+    @Override
+    public VehicleDto addImageUrls(UUID vehicleId, List<String> imageUrls) {
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new EntityNotFoundException(vehicleId, Vehicle.class));
+        
+        if (vehicle.getImageUrls() == null) {
+            vehicle.setImageUrls(new ArrayList<>());
+        }
+        vehicle.getImageUrls().addAll(imageUrls);
+        
+        return vehicleMapper.vehicleToVehicleDto(vehicleRepository.save(vehicle));
+    }
+
     private <T> void addIfNotNull(List<Specification<Vehicle>> specs, T value, Function<T, Specification<Vehicle>> fn) {
         if (value != null) {
             specs.add(fn.apply(value));

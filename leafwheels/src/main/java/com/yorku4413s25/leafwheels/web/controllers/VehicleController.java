@@ -146,4 +146,16 @@ public class VehicleController {
     public ResponseEntity<List<VehicleDto>> getAvailableVehicles() {
         return ResponseEntity.ok(vehicleService.getAvailableVehicles());
     }
+
+    @Operation(summary = "Add image URLs to a vehicle", description = "Add one or more image URLs to an existing vehicle.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Image URLs added successfully", content = @Content(schema = @Schema(implementation = VehicleDto.class))),
+            @ApiResponse(responseCode = "404", description = "Vehicle not found", content = @Content)
+    })
+    @PostMapping("/{vehicleId}/images")
+    public ResponseEntity<VehicleDto> addImageUrls(
+            @PathVariable UUID vehicleId,
+            @RequestBody List<String> imageUrls) {
+        return ResponseEntity.ok(vehicleService.addImageUrls(vehicleId, imageUrls));
+    }
 }

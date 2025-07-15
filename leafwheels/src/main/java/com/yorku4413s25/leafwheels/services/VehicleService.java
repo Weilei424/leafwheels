@@ -50,4 +50,6 @@ public interface VehicleService {
     List<VehicleDto> getVehiclesExcludingStatus(List<VehicleStatus> excludedStatuses);
 
     List<VehicleDto> getAvailableVehicles();
+
+    VehicleDto addImageUrls(UUID vehicleId, List<String> imageUrls);
 }

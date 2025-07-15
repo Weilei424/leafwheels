@@ -129,6 +129,29 @@ public class AccessoryController {
     })
     @PutMapping("/{id}")
     public ResponseEntity<AccessoryDto> updateAccessory(@PathVariable UUID id, @RequestBody AccessoryDto dto) {
-        return new ResponseEntity<>(accessoryService.createAccessory(dto), HttpStatus.OK);
+        return new ResponseEntity<>(accessoryService.updateById(id, dto), HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Add image URLs to an accessory",
+            description = "Add one or more image URLs to an existing accessory"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Image URLs added successfully",
+                    content = @Content(schema = @Schema(implementation = AccessoryDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Accessory not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    @PostMapping("/{id}/images")
+    public ResponseEntity<AccessoryDto> addImageUrls(
+            @PathVariable UUID id,
+            @RequestBody List<String> imageUrls) {
+        return ResponseEntity.ok(accessoryService.addImageUrls(id, imageUrls));
     }
 }

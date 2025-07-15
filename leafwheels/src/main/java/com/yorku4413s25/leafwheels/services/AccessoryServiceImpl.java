@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -59,5 +60,18 @@ public class AccessoryServiceImpl implements AccessoryService {
         Accessory target = accessoryRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(id, Accessory.class));
         accessoryRepository.delete(target);
+    }
+
+    @Override
+    public AccessoryDto addImageUrls(UUID accessoryId, List<String> imageUrls) {
+        Accessory accessory = accessoryRepository.findById(accessoryId)
+                .orElseThrow(() -> new EntityNotFoundException(accessoryId, Accessory.class));
+        
+        if (accessory.getImageUrls() == null) {
+            accessory.setImageUrls(new ArrayList<>());
+        }
+        accessory.getImageUrls().addAll(imageUrls);
+        
+        return accessoryMapper.accessoryToAccessoryDto(accessoryRepository.save(accessory));
     }
 }
