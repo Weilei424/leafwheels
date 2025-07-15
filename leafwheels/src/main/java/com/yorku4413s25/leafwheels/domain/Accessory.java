@@ -3,6 +3,7 @@ package com.yorku4413s25.leafwheels.domain;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -29,4 +30,9 @@ public class Accessory extends BaseEntity{
 
     @Column(nullable = false)
     private int quantity;
+
+    @ElementCollection
+    @CollectionTable(name = "accessory_image_urls", joinColumns = @JoinColumn(name = "accessory_id"))
+    @Column(name = "image_url", length = 500)
+    private List<String> imageUrls;
 }

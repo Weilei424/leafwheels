@@ -81,6 +81,11 @@ public class Vehicle extends BaseEntity{
     @Column(length = 20)
     private VehicleStatus status;
 
+    @ElementCollection
+    @CollectionTable(name = "vehicle_image_urls", joinColumns = @JoinColumn(name = "vehicle_id"))
+    @Column(name = "image_url", length = 500)
+    private List<String> imageUrls;
+
     @OneToMany(mappedBy = "vehicle", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<VehicleHistory> vehicleHistories;
 
