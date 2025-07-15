@@ -61,5 +61,7 @@ public class VehicleDto implements Serializable {
 
     VehicleStatus status;
 
+    List<String> imageUrls;
+
     List<VehicleHistoryDto> vehicleHistories;
 }
