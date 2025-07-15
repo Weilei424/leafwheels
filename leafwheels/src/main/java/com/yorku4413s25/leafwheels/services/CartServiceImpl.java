@@ -186,6 +186,15 @@ public class CartServiceImpl implements CartService {
     public void clearCart(UUID userId) {
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException(userId, Cart.class));
+
+        for (CartItem item : cart.getItems()) {
+            if (item.getType() == ItemType.VEHICLE && item.getVehicle() != null) {
+                Vehicle vehicle = item.getVehicle();
+                vehicle.setStatus(VehicleStatus.AVAILABLE);
+                vehicleRepository.save(vehicle);
+            }
+        }
+        
         cart.getItems().clear();
 
         cartRepository.save(cart);
