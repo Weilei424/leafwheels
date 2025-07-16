@@ -61,14 +61,20 @@ public class Vehicle extends BaseEntity{
     @Column(precision = 12, scale = 2, nullable = false)
     private BigDecimal price;
 
+    @Column(precision = 12, scale = 2, nullable = false)
+    private BigDecimal discountPrice;
+
+    @Column(precision = 5, scale = 2, nullable = false)
+    private BigDecimal discountPercentage = BigDecimal.ZERO;
+
+    @Column(precision = 12, scale = 2, nullable = false)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
     @Column(nullable = false)
     private boolean onDeal = false;
 
     @Column(length = 17, unique = true)
     private String vin;
-
-    @Column(precision = 5, scale = 2)
-    private BigDecimal discountPercent;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 10, nullable = false)
@@ -81,7 +87,47 @@ public class Vehicle extends BaseEntity{
     @Column(length = 20)
     private VehicleStatus status;
 
+    @ElementCollection
+    @CollectionTable(name = "vehicle_image_urls", joinColumns = @JoinColumn(name = "vehicle_id"))
+    @Column(name = "image_url", length = 500)
+    private List<String> imageUrls;
+
     @OneToMany(mappedBy = "vehicle", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<VehicleHistory> vehicleHistories;
+
+    public void updateDiscountCalculations() {
+        if (this.price != null) {
+            // Calculate based on discountAmount first
+            if (this.discountAmount != null && this.discountAmount.compareTo(BigDecimal.ZERO) > 0) {
+                this.discountPrice = this.price.subtract(this.discountAmount);
+                this.onDeal = true;
+            }
+            // Calculate based on discountPercentage if no discountAmount
+            else if (this.discountPercentage != null && this.discountPercentage.compareTo(BigDecimal.ZERO) > 0) {
+                this.discountPrice = this.price.multiply(BigDecimal.ONE.subtract(this.discountPercentage));
+                this.onDeal = true;
+            }
+            // No discount
+            else {
+                this.discountPrice = this.price;
+                this.onDeal = false;
+            }
+        }
+    }
+
+    public void setDiscountPercentage(BigDecimal discountPercentage) {
+        this.discountPercentage = discountPercentage;
+        updateDiscountCalculations();
+    }
+    
+    public void setDiscountAmount(BigDecimal discountAmount) {
+        this.discountAmount = discountAmount;
+        updateDiscountCalculations();
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+        updateDiscountCalculations();
+    }
 
 }

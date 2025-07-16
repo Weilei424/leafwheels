@@ -8,6 +8,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import jakarta.persistence.criteria.JoinType;
 import java.math.BigDecimal;
+import java.util.List;
 
 public class VehicleSpecification {
 
@@ -76,6 +77,16 @@ public class VehicleSpecification {
 
     public static Specification<Vehicle> hasStatus(VehicleStatus status) {
         return (root, query, cb) -> status == null ? null : cb.equal(root.get("status"), status);
+    }
+
+    public static Specification<Vehicle> hasStatusIn(List<VehicleStatus> statuses) {
+        return (root, query, cb) -> 
+            (statuses == null || statuses.isEmpty()) ? null : root.get("status").in(statuses);
+    }
+
+    public static Specification<Vehicle> hasStatusNotIn(List<VehicleStatus> statuses) {
+        return (root, query, cb) -> 
+            (statuses == null || statuses.isEmpty()) ? null : cb.not(root.get("status").in(statuses));
     }
 
     public static Specification<Vehicle> hasAccidentHistory(Boolean hasAccidentHistory) {

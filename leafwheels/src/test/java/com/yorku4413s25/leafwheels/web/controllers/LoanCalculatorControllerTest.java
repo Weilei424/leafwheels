@@ -91,7 +91,7 @@ class LoanCalculatorControllerTest {
                 .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.loanAmount").value(responseDto.getLoanAmount()))
-                .andExpect(jsonPath("$.downPayment").value(0))
+                .andExpect(jsonPath("$.downPayment").value("0.0"))
                 .andExpect(jsonPath("$.monthlyPayment").value(responseDto.getMonthlyPayment()));
 
         verify(loanCalculatorService).calculateLoan(any(LoanCalculationRequestDto.class));

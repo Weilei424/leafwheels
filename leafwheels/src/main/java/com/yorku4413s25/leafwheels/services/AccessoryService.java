@@ -11,4 +11,5 @@ public interface AccessoryService {
     AccessoryDto createAccessory(AccessoryDto dto);
     AccessoryDto updateById(UUID id, AccessoryDto dto);
     void deleteAccessory(UUID id);
+    AccessoryDto addImageUrls(UUID accessoryId, List<String> imageUrls);
 }
