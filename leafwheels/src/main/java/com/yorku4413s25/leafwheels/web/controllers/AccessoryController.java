@@ -2,6 +2,7 @@ package com.yorku4413s25.leafwheels.web.controllers;
 
 import com.yorku4413s25.leafwheels.services.AccessoryService;
 import com.yorku4413s25.leafwheels.web.models.AccessoryDto;
+import com.yorku4413s25.leafwheels.web.models.AccessoryRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,12 +16,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/accessories")
-@Tag(name = "Accessory API", description = "Endpoints for managing accessories")
+@Tag(name = "Accessory API", description = "Endpoints for managing accessories with automatic discount calculation")
 @RequiredArgsConstructor
 public class AccessoryController {
 
@@ -65,7 +67,7 @@ public class AccessoryController {
 
     @Operation(
             summary = "Create a new accessory",
-            description = "Create an accessory and return the created object"
+            description = "Create an accessory and return the created object. The discount system automatically calculates the final price and deal status based on either discount percentage or discount amount. Discount percentage represents the percentage off (e.g., 0.15 = 15% off) with discountPrice = originalPrice * (1 - discountPercentage). Discount amount represents a fixed dollar amount off (e.g., 25.00 = $25 off) with discountPrice = originalPrice - discountAmount. The onDeal flag is automatically set to true when either discountPercentage > 0 or discountAmount > 0. Note: discountAmount and discountPercentage cannot both be set simultaneously."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -80,7 +82,9 @@ public class AccessoryController {
             )
     })
     @PostMapping
-    public ResponseEntity<AccessoryDto> createAccessory(@RequestBody AccessoryDto dto) {
+    public ResponseEntity<AccessoryDto> createAccessory(@RequestBody AccessoryRequestDto requestDto) {
+        AccessoryDto dto = convertToAccessoryDto(requestDto);
+        validateDiscountMutualExclusivity(dto);
         return new ResponseEntity<>(accessoryService.createAccessory(dto), HttpStatus.CREATED);
     }
 
@@ -108,7 +112,7 @@ public class AccessoryController {
 
     @Operation(
             summary = "Update an accessory",
-            description = "Update an accessory by its ID"
+            description = "Update an accessory by its ID. The discount system automatically recalculates the final price and deal status based on any changes to the original price, discount percentage, or discount amount. Users cannot directly modify the discounted price or deal status as these are computed automatically. Note: discountAmount and discountPercentage cannot both be set simultaneously."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -128,7 +132,9 @@ public class AccessoryController {
             )
     })
     @PutMapping("/{id}")
-    public ResponseEntity<AccessoryDto> updateAccessory(@PathVariable UUID id, @RequestBody AccessoryDto dto) {
+    public ResponseEntity<AccessoryDto> updateAccessory(@PathVariable UUID id, @RequestBody AccessoryRequestDto requestDto) {
+        AccessoryDto dto = convertToAccessoryDto(requestDto);
+        validateDiscountMutualExclusivity(dto);
         return new ResponseEntity<>(accessoryService.updateById(id, dto), HttpStatus.OK);
     }
 
@@ -153,5 +159,25 @@ public class AccessoryController {
             @PathVariable UUID id,
             @RequestBody List<String> imageUrls) {
         return ResponseEntity.ok(accessoryService.addImageUrls(id, imageUrls));
+    }
+
+    private AccessoryDto convertToAccessoryDto(AccessoryRequestDto requestDto) {
+        return AccessoryDto.builder()
+                .id(requestDto.getId())
+                .name(requestDto.getName())
+                .description(requestDto.getDescription())
+                .price(requestDto.getPrice())
+                .discountPercentage(requestDto.getDiscountPercentage() != null ? requestDto.getDiscountPercentage() : BigDecimal.ZERO)
+                .discountAmount(requestDto.getDiscountAmount() != null ? requestDto.getDiscountAmount() : BigDecimal.ZERO)
+                .quantity(requestDto.getQuantity())
+                .imageUrls(requestDto.getImageUrls())
+                .build();
+    }
+
+    private void validateDiscountMutualExclusivity(AccessoryDto dto) {
+        if (dto.getDiscountAmount() != null && dto.getDiscountAmount().compareTo(BigDecimal.ZERO) > 0 &&
+            dto.getDiscountPercentage() != null && dto.getDiscountPercentage().compareTo(BigDecimal.ZERO) > 0) {
+            throw new IllegalStateException("Accessory cannot have both discountAmount and discountPercentage set");
+        }
     }
 }

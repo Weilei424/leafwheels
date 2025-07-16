@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -42,6 +43,13 @@ public class AccessoryServiceImpl implements AccessoryService {
     public AccessoryDto createAccessory(AccessoryDto dto) {
         Accessory accessory = accessoryMapper.accessoryDtoToAccessory(dto);
         accessory.setId(null); // Ensure a new ID is generated
+        if (accessory.getDiscountPercentage() == null) {
+            accessory.setDiscountPercentage(BigDecimal.ZERO);
+        }
+        if (accessory.getDiscountAmount() == null) {
+            accessory.setDiscountAmount(BigDecimal.ZERO);
+        }
+        accessory.updateDiscountCalculations();
         Accessory saved = accessoryRepository.save(accessory);
         return accessoryMapper.accessoryToAccessoryDto(saved);
     }
@@ -52,6 +60,7 @@ public class AccessoryServiceImpl implements AccessoryService {
                 .orElseThrow(() -> new EntityNotFoundException(id, Accessory.class));
 
         accessoryMapper.accessoryDtoToAccessoryUpdate(dto, existing);
+        existing.updateDiscountCalculations();
         return accessoryMapper.accessoryToAccessoryDto(accessoryRepository.save(existing));
     }
 

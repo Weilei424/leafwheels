@@ -28,6 +28,18 @@ public class Accessory extends BaseEntity{
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
+    @Column(precision = 12, scale = 2, nullable = false)
+    private BigDecimal discountPrice;
+
+    @Column(precision = 5, scale = 2, nullable = false)
+    private BigDecimal discountPercentage = BigDecimal.ZERO;
+
+    @Column(precision = 12, scale = 2, nullable = false)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(nullable = false)
+    private boolean onDeal = false;
+
     @Column(nullable = false)
     private int quantity;
 
@@ -35,4 +47,39 @@ public class Accessory extends BaseEntity{
     @CollectionTable(name = "accessory_image_urls", joinColumns = @JoinColumn(name = "accessory_id"))
     @Column(name = "image_url", length = 500)
     private List<String> imageUrls;
+
+    public void updateDiscountCalculations() {
+        if (this.price != null) {
+            // Calculate based on discountAmount first
+            if (this.discountAmount != null && this.discountAmount.compareTo(BigDecimal.ZERO) > 0) {
+                this.discountPrice = this.price.subtract(this.discountAmount);
+                this.onDeal = true;
+            }
+            // Calculate based on discountPercentage if no discountAmount
+            else if (this.discountPercentage != null && this.discountPercentage.compareTo(BigDecimal.ZERO) > 0) {
+                this.discountPrice = this.price.multiply(BigDecimal.ONE.subtract(this.discountPercentage));
+                this.onDeal = true;
+            }
+            // No discount
+            else {
+                this.discountPrice = this.price;
+                this.onDeal = false;
+            }
+        }
+    }
+
+    public void setDiscountPercentage(BigDecimal discountPercentage) {
+        this.discountPercentage = discountPercentage;
+        updateDiscountCalculations();
+    }
+    
+    public void setDiscountAmount(BigDecimal discountAmount) {
+        this.discountAmount = discountAmount;
+        updateDiscountCalculations();
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+        updateDiscountCalculations();
+    }
 }
