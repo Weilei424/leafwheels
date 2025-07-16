@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -18,6 +20,7 @@ public class PaymentResponseDto {
     private UUID id;
     private UUID userId;
     private UUID orderId;
+    @JsonSerialize(using = ToStringSerializer.class)
     private BigDecimal amount;
     private PaymentStatus status;
     private String paymentMethod;
