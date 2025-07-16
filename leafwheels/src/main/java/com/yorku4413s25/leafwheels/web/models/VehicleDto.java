@@ -5,6 +5,9 @@ import com.yorku4413s25.leafwheels.constants.Condition;
 import com.yorku4413s25.leafwheels.constants.Make;
 import com.yorku4413s25.leafwheels.constants.VehicleStatus;
 import lombok.*;
+import io.swagger.v3.oas.annotations.media.Schema;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -17,6 +20,7 @@ import java.util.UUID;
 @Builder
 @Data
 @AllArgsConstructor
+@Schema(description = "Vehicle response DTO with automatically calculated discount information")
 public class VehicleDto implements Serializable {
 
     UUID id;
@@ -45,14 +49,28 @@ public class VehicleDto implements Serializable {
     String trim;
 
     @NonNull
+    @Schema(description = "Original price of the vehicle before any discounts", example = "50000.00")
+    @JsonSerialize(using = ToStringSerializer.class)
     BigDecimal price;
 
+    @Schema(description = "Final discounted price calculated as: originalPrice * (1 - discountPercentage) OR originalPrice - discountAmount", example = "42500.00")
+    @JsonSerialize(using = ToStringSerializer.class)
+    BigDecimal discountPrice;
+
+    @NonNull
+    @Schema(description = "Discount percentage as a decimal (e.g., 0.15 = 15% off)", example = "0.15")
+    @JsonSerialize(using = ToStringSerializer.class)
+    BigDecimal discountPercentage;
+
+    @Schema(description = "Fixed discount amount subtracted from the original price", example = "5000.00")
+    @JsonSerialize(using = ToStringSerializer.class)
+    BigDecimal discountAmount;
+
+    @Schema(description = "Automatically set to true when discountPercentage > 0 OR discountAmount > 0", example = "true")
     boolean onDeal;
 
     @NonNull
     String vin;
-
-    BigDecimal discountPercent;
 
     @NonNull
     Condition condition;

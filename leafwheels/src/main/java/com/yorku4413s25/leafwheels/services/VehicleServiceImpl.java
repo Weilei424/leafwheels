@@ -46,7 +46,10 @@ public class VehicleServiceImpl implements VehicleService {
     @Override
     public VehicleDto create(VehicleDto vehicleDto) {
         Vehicle vehicle = vehicleMapper.vehicleDtoToVehicle(vehicleDto);
-        vehicleRepository.save(vehicle);
+        if (vehicle.getDiscountPercentage() == null) {
+            vehicle.setDiscountPercentage(BigDecimal.ZERO);
+        }
+        vehicle.updateDiscountCalculations();
         return vehicleMapper.vehicleToVehicleDto(vehicleRepository.save(vehicle));
     }
 
@@ -56,6 +59,7 @@ public class VehicleServiceImpl implements VehicleService {
                 .orElseThrow(() -> new EntityNotFoundException(vehicleId, Vehicle.class));
 
         vehicleMapper.vehicleDtoToVehicleUpdate(vehicleDto, existing);
+        existing.updateDiscountCalculations();
         return vehicleMapper.vehicleToVehicleDto(vehicleRepository.save(existing));
     }
 

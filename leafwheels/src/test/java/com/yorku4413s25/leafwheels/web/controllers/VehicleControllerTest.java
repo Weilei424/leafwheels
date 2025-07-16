@@ -6,8 +6,10 @@ import com.yorku4413s25.leafwheels.constants.BodyType;
 import com.yorku4413s25.leafwheels.constants.Condition;
 import com.yorku4413s25.leafwheels.constants.Make;
 import com.yorku4413s25.leafwheels.constants.VehicleStatus;
+import com.yorku4413s25.leafwheels.exception.ApplicationExceptionHandler;
 import com.yorku4413s25.leafwheels.services.VehicleService;
 import com.yorku4413s25.leafwheels.web.models.VehicleDto;
+import com.yorku4413s25.leafwheels.web.models.VehicleRequestDto;
 import com.yorku4413s25.leafwheels.web.models.VehicleHistoryDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +49,9 @@ class VehicleControllerTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         vehicleController = new VehicleController(vehicleService);
-        mockMvc = MockMvcBuilders.standaloneSetup(vehicleController).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(vehicleController)
+                .setControllerAdvice(new ApplicationExceptionHandler())
+                .build();
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
     }
@@ -63,6 +67,7 @@ class VehicleControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.make").value(vehicleDto.getMake().toString()))
                 .andExpect(jsonPath("$.model").value(vehicleDto.getModel()))
+                .andExpect(jsonPath("$.discountAmount").value(0.0))
                 .andExpect(jsonPath("$.vehicleHistories").isArray())
                 .andExpect(jsonPath("$.vehicleHistories.length()").value(1));
 
@@ -71,9 +76,13 @@ class VehicleControllerTest {
 
     @Test
     void createVehicleShouldReturnCreatedVehicleWhenValidInput() throws Exception {
-        VehicleDto inputDto = createSampleVehicleDto();
+        VehicleRequestDto inputDto = createSampleVehicleRequestDto();
         VehicleDto createdDto = createSampleVehicleDto();
         createdDto.setId(UUID.randomUUID());
+        createdDto.setDiscountPercentage(BigDecimal.ZERO);
+        createdDto.setDiscountAmount(BigDecimal.ZERO);
+        createdDto.setDiscountPrice(createdDto.getPrice());
+        createdDto.setOnDeal(false);
 
         when(vehicleService.create(any(VehicleDto.class))).thenReturn(createdDto);
 
@@ -81,7 +90,11 @@ class VehicleControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.make").value(createdDto.getMake().toString()));
+                .andExpect(jsonPath("$.make").value(createdDto.getMake().toString()))
+                .andExpect(jsonPath("$.discountPercentage").value(0.0))
+                .andExpect(jsonPath("$.discountAmount").value(0.0))
+                .andExpect(jsonPath("$.discountPrice").value(50000))
+                .andExpect(jsonPath("$.onDeal").value(false));
 
         verify(vehicleService).create(any(VehicleDto.class));
     }
@@ -89,9 +102,13 @@ class VehicleControllerTest {
     @Test
     void updateVehicleByIdShouldReturnUpdatedVehicleWhenValidInput() throws Exception {
         UUID vehicleId = UUID.randomUUID();
-        VehicleDto inputDto = createSampleVehicleDto();
+        VehicleRequestDto inputDto = createSampleVehicleRequestDto();
         VehicleDto updatedDto = createSampleVehicleDto();
         updatedDto.setId(vehicleId);
+        updatedDto.setDiscountPercentage(BigDecimal.ZERO);
+        updatedDto.setDiscountAmount(BigDecimal.ZERO);
+        updatedDto.setDiscountPrice(updatedDto.getPrice());
+        updatedDto.setOnDeal(false);
 
         when(vehicleService.updateById(eq(vehicleId), any(VehicleDto.class))).thenReturn(updatedDto);
 
@@ -99,7 +116,11 @@ class VehicleControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(vehicleId.toString()));
+                .andExpect(jsonPath("$.id").value(vehicleId.toString()))
+                .andExpect(jsonPath("$.discountPercentage").value(0.0))
+                .andExpect(jsonPath("$.discountAmount").value(0.0))
+                .andExpect(jsonPath("$.discountPrice").value(50000))
+                .andExpect(jsonPath("$.onDeal").value(false));
 
         verify(vehicleService).updateById(eq(vehicleId), any(VehicleDto.class));
     }
@@ -151,6 +172,176 @@ class VehicleControllerTest {
         verify(vehicleService).addImageUrls(vehicleId, imageUrls);
     }
 
+    @Test
+    void createVehicleWithDiscountShouldReturnVehicleWithCalculatedDiscountPrice() throws Exception {
+        VehicleRequestDto inputDto = createSampleVehicleRequestDto();
+        inputDto.setDiscountPercentage(new BigDecimal("0.15")); // 15% discount
+        
+        VehicleDto createdDto = createSampleVehicleDto();
+        createdDto.setId(UUID.randomUUID());
+        createdDto.setDiscountPercentage(new BigDecimal("0.15"));
+        createdDto.setDiscountAmount(BigDecimal.ZERO);
+        createdDto.setDiscountPrice(new BigDecimal("42500.00")); // 50000 * (1 - 0.15)
+        createdDto.setOnDeal(true);
+
+        when(vehicleService.create(any(VehicleDto.class))).thenReturn(createdDto);
+
+        mockMvc.perform(post("/api/v1/vehicle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.make").value(createdDto.getMake().toString()))
+                .andExpect(jsonPath("$.price").value(50000))
+                .andExpect(jsonPath("$.discountPercentage").value(0.15))
+                .andExpect(jsonPath("$.discountAmount").value(0.0))
+                .andExpect(jsonPath("$.discountPrice").value(42500.0))
+                .andExpect(jsonPath("$.onDeal").value(true));
+
+        verify(vehicleService).create(any(VehicleDto.class));
+    }
+
+    @Test
+    void createVehicleWithoutDiscountShouldDefaultToNoDiscount() throws Exception {
+        VehicleRequestDto inputDto = createSampleVehicleRequestDto();
+        inputDto.setDiscountPercentage(null); // No discount specified
+        
+        VehicleDto createdDto = createSampleVehicleDto();
+        createdDto.setId(UUID.randomUUID());
+        createdDto.setDiscountPercentage(BigDecimal.ZERO);
+        createdDto.setDiscountAmount(BigDecimal.ZERO);
+        createdDto.setDiscountPrice(new BigDecimal("50000"));
+        createdDto.setOnDeal(false);
+
+        when(vehicleService.create(any(VehicleDto.class))).thenReturn(createdDto);
+
+        mockMvc.perform(post("/api/v1/vehicle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.make").value(createdDto.getMake().toString()))
+                .andExpect(jsonPath("$.price").value(50000))
+                .andExpect(jsonPath("$.discountPercentage").value(0.0))
+                .andExpect(jsonPath("$.discountAmount").value(0.0))
+                .andExpect(jsonPath("$.discountPrice").value(50000))
+                .andExpect(jsonPath("$.onDeal").value(false));
+
+        verify(vehicleService).create(any(VehicleDto.class));
+    }
+
+    @Test
+    void updateVehicleWithDiscountShouldReturnUpdatedVehicleWithCalculatedDiscountPrice() throws Exception {
+        UUID vehicleId = UUID.randomUUID();
+        VehicleRequestDto inputDto = createSampleVehicleRequestDto();
+        inputDto.setDiscountPercentage(new BigDecimal("0.10")); // 10% discount
+        
+        VehicleDto updatedDto = createSampleVehicleDto();
+        updatedDto.setId(vehicleId);
+        updatedDto.setDiscountPercentage(new BigDecimal("0.10"));
+        updatedDto.setDiscountAmount(BigDecimal.ZERO);
+        updatedDto.setDiscountPrice(new BigDecimal("45000.00")); // 50000 * (1 - 0.10)
+        updatedDto.setOnDeal(true);
+
+        when(vehicleService.updateById(eq(vehicleId), any(VehicleDto.class))).thenReturn(updatedDto);
+
+        mockMvc.perform(put("/api/v1/vehicle/{vehicleId}", vehicleId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(vehicleId.toString()))
+                .andExpect(jsonPath("$.price").value(50000))
+                .andExpect(jsonPath("$.discountPercentage").value(0.10))
+                .andExpect(jsonPath("$.discountAmount").value(0.0))
+                .andExpect(jsonPath("$.discountPrice").value(45000.0))
+                .andExpect(jsonPath("$.onDeal").value(true));
+
+        verify(vehicleService).updateById(eq(vehicleId), any(VehicleDto.class));
+    }
+
+    @Test
+    void createVehicleWithZeroDiscountShouldNotBeOnDeal() throws Exception {
+        VehicleRequestDto inputDto = createSampleVehicleRequestDto();
+        inputDto.setDiscountPercentage(BigDecimal.ZERO); // 0% discount
+        
+        VehicleDto createdDto = createSampleVehicleDto();
+        createdDto.setId(UUID.randomUUID());
+        createdDto.setDiscountPercentage(BigDecimal.ZERO);
+        createdDto.setDiscountAmount(BigDecimal.ZERO);
+        createdDto.setDiscountPrice(new BigDecimal("50000.00")); // 50000 * (1 - 0.0)
+        createdDto.setOnDeal(false);
+
+        when(vehicleService.create(any(VehicleDto.class))).thenReturn(createdDto);
+
+        mockMvc.perform(post("/api/v1/vehicle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.make").value(createdDto.getMake().toString()))
+                .andExpect(jsonPath("$.price").value(50000))
+                .andExpect(jsonPath("$.discountPercentage").value(0.0))
+                .andExpect(jsonPath("$.discountAmount").value(0.0))
+                .andExpect(jsonPath("$.discountPrice").value(50000.0))
+                .andExpect(jsonPath("$.onDeal").value(false));
+
+        verify(vehicleService).create(any(VehicleDto.class));
+    }
+
+    @Test
+    void createVehicleWithMaxDiscountShouldCalculateCorrectly() throws Exception {
+        VehicleRequestDto inputDto = createSampleVehicleRequestDto();
+        inputDto.setDiscountPercentage(new BigDecimal("0.50")); // 50% discount
+        
+        VehicleDto createdDto = createSampleVehicleDto();
+        createdDto.setId(UUID.randomUUID());
+        createdDto.setDiscountPercentage(new BigDecimal("0.50"));
+        createdDto.setDiscountAmount(BigDecimal.ZERO);
+        createdDto.setDiscountPrice(new BigDecimal("25000.00")); // 50000 * (1 - 0.50)
+        createdDto.setOnDeal(true);
+
+        when(vehicleService.create(any(VehicleDto.class))).thenReturn(createdDto);
+
+        mockMvc.perform(post("/api/v1/vehicle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.make").value(createdDto.getMake().toString()))
+                .andExpect(jsonPath("$.price").value(50000))
+                .andExpect(jsonPath("$.discountPercentage").value(0.50))
+                .andExpect(jsonPath("$.discountAmount").value(0.0))
+                .andExpect(jsonPath("$.discountPrice").value(25000.0))
+                .andExpect(jsonPath("$.onDeal").value(true));
+
+        verify(vehicleService).create(any(VehicleDto.class));
+    }
+
+    @Test
+    void updateVehicleWithSmallDiscountShouldCalculateCorrectly() throws Exception {
+        UUID vehicleId = UUID.randomUUID();
+        VehicleRequestDto inputDto = createSampleVehicleRequestDto();
+        inputDto.setDiscountPercentage(new BigDecimal("0.05")); // 5% discount
+        
+        VehicleDto updatedDto = createSampleVehicleDto();
+        updatedDto.setId(vehicleId);
+        updatedDto.setDiscountPercentage(new BigDecimal("0.05"));
+        updatedDto.setDiscountAmount(BigDecimal.ZERO);
+        updatedDto.setDiscountPrice(new BigDecimal("47500.00")); // 50000 * (1 - 0.05)
+        updatedDto.setOnDeal(true);
+
+        when(vehicleService.updateById(eq(vehicleId), any(VehicleDto.class))).thenReturn(updatedDto);
+
+        mockMvc.perform(put("/api/v1/vehicle/{vehicleId}", vehicleId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(vehicleId.toString()))
+                .andExpect(jsonPath("$.price").value(50000))
+                .andExpect(jsonPath("$.discountPercentage").value(0.05))
+                .andExpect(jsonPath("$.discountAmount").value(0.0))
+                .andExpect(jsonPath("$.discountPrice").value(47500.0))
+                .andExpect(jsonPath("$.onDeal").value(true));
+
+        verify(vehicleService).updateById(eq(vehicleId), any(VehicleDto.class));
+    }
+
     private VehicleDto createSampleVehicleDto() {
         return VehicleDto.builder()
                 .make(Make.TESLA)
@@ -161,10 +352,32 @@ class VehicleControllerTest {
                 .doors(4)
                 .seats(5)
                 .price(new BigDecimal("50000"))
+                .discountPercentage(BigDecimal.ZERO)
+                .discountAmount(BigDecimal.ZERO)
+                .discountPrice(new BigDecimal("50000"))
+                .onDeal(false)
                 .condition(Condition.NEW)
                 .status(VehicleStatus.AVAILABLE)
                 .vin("TEST123456789")
                 .vehicleHistories(Arrays.asList(createSampleVehicleHistoryDto()))
+                .build();
+    }
+
+    private VehicleRequestDto createSampleVehicleRequestDto() {
+        return VehicleRequestDto.builder()
+                .make(Make.TESLA)
+                .model("Model 3")
+                .year(2023)
+                .bodyType(BodyType.SEDAN)
+                .exteriorColor("White")
+                .doors(4)
+                .seats(5)
+                .price(new BigDecimal("50000"))
+                .discountPercentage(BigDecimal.ZERO)
+                .discountAmount(BigDecimal.ZERO)
+                .condition(Condition.NEW)
+                .status(VehicleStatus.AVAILABLE)
+                .vin("TEST123456789")
                 .build();
     }
 
