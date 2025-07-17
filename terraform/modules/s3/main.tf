@@ -39,6 +39,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "images" {
     id     = "image_lifecycle"
     status = "Enabled"
 
+    filter {}
+
     expiration {
       days = 365
     }
