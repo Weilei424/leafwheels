@@ -55,7 +55,7 @@ public class CartServiceImpl implements CartService {
             Vehicle vehicle = vehicleRepository.findById(dto.getVehicleId())
                     .orElseThrow(() -> new EntityNotFoundException(dto.getVehicleId(), Vehicle.class));
 
-            if (vehicle.getStatus() != VehicleStatus.AVAILABLE) {
+            if (vehicle.getStatus() != null && vehicle.getStatus() != VehicleStatus.AVAILABLE) {
                 throw new RuntimeException("Vehicle is not available.");
             }
 

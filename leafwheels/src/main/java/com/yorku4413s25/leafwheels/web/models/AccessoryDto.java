@@ -36,7 +36,6 @@ public class AccessoryDto {
     @JsonSerialize(using = ToStringSerializer.class)
     BigDecimal discountPrice;
 
-    @NonNull
     @Schema(description = "Discount percentage as a decimal (e.g., 0.15 = 15% off)", example = "0.15")
     @JsonSerialize(using = ToStringSerializer.class)
     BigDecimal discountPercentage;
@@ -46,7 +45,7 @@ public class AccessoryDto {
     BigDecimal discountAmount;
 
     @Schema(description = "Automatically set to true when discountPercentage > 0 OR discountAmount > 0", example = "true")
-    boolean onDeal;
+    Boolean onDeal;
 
     @NonNull
     int quantity;
