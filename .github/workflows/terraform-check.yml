@@ -46,7 +46,10 @@ jobs:
       id: terraform-plan
       run: |
         cd terraform
-        terraform plan -input=false -no-color
+        terraform plan -input=false -no-color -out=tfplan 2>&1 | tee plan_output.txt
+        echo "plan_output<<EOF" >> $GITHUB_OUTPUT
+        cat plan_output.txt >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
       env:
         AWS_ACCESS_KEY_ID: dummy
         AWS_SECRET_ACCESS_KEY: dummy
@@ -58,6 +61,14 @@ jobs:
       uses: actions/github-script@v7
       with:
         script: |
+          const planOutput = `${{ steps.terraform-plan.outputs.plan_output }}`;
+          
+          // Truncate plan output if too long (GitHub comment limit is ~65k chars)
+          const maxLength = 60000;
+          const truncatedPlan = planOutput.length > maxLength 
+            ? planOutput.substring(0, maxLength) + '\n\n... (output truncated)'
+            : planOutput;
+          
           const comment = `## Terraform Check Results
           
           ### Format Check
@@ -68,6 +79,15 @@ jobs:
           
           ### Plan Check
           ${{ steps.terraform-plan.outcome == 'success' && '✅ Generated successfully' || '⚠️ Plan had issues (non-blocking)' }}
+          
+          <details>
+          <summary>📋 Terraform Plan Output</summary>
+          
+          \`\`\`
+          ${truncatedPlan}
+          \`\`\`
+          
+          </details>
           `;
           
           try {
