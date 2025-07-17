@@ -1,9 +1,17 @@
 @import "tailwindcss";
+
+/* ==========================
+   Global Styles
+========================== */
+
+
+
+
 html {
     scroll-behavior: smooth;
+    overflow-x: hidden !important;
+    height: 100%;
 }
-
-
 
 body {
     background-color: #ffffff;
@@ -12,98 +20,43 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     @apply font-sans;
-
-}
-
-body,
-html {
     overflow-x: hidden !important;
+    height: 100%;
 }
 
+/* Monospace font for code blocks */
 code {
-    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
-/* Perfect spacing - navbar is 60px (h-15), section padding is 60px */
-section {
-    padding-top: 60px !important;
-    padding-bottom: 60px !important;
-}
-
-
-
+/* Remove default list styles globally */
 li {
     list-style: none;
 }
 
+/* ==========================
+   Layout Spacing
+========================== */
 
-.heading {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.heading h1 {
-    width: fit-content;
-    text-align: center;
-    margin: 20px auto 30px !important;
-}
-
-.images-container {
-    display: flex;
-}
-
-/*   ---Home Slider---   */
-
-.homeSlide {
-    display: flex;
-    justify-content: center;
-    background-color: #f6f9fc;
-    padding-bottom: 0 !important;
-}html {
-     scroll-behavior: smooth;
- }
-
-body {
-    background-color: #ffffff;
-    margin: 0;
-    font-family: "Lato", sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-body,
-html {
-    overflow-x: hidden !important;
-}
-
-code {
-    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
-}
-
-/* Fixed: Account for 64px navbar height */
+/* Sections have consistent vertical padding */
+/* Adjusted for navbar height (64px) */
 section {
-    padding-top: 80px !important;  /* Increased from 60px to 80px */
+    padding-top: 80px !important;   /* Increased from 60px to 80px */
     padding-bottom: 60px !important;
 }
 
+/* ==========================
+   Navigation
+========================== */
 
-
-
-
-/* Ensure navbar links can override global styles */
+/* Ensure navbar links inherit color and override global styles */
 nav a {
     color: inherit;
 }
 
-li {
-    list-style: none;
-}
-
-
-
+/* ==========================
+   Headings & Typography
+========================== */
 
 .heading {
     display: flex;
@@ -117,11 +70,17 @@ li {
     margin: 20px auto 30px !important;
 }
 
+/* ==========================
+   Layout Containers
+========================== */
+
 .images-container {
     display: flex;
 }
 
-/*   ---Home Slider---   */
+/* ==========================
+   Home Slider Section
+========================== */
 
 .homeSlide {
     display: flex;
@@ -129,3 +88,12 @@ li {
     background-color: #f6f9fc;
     padding-bottom: 0 !important;
 }
+
+
+
+
+
+
+
+
+

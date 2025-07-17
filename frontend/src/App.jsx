@@ -1,4 +1,4 @@
-import {Route, Routes } from "react-router-dom";
+import {Navigate, Route, Routes} from "react-router-dom";
 
 import HomePage from "./pages/Home/Home.jsx";
 import SignUpPage from "./pages/Auth/Signup.jsx";
@@ -13,13 +13,12 @@ import CartPage from "./pages/Cart/Cart.jsx"
 
 import VehiclePage from "./pages/Store/VehiclePage.jsx";
 import AccessoryPage from "./pages/Store/AccessoryPage.jsx";
+import { ToastContainer, Bounce } from 'react-toastify';
 
-
-// import { useUserStore } from "./stores/useUserStore";
-// import { useCartStore } from "./stores/useCartStore";
 // import PurchaseSuccessPage from "./pages/PurchaseSuccessPage";
 // import PurchaseCancelPage from "./pages/PurchaseCancelPage";
 
+import {useUserStore} from "./stores/useUserStore";
 // Layout component for pages with navbar/footer
 const Layout = ({ children }) => (
     <div className="flex flex-col min-h-screen">
@@ -40,6 +39,16 @@ const Layout = ({ children }) => (
 
 
 function App() {
+    const {user} = useUserStore();
+
+
+    // useEffect(() => {
+    //     if (!user) return;
+    //
+    //     getCartItems();
+    // }, [getCartItems, user]);
+
+
     // const { user, checkAuth, checkingAuth } = useUserStore();
     // const { getCartItems } = useCartStore();
 
@@ -54,28 +63,44 @@ function App() {
     // if (checkingAuth) return <LoadingSpinner />;
 
     return (
-        <Routes>
-            {/* Auth routes - no layout */}
-            <Route path="/login" element={<LoginPage />} />
-             <Route path="/signup" element={<SignUpPage />} />
-
-            {/* Store routes - with layout */}
-            <Route path="/" element={<Layout> <HomePage /></Layout>} />
-            <Route path="/cart" element={<Layout><CartPage /></Layout>} />
-            <Route path="/store" element={<Layout><StorePage/></Layout>} />
-             <Route path="/admin" element={<Layout><AdminPage /></Layout>} />
-            <Route path="/vehicle/:id" element={<Layout> <VehiclePage /></Layout>} />
-            <Route path="/accessory/:id" element={<Layout><AccessoryPage /></Layout>} />
-            {/*<Route path="/accessory/:id" element={<Layout><AccessoryPage /></Layout>} />*/}
+        <>
+            <Routes>
+                {/* Auth routes - no layout */}
+                <Route path="/login" element={!user ? <LoginPage /> : <Navigate to='/' />} />
+                <Route path="/signup" element={!user ? <SignUpPage /> : <Navigate to='/' />} />
 
 
-            {/* <Route path="/category/:category" element={<Layout><CategoryPage /></Layout>} /> */}
-            {/* <Route path="/purchase-success" element={<Layout><PurchaseSuccessPage /></Layout>} /> */}
-            {/* <Route path="/purchase-cancel" element={<Layout><PurchaseCancelPage /></Layout>} /> */}
+                {/* Store routes - with layout */}
+                <Route path="/" element={<Layout> <HomePage /></Layout>} />
+                <Route path="/cart" element={<Layout><CartPage /></Layout>} />
+                <Route path="/store" element={<Layout><StorePage/></Layout>} />
+                <Route path="/admin" element={<Layout><AdminPage /></Layout>} />
+                <Route path="/vehicle/:id" element={<Layout> <VehiclePage /></Layout>} />
+                <Route path="/accessory/:id" element={<Layout><AccessoryPage /></Layout>} />
+                {/*<Route path="/accessory/:id" element={<Layout><AccessoryPage /></Layout>} />*/}
 
-            {/* Notifications */}
-            {/* <Toaster position="top-right" reverseOrder={false} /> */}
-        </Routes>
+
+                {/* <Route path="/category/:category" element={<Layout><CategoryPage /></Layout>} /> */}
+                {/* <Route path="/purchase-success" element={<Layout><PurchaseSuccessPage /></Layout>} /> */}
+                {/* <Route path="/purchase-cancel" element={<Layout><PurchaseCancelPage /></Layout>} /> */}
+            </Routes>
+            <ToastContainer
+                position="top-right"
+                autoClose={1000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick={false}
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="light"
+                transition={Bounce}
+            />
+
+
+        </>
+
     );
 }
 
