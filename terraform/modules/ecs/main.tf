@@ -40,12 +40,12 @@ resource "aws_launch_template" "ecs" {
 }
 
 resource "aws_autoscaling_group" "ecs" {
-  name                = "${var.name_prefix}-ecs-asg"
-  vpc_zone_identifier = var.subnet_ids
-  min_size            = var.min_capacity
-  max_size            = var.max_capacity
-  desired_capacity    = var.desired_capacity
-  health_check_type   = "ELB"
+  name                      = "${var.name_prefix}-ecs-asg"
+  vpc_zone_identifier       = var.subnet_ids
+  min_size                  = var.min_capacity
+  max_size                  = var.max_capacity
+  desired_capacity          = var.desired_capacity
+  health_check_type         = "ELB"
   health_check_grace_period = 300
 
   launch_template {

@@ -60,8 +60,8 @@ resource "aws_s3_bucket_policy" "images" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowCloudFrontAccess"
-        Effect    = "Allow"
+        Sid    = "AllowCloudFrontAccess"
+        Effect = "Allow"
         Principal = {
           AWS = aws_cloudfront_origin_access_identity.images.iam_arn
         }
@@ -69,8 +69,8 @@ resource "aws_s3_bucket_policy" "images" {
         Resource = "${aws_s3_bucket.images.arn}/*"
       },
       {
-        Sid       = "AllowECSTasksAccess"
-        Effect    = "Allow"
+        Sid    = "AllowECSTasksAccess"
+        Effect = "Allow"
         Principal = {
           AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
         }

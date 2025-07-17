@@ -80,7 +80,7 @@ resource "aws_iam_role" "ecs_task" {
   })
 
   tags = merge(var.tags, {
-    Name = "${var.name_prefix}-ecs-task-role"
+    Name    = "${var.name_prefix}-ecs-task-role"
     Purpose = "ECSTask"
   })
 }
