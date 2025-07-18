@@ -68,13 +68,10 @@ jobs:
         script: |
           const planOutput = `${{ steps.terraform-plan.outputs.plan_output }}`;
           
-          // Truncate plan output if too long (GitHub comment limit is ~65k chars)
+          // GitHub comment limit is ~65k chars, leave some buffer for the rest of the comment
           const maxLength = 60000;
-          const truncatedPlan = planOutput.length > maxLength 
-            ? planOutput.substring(0, maxLength) + '\n\n... (output truncated)'
-            : planOutput;
           
-          const comment = `## Terraform Check Results
+          const summaryComment = `## Terraform Check Results
           
           ### Format Check
           ${{ steps.terraform-fmt.outcome == 'success' && '✅ Passed' || '❌ Failed - Run `terraform fmt -recursive` to fix' }}
@@ -84,24 +81,70 @@ jobs:
           
           ### Plan Check
           ${{ secrets.AWS_ACCESS_KEY_ID && '✅ Generated successfully' || '⚠️ Skipped (requires AWS credentials)' }}
-          
-          <details>
-          <summary>📋 Terraform Plan Output</summary>
-          
-          \`\`\`
-          ${truncatedPlan}
-          \`\`\`
-          
-          </details>
+          ${planOutput.length > maxLength ? '\n📋 **Plan output posted in separate comments below due to length**' : ''}
           `;
           
           try {
+            // Post summary comment first
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: comment
+              body: summaryComment
             });
+            
+            // If plan output fits in one comment, post it
+            if (planOutput.length <= maxLength) {
+              const planComment = `<details>
+              <summary>📋 Terraform Plan Output</summary>
+              
+              \`\`\`
+              ${planOutput}
+              \`\`\`
+              
+              </details>`;
+              
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: planComment
+              });
+            } else {
+              // Split into multiple comments
+              const chunks = [];
+              let currentPos = 0;
+              let chunkIndex = 1;
+              
+              while (currentPos < planOutput.length) {
+                const chunkSize = maxLength - 200; // Leave room for comment formatting
+                const chunk = planOutput.substring(currentPos, currentPos + chunkSize);
+                chunks.push(chunk);
+                currentPos += chunkSize;
+              }
+              
+              // Post each chunk as a separate comment
+              for (let i = 0; i < chunks.length; i++) {
+                const chunkComment = `<details>
+                <summary>📋 Terraform Plan Output (Part ${i + 1}/${chunks.length})</summary>
+                
+                \`\`\`
+                ${chunks[i]}
+                \`\`\`
+                
+                </details>`;
+                
+                await github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: chunkComment
+                });
+                
+                // Small delay between comments to avoid rate limiting
+                await new Promise(resolve => setTimeout(resolve, 500));
+              }
+            }
           } catch (error) {
             console.log('Could not create comment:', error.message);
           }
