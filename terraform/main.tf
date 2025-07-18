@@ -91,8 +91,9 @@ module "alb" {
   name_prefix = local.name_prefix
   environment = local.environment
 
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.public_subnet_ids
+  vpc_id                = module.vpc.vpc_id
+  subnet_ids            = module.vpc.public_subnet_ids
+  alb_security_group_id = module.vpc.alb_security_group_id
 
   tags = local.common_tags
 }
