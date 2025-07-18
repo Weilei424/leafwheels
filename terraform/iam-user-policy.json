@@ -1,0 +1,35 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:Describe*",
+        "ecs:Describe*",
+        "ecs:List*",
+        "elasticloadbalancing:Describe*",
+        "s3:GetBucket*",
+        "s3:ListBucket*",
+        "s3:GetObject*",
+        "cloudfront:Get*",
+        "cloudfront:List*",
+        "iam:Get*",
+        "iam:List*",
+        "logs:Describe*",
+        "autoscaling:Describe*",
+        "ecr:Describe*",
+        "ecr:GetAuthorizationToken",
+        "lex:Get*",
+        "lex:Describe*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sts:GetCallerIdentity"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
