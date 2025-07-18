@@ -2,10 +2,10 @@ package com.yorku4413s25.leafwheels.domain;
 
 import com.yorku4413s25.leafwheels.constants.ItemType;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.*;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -26,10 +26,16 @@ public class Review extends BaseEntity{
     @Column(nullable = false)
     private UUID vehicleId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vehicleId", insertable = false, updatable = false)
+    private Vehicle vehicle;
+
     @Column(length = 500)
     private String comment;
 
     @Column(nullable = false)
+    @Min(value = 1, message = "Rating must be between 1 and 5")
+    @Max(value = 5, message = "Rating must be between 1 and 5")
     private int rating;
 
 

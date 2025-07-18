@@ -20,11 +20,13 @@ public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final ReviewMapper reviewMapper;
+    private final VehicleService vehicleService;
 
     @Override
     public ReviewDto createReview(ReviewDto reviewDto) {
         Review review = reviewMapper.reviewDtoToReview(reviewDto);
         Review saved = reviewRepository.save(review);
+        vehicleService.updateVehicleRatings(reviewDto.getVehicleId());
         return reviewMapper.reviewToReviewDto(saved);
     }
 
@@ -57,6 +59,10 @@ public class ReviewServiceImpl implements ReviewService {
         if (!reviewRepository.existsById(reviewId)) {
             throw new EntityNotFoundException(reviewId, Review.class);
         }
+        Review review = reviewRepository.findById(reviewId).orElseThrow(() -> 
+            new EntityNotFoundException(reviewId, Review.class));
+        UUID vehicleId = review.getVehicle().getId();
         reviewRepository.deleteById(reviewId);
+        vehicleService.updateVehicleRatings(vehicleId);
     }
 }

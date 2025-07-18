@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,7 +32,7 @@ public class ReviewController {
             @ApiResponse(responseCode = "400", description = "Invalid input", content = @Content)
     })
     @PostMapping
-    public ResponseEntity<ReviewDto> createReview(@RequestBody ReviewDto dto) {
+    public ResponseEntity<ReviewDto> createReview(@Valid @RequestBody ReviewDto dto) {
         ReviewDto created = reviewService.createReview(dto);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
