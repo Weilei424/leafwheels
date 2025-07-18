@@ -1,7 +1,9 @@
 package com.yorku4413s25.leafwheels.web.controllers;
 
+import com.yorku4413s25.leafwheels.constants.Make;
 import com.yorku4413s25.leafwheels.services.ReviewService;
 import com.yorku4413s25.leafwheels.web.models.ReviewDto;
+import com.yorku4413s25.leafwheels.web.models.ReviewSummaryDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,11 +27,11 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @Operation(summary = "Create a review", description = "Submit a new review for a vehicle by a user.")
+    @Operation(summary = "Create a review", description = "Submit a new review for a make and model by a user.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Review created",
                     content = @Content(schema = @Schema(implementation = ReviewDto.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid input", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Invalid input or duplicate review", content = @Content)
     })
     @PostMapping
     public ResponseEntity<ReviewDto> createReview(@Valid @RequestBody ReviewDto dto) {
@@ -56,15 +58,24 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.getReviewsByUserId(userId));
     }
 
-    @Operation(summary = "Get reviews by vehicle", description = "Retrieve all reviews for a specific vehicle.")
+    @Operation(summary = "Get reviews by make and model", description = "Retrieve all reviews for a specific make and model.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List of vehicle reviews",
-                    content = @Content(schema = @Schema(implementation = ReviewDto.class))),
-            @ApiResponse(responseCode = "404", description = "Vehicle not found", content = @Content)
+            @ApiResponse(responseCode = "200", description = "List of reviews for make/model",
+                    content = @Content(schema = @Schema(implementation = ReviewDto.class)))
     })
-    @GetMapping("/vehicle/{vehicleId}")
-    public ResponseEntity<List<ReviewDto>> getByVehicle(@PathVariable UUID vehicleId) {
-        return ResponseEntity.ok(reviewService.getReviewsByVehicleId(vehicleId));
+    @GetMapping("/make/{make}/model/{model}")
+    public ResponseEntity<List<ReviewDto>> getByMakeAndModel(@PathVariable Make make, @PathVariable String model) {
+        return ResponseEntity.ok(reviewService.getReviewsByMakeAndModel(make, model));
+    }
+
+    @Operation(summary = "Get review summary", description = "Retrieve comprehensive review summary for a make and model including average rating, star distribution, and individual reviews.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Review summary for make/model",
+                    content = @Content(schema = @Schema(implementation = ReviewSummaryDto.class)))
+    })
+    @GetMapping("/make/{make}/model/{model}/summary")
+    public ResponseEntity<ReviewSummaryDto> getReviewSummary(@PathVariable Make make, @PathVariable String model) {
+        return ResponseEntity.ok(reviewService.getReviewSummary(make, model));
     }
 
     @Operation(summary = "Delete a review", description = "Remove a review by its ID.")
