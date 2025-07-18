@@ -1,10 +1,10 @@
 package com.yorku4413s25.leafwheels.bootstrap;
 
+import com.yorku4413s25.leafwheels.constants.Make;
 import com.yorku4413s25.leafwheels.domain.Review;
 import com.yorku4413s25.leafwheels.domain.Vehicle;
 import com.yorku4413s25.leafwheels.repositories.ReviewRepository;
 import com.yorku4413s25.leafwheels.repositories.VehicleRepository;
-import com.yorku4413s25.leafwheels.services.VehicleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
@@ -20,7 +20,6 @@ public class ReviewLoader implements CommandLineRunner {
 
     private final ReviewRepository reviewRepository;
     private final VehicleRepository vehicleRepository;
-    private final VehicleService vehicleService;
     
     private final Random random = new Random();
 
@@ -33,13 +32,25 @@ public class ReviewLoader implements CommandLineRunner {
             // Generate fake user IDs for reviews
             List<UUID> userIds = generateFakeUserIds(50);
             
-            for (Vehicle vehicle : vehicles) {
-                // 70% chance vehicle has reviews
+            // Group vehicles by make/model to create reviews for make/model combinations
+            Map<String, List<Vehicle>> vehiclesByMakeModel = vehicles.stream()
+                    .collect(Collectors.groupingBy(v -> v.getMake() + ":" + v.getModel()));
+            
+            for (Map.Entry<String, List<Vehicle>> entry : vehiclesByMakeModel.entrySet()) {
+                String[] parts = entry.getKey().split(":");
+                Make make = Make.valueOf(parts[0]);
+                String model = parts[1];
+                
+                // 70% chance this make/model has reviews
                 if (random.nextDouble() < 0.7) {
-                    int numReviews = generateNumReviews();
+                    int numReviews = Math.min(generateNumReviews(), userIds.size()); // Can't have more reviews than users
+                    
+                    // Shuffle user IDs to ensure unique users for this make/model
+                    List<UUID> shuffledUserIds = new ArrayList<>(userIds);
+                    Collections.shuffle(shuffledUserIds, random);
                     
                     for (int i = 0; i < numReviews; i++) {
-                        Review review = createRealisticReview(vehicle, userIds);
+                        Review review = createRealisticReview(make, model, shuffledUserIds.get(i));
                         reviews.add(review);
                     }
                 }
@@ -47,17 +58,8 @@ public class ReviewLoader implements CommandLineRunner {
             
             reviewRepository.saveAll(reviews);
             
-            // Update vehicle ratings for all vehicles that have reviews
-            Set<UUID> vehiclesWithReviews = reviews.stream()
-                    .map(Review::getVehicleId)
-                    .collect(Collectors.toSet());
-            
-            for (UUID vehicleId : vehiclesWithReviews) {
-                vehicleService.updateVehicleRatings(vehicleId);
-            }
-            
             System.out.println("Seeded " + reviews.size() + " review records for " + 
-                             vehiclesWithReviews.size() + " vehicles.");
+                             vehiclesByMakeModel.size() + " make/model combinations.");
         } else {
             System.out.println("Reviews already present — skipping seeding.");
         }
@@ -81,13 +83,14 @@ public class ReviewLoader implements CommandLineRunner {
         return 5;
     }
     
-    private Review createRealisticReview(Vehicle vehicle, List<UUID> userIds) {
+    private Review createRealisticReview(Make make, String model, UUID userId) {
         int rating = generateRealisticRating();
-        String comment = generateRealisticComment(vehicle, rating);
+        String comment = generateRealisticComment(make, model, rating);
         
         return Review.builder()
-                .userId(userIds.get(random.nextInt(userIds.size())))
-                .vehicleId(vehicle.getId())
+                .userId(userId)
+                .make(make)
+                .model(model)
                 .rating(rating)
                 .comment(comment)
                 .build();
@@ -104,7 +107,7 @@ public class ReviewLoader implements CommandLineRunner {
         return 1;
     }
     
-    private String generateRealisticComment(Vehicle vehicle, int rating) {
+    private String generateRealisticComment(Make make, String model, int rating) {
         // 30% chance of no comment
         if (random.nextDouble() < 0.3) {
             return null;
@@ -149,26 +152,26 @@ public class ReviewLoader implements CommandLineRunner {
                 "Quality control issues and frequent service appointments needed."
         );
         
-        String modelYear = vehicle.getYear() + " " + vehicle.getMake() + " " + vehicle.getModel();
+        String makeModel = make + " " + model;
         
         if (rating >= 4) {
-            return addVehicleSpecificTouch(positiveComments.get(random.nextInt(positiveComments.size())), modelYear);
+            return addVehicleSpecificTouch(positiveComments.get(random.nextInt(positiveComments.size())), makeModel);
         } else if (rating == 3) {
-            return addVehicleSpecificTouch(neutralComments.get(random.nextInt(neutralComments.size())), modelYear);
+            return addVehicleSpecificTouch(neutralComments.get(random.nextInt(neutralComments.size())), makeModel);
         } else {
-            return addVehicleSpecificTouch(negativeComments.get(random.nextInt(negativeComments.size())), modelYear);
+            return addVehicleSpecificTouch(negativeComments.get(random.nextInt(negativeComments.size())), makeModel);
         }
     }
     
-    private String addVehicleSpecificTouch(String baseComment, String modelYear) {
+    private String addVehicleSpecificTouch(String baseComment, String makeModel) {
         // Occasionally add vehicle-specific context
         if (random.nextDouble() < 0.3) {
             List<String> vehicleContexts = Arrays.asList(
-                    " This " + modelYear + " exceeded my expectations.",
-                    " Perfect choice for a " + modelYear + ".",
-                    " Would buy another " + modelYear + " in the future.",
-                    " The " + modelYear + " handles really well.",
-                    " This particular " + modelYear + " model is solid."
+                    " This " + makeModel + " exceeded my expectations.",
+                    " Perfect choice for a " + makeModel + ".",
+                    " Would buy another " + makeModel + " in the future.",
+                    " The " + makeModel + " handles really well.",
+                    " This particular " + makeModel + " model is solid."
             );
             return baseComment + vehicleContexts.get(random.nextInt(vehicleContexts.size()));
         }

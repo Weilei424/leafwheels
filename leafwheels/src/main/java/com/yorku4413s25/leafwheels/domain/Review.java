@@ -1,15 +1,17 @@
 package com.yorku4413s25.leafwheels.domain;
 
-import com.yorku4413s25.leafwheels.constants.ItemType;
+import com.yorku4413s25.leafwheels.constants.Make;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.util.UUID;
 
 @Entity
-@Table(name = "reviews")
+@Table(name = "reviews", 
+       uniqueConstraints = @UniqueConstraint(columnNames = {"userId", "make", "model"}))
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -20,22 +22,26 @@ public class Review extends BaseEntity{
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID reviewId;
 
+    @NotNull(message = "User ID is required")
     @Column(nullable = false)
     private UUID userId;
 
-    @Column(nullable = false)
-    private UUID vehicleId;
+    @NotNull(message = "Make is required")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private Make make;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "vehicleId", insertable = false, updatable = false)
-    private Vehicle vehicle;
+    @NotNull(message = "Model is required")
+    @Column(nullable = false, length = 100)
+    private String model;
 
     @Column(length = 500)
     private String comment;
 
-    @Column(nullable = false)
+    @NotNull(message = "Rating is required")
     @Min(value = 1, message = "Rating must be between 1 and 5")
     @Max(value = 5, message = "Rating must be between 1 and 5")
+    @Column(nullable = false)
     private int rating;
 
 

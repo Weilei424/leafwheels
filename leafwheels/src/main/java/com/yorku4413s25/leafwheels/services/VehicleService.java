@@ -4,7 +4,6 @@ import com.yorku4413s25.leafwheels.constants.BodyType;
 import com.yorku4413s25.leafwheels.constants.Condition;
 import com.yorku4413s25.leafwheels.constants.Make;
 import com.yorku4413s25.leafwheels.constants.VehicleStatus;
-import com.yorku4413s25.leafwheels.domain.Vehicle;
 import com.yorku4413s25.leafwheels.web.models.VehicleDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -52,6 +51,4 @@ public interface VehicleService {
     List<VehicleDto> getAvailableVehicles();
 
     VehicleDto addImageUrls(UUID vehicleId, List<String> imageUrls);
-
-    void updateVehicleRatings(UUID vehicleId);
 }
