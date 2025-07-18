@@ -26,7 +26,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public ReviewDto createReview(ReviewDto reviewDto) {
-        if (reviewRepository.existsByUserIdAndMakeAndModel(
+        if (reviewRepository.existsByUserIdAndMakeAndModelIgnoreCase(
                 reviewDto.getUserId(), reviewDto.getMake(), reviewDto.getModel())) {
             throw new IllegalArgumentException("User has already reviewed this make/model combination");
         }
@@ -55,7 +55,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional(readOnly = true)
     public List<ReviewDto> getReviewsByMakeAndModel(Make make, String model) {
-        return reviewRepository.findByMakeAndModel(make, model).stream()
+        return reviewRepository.findByMakeAndModelIgnoreCase(make, model).stream()
                 .map(reviewMapper::reviewToReviewDto)
                 .collect(Collectors.toList());
     }
@@ -63,7 +63,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional(readOnly = true)
     public ReviewSummaryDto getReviewSummary(Make make, String model) {
-        List<Review> reviews = reviewRepository.findByMakeAndModel(make, model);
+        List<Review> reviews = reviewRepository.findByMakeAndModelIgnoreCase(make, model);
         
         if (reviews.isEmpty()) {
             return ReviewSummaryDto.builder()

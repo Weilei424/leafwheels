@@ -36,9 +36,6 @@ public class VehicleHistoryLoader implements CommandLineRunner {
         List<Vehicle> vehicles = vehicleRepository.findAll();
 
         if (vehicles.size() >= 20) {
-            // Only USED vehicles (high mileage) get accident history
-            // New vehicles (mileage < 300km) will have NO history
-            
             // Vehicle 2: Nissan Leaf (USED - 15000km) - 1 accident
             Vehicle nissanLeaf = vehicles.get(1);
             vehicleHistoryRepository.save(
@@ -89,8 +86,6 @@ public class VehicleHistoryLoader implements CommandLineRunner {
                             .build()
             );
 
-            // NOTE: Vehicles 1, 3, 5, 7, 8, 10 (first 10) have no accident history
-            // ALL NEW vehicles (11-20) have NO accident history
         }
     }
 }

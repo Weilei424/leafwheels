@@ -64,8 +64,13 @@ public class ReviewController {
                     content = @Content(schema = @Schema(implementation = ReviewDto.class)))
     })
     @GetMapping("/make/{make}/model/{model}")
-    public ResponseEntity<List<ReviewDto>> getByMakeAndModel(@PathVariable Make make, @PathVariable String model) {
-        return ResponseEntity.ok(reviewService.getReviewsByMakeAndModel(make, model));
+    public ResponseEntity<List<ReviewDto>> getByMakeAndModel(@PathVariable String make, @PathVariable String model) {
+        try {
+            Make makeEnum = Make.valueOf(make.toUpperCase());
+            return ResponseEntity.ok(reviewService.getReviewsByMakeAndModel(makeEnum, model));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid make: " + make);
+        }
     }
 
     @Operation(summary = "Get review summary", description = "Retrieve comprehensive review summary for a make and model including average rating, star distribution, and individual reviews.")
@@ -74,8 +79,13 @@ public class ReviewController {
                     content = @Content(schema = @Schema(implementation = ReviewSummaryDto.class)))
     })
     @GetMapping("/make/{make}/model/{model}/summary")
-    public ResponseEntity<ReviewSummaryDto> getReviewSummary(@PathVariable Make make, @PathVariable String model) {
-        return ResponseEntity.ok(reviewService.getReviewSummary(make, model));
+    public ResponseEntity<ReviewSummaryDto> getReviewSummary(@PathVariable String make, @PathVariable String model) {
+        try {
+            Make makeEnum = Make.valueOf(make.toUpperCase());
+            return ResponseEntity.ok(reviewService.getReviewSummary(makeEnum, model));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid make: " + make);
+        }
     }
 
     @Operation(summary = "Delete a review", description = "Remove a review by its ID.")
