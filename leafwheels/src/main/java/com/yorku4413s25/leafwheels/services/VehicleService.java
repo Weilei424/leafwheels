@@ -52,4 +52,6 @@ public interface VehicleService {
     List<VehicleDto> getAvailableVehicles();
 
     VehicleDto addImageUrls(UUID vehicleId, List<String> imageUrls);
+
+    void updateVehicleRatings(UUID vehicleId);
 }
