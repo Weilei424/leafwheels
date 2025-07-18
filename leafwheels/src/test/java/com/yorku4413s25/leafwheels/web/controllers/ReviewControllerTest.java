@@ -185,54 +185,36 @@ class ReviewControllerTest {
     }
 
     @Test
-    void createReviewShouldPassWithoutValidation() throws Exception {
-        // NOTE: Without validation framework, these tests verify controller behavior
-        // In a real application, you would add spring-boot-starter-validation dependency
+    void createReviewShouldRejectInvalidRating() throws Exception {
+        // With validation framework active, invalid ratings should be rejected
         
         ReviewDto inputDto = createSampleReviewDto();
-        inputDto.setRating(0); // Would be invalid with validation
+        inputDto.setRating(0); // Invalid rating (must be 1-5)
         inputDto.setReviewId(null);
-        
-        ReviewDto createdDto = createSampleReviewDto();
-        createdDto.setRating(0);
-        createdDto.setReviewId(UUID.randomUUID());
-        createdDto.setCreatedAt(Instant.now());
-
-        when(reviewService.createReview(any(ReviewDto.class))).thenReturn(createdDto);
 
         mockMvc.perform(post("/api/v1/reviews")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(inputDto)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.rating").value(0));
+                .andExpect(status().isBadRequest());
 
-        verify(reviewService).createReview(any(ReviewDto.class));
+        verify(reviewService, never()).createReview(any(ReviewDto.class));
     }
 
     @Test
-    void createReviewShouldAcceptNullFields() throws Exception {
-        // NOTE: Without validation framework, null fields are accepted
+    void createReviewShouldRejectNullRequiredFields() throws Exception {
+        // With validation framework active, null required fields should be rejected
         ReviewDto inputDto = createSampleReviewDto();
-        inputDto.setUserId(null);
-        inputDto.setMake(null);
-        inputDto.setModel(null);
+        inputDto.setUserId(null); // Required field
+        inputDto.setMake(null); // Required field
+        inputDto.setModel(null); // Required field
         inputDto.setReviewId(null);
-        
-        ReviewDto createdDto = createSampleReviewDto();
-        createdDto.setUserId(null);
-        createdDto.setMake(null);
-        createdDto.setModel(null);
-        createdDto.setReviewId(UUID.randomUUID());
-        createdDto.setCreatedAt(Instant.now());
-
-        when(reviewService.createReview(any(ReviewDto.class))).thenReturn(createdDto);
 
         mockMvc.perform(post("/api/v1/reviews")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(inputDto)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isBadRequest());
 
-        verify(reviewService).createReview(any(ReviewDto.class));
+        verify(reviewService, never()).createReview(any(ReviewDto.class));
     }
 
     @Test
