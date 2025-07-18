@@ -2,6 +2,7 @@ package com.yorku4413s25.leafwheels.bootstrap;
 
 import com.yorku4413s25.leafwheels.constants.ItemType;
 import com.yorku4413s25.leafwheels.constants.Role;
+import com.yorku4413s25.leafwheels.constants.VehicleStatus;
 import com.yorku4413s25.leafwheels.domain.*;
 import com.yorku4413s25.leafwheels.repositories.*;
 import com.yorku4413s25.leafwheels.services.CartService;
@@ -44,7 +45,9 @@ public class CartLoader implements CommandLineRunner {
                 .limit(4)
                 .toList();
         
-        List<Vehicle> vehicles = vehicleRepository.findAll();
+        List<Vehicle> vehicles = vehicleRepository.findAll().stream()
+                .filter(v -> v.getStatus() == null || v.getStatus() == VehicleStatus.AVAILABLE)
+                .toList();
         List<Accessory> accessories = accessoryRepository.findAll();
 
         if (users.size() >= 4 && vehicles.size() >= 10 && accessories.size() >= 6) {

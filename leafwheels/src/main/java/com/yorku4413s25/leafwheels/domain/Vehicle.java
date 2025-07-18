@@ -61,17 +61,17 @@ public class Vehicle extends BaseEntity{
     @Column(precision = 12, scale = 2, nullable = false)
     private BigDecimal price;
 
-    @Column(precision = 12, scale = 2, nullable = false)
+    @Column(precision = 12, scale = 2, nullable = true)
     private BigDecimal discountPrice;
 
-    @Column(precision = 5, scale = 2, nullable = false)
+    @Column(precision = 5, scale = 2, nullable = true)
     private BigDecimal discountPercentage = BigDecimal.ZERO;
 
-    @Column(precision = 12, scale = 2, nullable = false)
+    @Column(precision = 12, scale = 2, nullable = true)
     private BigDecimal discountAmount = BigDecimal.ZERO;
 
-    @Column(nullable = false)
-    private boolean onDeal = false;
+    @Column(nullable = true)
+    private Boolean onDeal = false;
 
     @Column(length = 17, unique = true)
     private String vin;

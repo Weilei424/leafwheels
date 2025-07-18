@@ -90,7 +90,7 @@ class AccessoryControllerTest {
                 .andExpect(jsonPath("$.discountAmount").value(createdDto.getDiscountAmount()))
                 .andExpect(jsonPath("$.discountPercentage").value(createdDto.getDiscountPercentage()))
                 .andExpect(jsonPath("$.discountPrice").value(createdDto.getDiscountPrice()))
-                .andExpect(jsonPath("$.onDeal").value(createdDto.isOnDeal()));
+                .andExpect(jsonPath("$.onDeal").value(createdDto.getOnDeal()));
 
         verify(accessoryService).createAccessory(any(AccessoryDto.class));
     }
@@ -123,7 +123,7 @@ class AccessoryControllerTest {
                 .andExpect(jsonPath("$.discountAmount").value(updatedDto.getDiscountAmount()))
                 .andExpect(jsonPath("$.discountPercentage").value(updatedDto.getDiscountPercentage()))
                 .andExpect(jsonPath("$.discountPrice").value(updatedDto.getDiscountPrice()))
-                .andExpect(jsonPath("$.onDeal").value(updatedDto.isOnDeal()));
+                .andExpect(jsonPath("$.onDeal").value(updatedDto.getOnDeal()));
 
         verify(accessoryService).updateById(eq(accessoryId), any(AccessoryDto.class));
     }
@@ -327,7 +327,7 @@ class AccessoryControllerTest {
                 .andExpect(jsonPath("$.discountAmount").value(accessoryDto.getDiscountAmount()))
                 .andExpect(jsonPath("$.discountPercentage").value(accessoryDto.getDiscountPercentage()))
                 .andExpect(jsonPath("$.discountPrice").value(accessoryDto.getDiscountPrice()))
-                .andExpect(jsonPath("$.onDeal").value(accessoryDto.isOnDeal()));
+                .andExpect(jsonPath("$.onDeal").value(accessoryDto.getOnDeal()));
 
         verify(accessoryService).getAccessoryById(accessoryId);
     }
