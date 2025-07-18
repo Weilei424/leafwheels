@@ -133,6 +133,22 @@ class ReviewControllerTest {
     }
 
     @Test
+    void getReviewsByMakeAndModelShouldBeCaseInsensitive() throws Exception {
+        Make make = Make.TESLA;
+        String model = "Model 3";
+        List<ReviewDto> makeModelReviews = Arrays.asList(createSampleReviewDto());
+
+        when(reviewService.getReviewsByMakeAndModel(make, model)).thenReturn(makeModelReviews);
+
+        mockMvc.perform(get("/api/v1/reviews/make/{make}/model/{model}", "tesla", model))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].make").value("TESLA"));
+
+        verify(reviewService).getReviewsByMakeAndModel(make, model);
+    }
+
+    @Test
     void getReviewSummaryShouldReturnComprehensiveReviewData() throws Exception {
         Make make = Make.TESLA;
         String model = "Model 3";
@@ -152,6 +168,28 @@ class ReviewControllerTest {
                 .andExpect(jsonPath("$.individualReviews.length()").value(2));
 
         verify(reviewService).getReviewSummary(make, model);
+    }
+
+    @Test
+    void getReviewSummaryShouldBeCaseInsensitive() throws Exception {
+        Make make = Make.TESLA;
+        String model = "Model 3";
+        ReviewSummaryDto summaryDto = createSampleReviewSummaryDto();
+
+        when(reviewService.getReviewSummary(make, model)).thenReturn(summaryDto);
+
+        mockMvc.perform(get("/api/v1/reviews/make/{make}/model/{model}/summary", "Tesla", model))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.make").value("TESLA"))
+                .andExpect(jsonPath("$.model").value("Model 3"));
+
+        verify(reviewService).getReviewSummary(make, model);
+    }
+
+    @Test
+    void getReviewsByMakeAndModelShouldReturnBadRequestForInvalidMake() throws Exception {
+        mockMvc.perform(get("/api/v1/reviews/make/{make}/model/{model}", "INVALID_MAKE", "Model 3"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -186,10 +224,8 @@ class ReviewControllerTest {
 
     @Test
     void createReviewShouldRejectInvalidRating() throws Exception {
-        // With validation framework active, invalid ratings should be rejected
-        
         ReviewDto inputDto = createSampleReviewDto();
-        inputDto.setRating(0); // Invalid rating (must be 1-5)
+        inputDto.setRating(0);
         inputDto.setReviewId(null);
 
         mockMvc.perform(post("/api/v1/reviews")
@@ -202,11 +238,10 @@ class ReviewControllerTest {
 
     @Test
     void createReviewShouldRejectNullRequiredFields() throws Exception {
-        // With validation framework active, null required fields should be rejected
         ReviewDto inputDto = createSampleReviewDto();
-        inputDto.setUserId(null); // Required field
-        inputDto.setMake(null); // Required field
-        inputDto.setModel(null); // Required field
+        inputDto.setUserId(null);
+        inputDto.setMake(null);
+        inputDto.setModel(null);
         inputDto.setReviewId(null);
 
         mockMvc.perform(post("/api/v1/reviews")

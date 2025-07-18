@@ -40,7 +40,6 @@ public class OrderServiceImpl implements OrderService {
         if (dto.getItems() == null || dto.getItems().isEmpty())
             throw new IllegalArgumentException("Order must have at least one item");
 
-        // Build OrderItems and calculate total
         List<OrderItem> orderItems = new ArrayList<>();
         BigDecimal total = BigDecimal.ZERO;
 
@@ -56,9 +55,7 @@ public class OrderServiceImpl implements OrderService {
                         .orElseThrow(() -> new EntityNotFoundException(itemDto.getVehicleId(), Vehicle.class));
                 itemBuilder.vehicle(vehicle).accessory(null);
                 itemBuilder.unitPrice(vehicle.getPrice());
-                itemBuilder.quantity(1); // Only 1 vehicle per orderItem
-                // Optionally mark vehicle as sold here or after payment
-                // vehicle.setStatus(VehicleStatus.SOLD);
+                itemBuilder.quantity(1);
                 total = total.add(vehicle.getPrice());
             } else if (itemDto.getType() == ItemType.ACCESSORY) {
                 if (itemDto.getAccessoryId() == null)
