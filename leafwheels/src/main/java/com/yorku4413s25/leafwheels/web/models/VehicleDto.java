@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -82,4 +83,14 @@ public class VehicleDto implements Serializable {
     List<String> imageUrls;
 
     List<VehicleHistoryDto> vehicleHistories;
+
+    @Schema(description = "Average rating from all reviews (1-5 stars, 1 decimal place)", example = "4.2")
+    @JsonSerialize(using = ToStringSerializer.class)
+    BigDecimal averageRating;
+
+    @Schema(description = "Total number of reviews for this vehicle", example = "15")
+    int totalReviews;
+
+    @Schema(description = "Count of reviews for each star rating (1-5)", example = "{\"1\": 0, \"2\": 1, \"3\": 2, \"4\": 5, \"5\": 7}")
+    Map<Integer, Integer> starRatingCounts;
 }

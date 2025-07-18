@@ -8,6 +8,7 @@ import com.yorku4413s25.leafwheels.domain.Vehicle;
 import com.yorku4413s25.leafwheels.domain.VehicleSpecification;
 import com.yorku4413s25.leafwheels.exception.EntityNotFoundException;
 import com.yorku4413s25.leafwheels.repositories.VehicleRepository;
+import com.yorku4413s25.leafwheels.repositories.ReviewRepository;
 import com.yorku4413s25.leafwheels.web.mappers.DateMapper;
 import com.yorku4413s25.leafwheels.web.mappers.VehicleMapper;
 import com.yorku4413s25.leafwheels.web.models.VehicleDto;
@@ -19,8 +20,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 import java.util.List;
@@ -34,6 +38,7 @@ public class VehicleServiceImpl implements VehicleService {
 
     private final VehicleRepository vehicleRepository;
     private final VehicleMapper vehicleMapper;
+    private final ReviewRepository reviewRepository;
 
     @Override
     public VehicleDto getById(UUID vehicleId) {
@@ -102,7 +107,6 @@ public class VehicleServiceImpl implements VehicleService {
     ) {
         List<Specification<Vehicle>> specs = new ArrayList<>();
 
-        //todo: validation and exception handling for invalid values
         addIfNotNull(specs, year, VehicleSpecification::hasYear);
         addIfNotNull(specs, make, VehicleSpecification::hasMake);
         addIfNotNull(specs, model, VehicleSpecification::hasModel);
@@ -164,6 +168,43 @@ public class VehicleServiceImpl implements VehicleService {
         vehicle.getImageUrls().addAll(imageUrls);
         
         return vehicleMapper.vehicleToVehicleDto(vehicleRepository.save(vehicle));
+    }
+
+    @Override
+    @Transactional
+    public void updateVehicleRatings(UUID vehicleId) {
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new EntityNotFoundException(vehicleId, Vehicle.class));
+        
+        var reviews = reviewRepository.findByVehicleId(vehicleId);
+        
+        if (reviews.isEmpty()) {
+            vehicle.setAverageRating(BigDecimal.ZERO);
+            vehicle.setTotalReviews(0);
+            vehicle.setStarRatingCounts(new HashMap<>());
+        } else {
+            double average = reviews.stream()
+                    .mapToInt(review -> review.getRating())
+                    .average()
+                    .orElse(0.0);
+            vehicle.setAverageRating(BigDecimal.valueOf(average).setScale(1, RoundingMode.HALF_UP));
+
+            vehicle.setTotalReviews(reviews.size());
+
+            Map<Integer, Integer> starCounts = new HashMap<>();
+            for (int i = 1; i <= 5; i++) {
+                starCounts.put(i, 0);
+            }
+            
+            reviews.forEach(review -> {
+                int rating = review.getRating();
+                starCounts.put(rating, starCounts.get(rating) + 1);
+            });
+            
+            vehicle.setStarRatingCounts(starCounts);
+        }
+        
+        vehicleRepository.save(vehicle);
     }
 
     private <T> void addIfNotNull(List<Specification<Vehicle>> specs, T value, Function<T, Specification<Vehicle>> fn) {

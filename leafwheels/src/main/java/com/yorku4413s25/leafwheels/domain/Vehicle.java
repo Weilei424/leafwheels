@@ -8,7 +8,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Entity
@@ -94,6 +96,21 @@ public class Vehicle extends BaseEntity{
 
     @OneToMany(mappedBy = "vehicle", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<VehicleHistory> vehicleHistories;
+
+    @OneToMany(mappedBy = "vehicle", fetch = FetchType.LAZY)
+    private List<Review> reviews;
+
+    @Column(precision = 3, scale = 1)
+    private BigDecimal averageRating = BigDecimal.ZERO;
+
+    @Column
+    private int totalReviews = 0;
+
+    @ElementCollection
+    @CollectionTable(name = "vehicle_star_ratings", joinColumns = @JoinColumn(name = "vehicle_id"))
+    @MapKeyColumn(name = "star_rating")
+    @Column(name = "count")
+    private Map<Integer, Integer> starRatingCounts = new HashMap<>();
 
     public void updateDiscountCalculations() {
         if (this.price != null) {
