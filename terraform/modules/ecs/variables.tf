@@ -36,7 +36,7 @@ variable "ami_id" {
 variable "instance_type" {
   description = "Instance type for ECS instances"
   type        = string
-  default     = "t2.micro"
+  default     = "t3.micro"
 }
 
 variable "key_name" {
