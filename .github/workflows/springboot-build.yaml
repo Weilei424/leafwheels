@@ -26,6 +26,16 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -51,6 +61,13 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/leafwheels
           SPRING_DATASOURCE_USERNAME: user
           SPRING_DATASOURCE_PASSWORD: password
+          SPRING_DATA_REDIS_HOST: localhost
+          SPRING_DATA_REDIS_PORT: 6379
+          SPRING_DATA_REDIS_PASSWORD: ""
+          JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+          JWT_ACCESS_TOKEN_EXPIRATION: 900000
+          JWT_REFRESH_TOKEN_EXPIRATION: 604800000
+          JWT_ISSUER: leafwheels-ci
 
       - name: Package (skip tests)
         run: mvn -f leafwheels/pom.xml package -DskipTests
