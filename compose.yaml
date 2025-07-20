@@ -57,6 +57,7 @@ services:
       - "3000:80"
     networks:
       - leafwheels-net
+    restart: "no"
 
 volumes:
   postgres_data:
