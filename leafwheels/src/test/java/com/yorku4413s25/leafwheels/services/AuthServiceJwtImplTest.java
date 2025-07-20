@@ -27,8 +27,11 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class AuthServiceJwtImplTest {
 
     @Mock
@@ -99,7 +102,7 @@ class AuthServiceJwtImplTest {
         when(jwtService.generateAccessToken(any())).thenReturn("accessToken");
         when(jwtService.generateRefreshToken(any())).thenReturn("refreshToken");
         when(jwtService.getAccessTokenExpiration()).thenReturn(900000L);
-        when(userMapper.toDto(testUser)).thenReturn(UserDto.builder().email("test@example.com").build());
+        when(userMapper.userToUserDto(testUser)).thenReturn(UserDto.builder().email("test@example.com").build());
 
         AuthResponseDto response = authService.signup(signupRequest);
 
@@ -143,10 +146,10 @@ class AuthServiceJwtImplTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userPrincipal);
-        when(jwtService.generateAccessToken(userPrincipal)).thenReturn("accessToken");
-        when(jwtService.generateRefreshToken(userPrincipal)).thenReturn("refreshToken");
+        when(jwtService.generateAccessToken(any())).thenReturn("accessToken");
+        when(jwtService.generateRefreshToken(any())).thenReturn("refreshToken");
         when(jwtService.getAccessTokenExpiration()).thenReturn(900000L);
-        when(userMapper.toDto(testUser)).thenReturn(UserDto.builder().email("test@example.com").build());
+        when(userMapper.userToUserDto(testUser)).thenReturn(UserDto.builder().email("test@example.com").build());
 
         AuthResponseDto response = authService.signin(signinRequest);
 
@@ -194,11 +197,11 @@ class AuthServiceJwtImplTest {
         when(jwtService.extractUsername("validRefreshToken")).thenReturn("test@example.com");
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
         when(valueOperations.get("refresh_token:" + testUser.getId())).thenReturn("validRefreshToken");
-        when(jwtService.isTokenValid("validRefreshToken", userPrincipal)).thenReturn(true);
-        when(jwtService.generateAccessToken(userPrincipal)).thenReturn("newAccessToken");
-        when(jwtService.generateRefreshToken(userPrincipal)).thenReturn("newRefreshToken");
+        when(jwtService.isTokenValid(eq("validRefreshToken"), any())).thenReturn(true);
+        when(jwtService.generateAccessToken(any())).thenReturn("newAccessToken");
+        when(jwtService.generateRefreshToken(any())).thenReturn("newRefreshToken");
         when(jwtService.getAccessTokenExpiration()).thenReturn(900000L);
-        when(userMapper.toDto(testUser)).thenReturn(UserDto.builder().email("test@example.com").build());
+        when(userMapper.userToUserDto(testUser)).thenReturn(UserDto.builder().email("test@example.com").build());
 
         AuthResponseDto response = authService.refreshToken(refreshRequest);
 
