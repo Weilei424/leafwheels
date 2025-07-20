@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+/* ==========================
+   Global Styles
+========================== */
+
+
+
+
+html {
+    scroll-behavior: smooth;
+    overflow-x: hidden !important;
+    height: 100%;
+}
+
+body {
+    background-color: #ffffff;
+    margin: 0;
+    font-family: "Lato", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    @apply font-sans;
+    overflow-x: hidden !important;
+    height: 100%;
+}
+
+
+
+/* ==========================
+   Navigation Consistency
+========================== */
+nav a {
+    color: inherit;
+    text-decoration: none;
+    transition: color var(--transition-normal);
+}
+
+nav a:hover {
+    color: var(--color-primary);
+}
+
+
+
+/* Monospace font for code blocks */
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+/* Remove default list styles globally */
+li {
+    list-style: none;
+}
+
+/* ==========================
+   Layout Spacing
+========================== */
+
+/* Sections have consistent vertical padding */
+/* Adjusted for navbar height (64px) */
+section {
+    padding-top: 80px !important;   /* Increased from 60px to 80px */
+    padding-bottom: 60px !important;
+}
+
+/* ==========================
+   Navigation
+========================== */
+
+/* Ensure navbar links inherit color and override global styles */
+nav a {
+    color: inherit;
+}
+
+/* ==========================
+   Headings & Typography
+========================== */
+
+.heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.heading h1 {
+    width: fit-content;
+    text-align: center;
+    margin: 20px auto 30px !important;
+}
+
+/* ==========================
+   Layout Containers
+========================== */
+
+.images-container {
+    display: flex;
+}
+
+/* ==========================
+   Home Slider Section
+========================== */
+
+.homeSlide {
+    display: flex;
+    justify-content: center;
+    background-color: #f6f9fc;
+    padding-bottom: 0 !important;
+}
+
+
+
+
+
+
+
+
+
