@@ -3,6 +3,7 @@ import com.yorku4413s25.leafwheels.constants.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -35,5 +36,34 @@ public class User extends BaseEntity {
 
     @Column(nullable = false, length =100)
     private String password;
+
+    @Column(name = "account_enabled", nullable = false)
+    @Builder.Default
+    private Boolean accountEnabled = true;
+
+    @Column(name = "account_locked", nullable = false)
+    @Builder.Default
+    private Boolean accountLocked = false;
+
+    @Column(name = "account_expired", nullable = false)
+    @Builder.Default
+    private Boolean accountExpired = false;
+
+    @Column(name = "email_verified", nullable = false)
+    @Builder.Default
+    private Boolean emailVerified = false;
+
+    @Column(name = "failed_login_attempts", nullable = false)
+    @Builder.Default
+    private Integer failedLoginAttempts = 0;
+
+    @Column(name = "last_login_at")
+    private Instant lastLoginAt;
+
+    @Column(name = "password_reset_token", length = 255)
+    private String passwordResetToken;
+
+    @Column(name = "password_reset_expires_at")
+    private Instant passwordResetExpiresAt;
 
 }
