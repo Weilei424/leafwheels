@@ -1,9 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import {useReviewStore} from "../../stores/useReviewsStore.js";
-import {StarRating} from "../reviews/ReviewComponents.jsx";
-
+import { useReviewStore } from "../../stores/useReviewsStore.js"; // Fixed import
+import { StarRating } from "../reviews/ReviewComponents.jsx";
 
 const VehicleCard = ({ vehicle, onAddToCart }) => {
     const { getAverageRating, getReviewCount } = useReviewStore();
@@ -93,29 +92,39 @@ const VehicleCard = ({ vehicle, onAddToCart }) => {
 
                     {/* Status */}
                     <div className="flex items-center justify-between">
-            <span className={`text-xs font-medium ${statusInfo.color}`}>
-              {statusInfo.label}
-            </span>
+                        <span className={`text-xs font-medium ${statusInfo.color}`}>
+                            {statusInfo.label}
+                        </span>
                         {vehicle.hasAccidentHistory && (
                             <span className="text-xs text-amber-600">⚠️</span>
                         )}
                     </div>
 
+                    {/* Reviews - Show BEFORE price for better visibility */}
+                    {reviewCount > 0 && (
+                        <div className="flex items-center gap-2">
+                            <StarRating rating={Math.round(averageRating)} readonly size="sm" />
+                            <span className="text-sm text-gray-600">
+                                {averageRating} ({reviewCount} review{reviewCount !== 1 ? 's' : ''})
+                            </span>
+                        </div>
+                    )}
+
                     {/* Price */}
                     <div className="space-y-1">
                         {hasDiscount ? (
                             <div className="flex items-center gap-2">
-                <span className="text-lg font-semibold text-gray-900">
-                  ${displayPrice.toLocaleString()}
-                </span>
+                                <span className="text-lg font-semibold text-gray-900">
+                                    ${displayPrice.toLocaleString()}
+                                </span>
                                 <span className="text-sm text-gray-400 line-through">
-                  ${regularPrice.toLocaleString()}
-                </span>
+                                    ${regularPrice.toLocaleString()}
+                                </span>
                             </div>
                         ) : (
                             <span className="text-lg font-semibold text-gray-900">
-                ${displayPrice.toLocaleString()}
-              </span>
+                                ${displayPrice.toLocaleString()}
+                            </span>
                         )}
                     </div>
                 </div>
@@ -135,28 +144,17 @@ const VehicleCard = ({ vehicle, onAddToCart }) => {
                     }}
                     disabled={!canAddToCart}
                     className={`
-            w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200
-            ${canAddToCart
+                        w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200
+                        ${canAddToCart
                         ? "bg-green-600 text-white hover:bg-green-700 shadow-sm hover:shadow-md"
                         : "bg-gray-100 text-gray-400 cursor-not-allowed"
                     }
-          `}
+                    `}
                     aria-label={`Add ${vehicle.make || 'vehicle'} ${vehicle.model || ''} to cart`}
                 >
                     {getButtonText()}
                 </motion.button>
             </div>
-
-
-            {/* Add a reviews section */}
-            {reviewCount > 0 && (
-                <div className="px-4 pb-2">
-                    <div className="flex items-center gap-2">
-                        <StarRating rating={Math.round(averageRating)} readonly size="sm" />
-                        <span className="text-sm text-gray-600"> {averageRating} ({reviewCount} review{reviewCount !== 1 ? 's' : ''}) </span>
-                    </div>
-                </div>
-            )}
         </motion.div>
     );
 };
