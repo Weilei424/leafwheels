@@ -37,23 +37,23 @@ public class User extends BaseEntity {
     @Column(nullable = false, length =100)
     private String password;
 
-    @Column(name = "account_enabled", nullable = false)
+    @Column(name = "account_enabled", nullable = false, columnDefinition = "boolean default true")
     @Builder.Default
     private Boolean accountEnabled = true;
 
-    @Column(name = "account_locked", nullable = false)
+    @Column(name = "account_locked", nullable = false, columnDefinition = "boolean default false")
     @Builder.Default
     private Boolean accountLocked = false;
 
-    @Column(name = "account_expired", nullable = false)
+    @Column(name = "account_expired", nullable = false, columnDefinition = "boolean default false")
     @Builder.Default
     private Boolean accountExpired = false;
 
-    @Column(name = "email_verified", nullable = false)
+    @Column(name = "email_verified", nullable = false, columnDefinition = "boolean default false")
     @Builder.Default
     private Boolean emailVerified = false;
 
-    @Column(name = "failed_login_attempts", nullable = false)
+    @Column(name = "failed_login_attempts", nullable = false, columnDefinition = "integer default 0")
     @Builder.Default
     private Integer failedLoginAttempts = 0;
 
