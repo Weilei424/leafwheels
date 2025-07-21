@@ -29,10 +29,7 @@ const Navbar = () => {
 
     const navLinks = [
         { name: "Home", path: "/" },
-        { name: "Store", path: "/store" },
-        {name: "Payments", path: "/payment-history"}
-
-
+        { name: "Store", path: "/store" }
     ];
 
     return (
@@ -300,6 +297,20 @@ const UserMenu = ({ user, logout }) => {
                                     onClick={() => setIsOpen(false)}
                                 >
                                     My Reviews
+                                </Link>
+                                <Link
+                                    to="/payment-history"
+                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
+                                    onClick={() => setIsOpen(false)}
+                                >
+                                    Payment History
+                                </Link>
+                                <Link
+                                    to="/orders"
+                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
+                                    onClick={() => setIsOpen(false)}
+                                >
+                                    Orders
                                 </Link>
                             </>
                         )}

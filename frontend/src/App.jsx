@@ -1,8 +1,6 @@
 import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ToastContainer, Bounce } from 'react-toastify';
-
 import HomePage from "./pages/Home/Home.jsx";
 import SignUpPage from "./pages/Auth/Signup.jsx";
 import LoginPage from "./pages/Auth/Login.jsx";
@@ -11,19 +9,21 @@ import StorePage from "./pages/Store/StorePage.jsx";
 import VehiclePage from "./pages/Store/VehiclePage.jsx";
 import AccessoryPage from "./pages/Store/AccessoryPage.jsx";
 import CartPage from "./pages/Cart/Cart.jsx";
-import { CheckoutPage, PaymentHistoryPage } from "./pages/Payment/PaymentPages.jsx";
 import {AllReviewsPage, UserReviewsPage, VehicleReviewsPage} from "./pages/Reviews/Reviews.jsx";
+import PaymentHistoryPage from "./pages/Payment/PaymentHistoryPage.jsx";
+import CheckoutPage from "./pages/Payment/PaymentCheckout.jsx";
+
 
 
 import Navbar from "./components/common/Navigation/Navbar.jsx";
 import Footer from "./components/common/Footer/Footer.jsx";
 
 import { useUserStore } from "./stores/useUserStore";
+import {ToastContainer} from "react-toastify";
 
-// Clean Layout component with consistent styling
 const Layout = ({ children }) => (
     <div className="flex flex-col min-h-screen bg-white">
-        {/* Clean header */}
+        {/* header */}
         <motion.header
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -44,7 +44,7 @@ const Layout = ({ children }) => (
             </AnimatePresence>
         </motion.main>
 
-        {/* Clean footer */}
+        {/*  footer */}
         <motion.footer
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -56,9 +56,9 @@ const Layout = ({ children }) => (
     </div>
 );
 
-// Clean auth layout for login/signup pages
+// auth layout for login/signup pages
 const AuthLayout = ({ children }) => (
-    <div className="min-h-screen   justify-center">
+    <div className="min-h-screen justify-center">
         <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -87,7 +87,7 @@ function App() {
     return (
         <>
             <Routes>
-                {/* Auth routes - clean auth layout */}
+                {/* Auth routes -  auth layout */}
                 <Route
                     path="/login"
                     element={
@@ -237,38 +237,14 @@ function App() {
                 {/* Catch all - redirect to home */}
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-
-            {/* Clean toast notifications matching our design */}
+            {/*  toast notifications */}
             <ToastContainer
+                stacked
+                autoClose={1000}
+                hideProgressBar
                 position="top-right"
-                autoClose={3000}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="light"
-                transition={Bounce}
-                toastClassName="!bg-white !text-gray-900 !shadow-lg !border !border-gray-100 !rounded-lg"
-                progressClassName="!bg-green-600"
-                closeButton={({ closeToast }) => (
-                    <button
-                        onClick={closeToast}
-                        className="text-gray-400 hover:text-gray-600 transition-colors p-1"
-                        aria-label="Close notification"
-                    >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                    </button>
-                )}
-                style={{
-                    fontSize: '14px',
-                    fontWeight: '500',
-                }}
             />
+
         </>
     );
 }

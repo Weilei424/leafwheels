@@ -134,7 +134,7 @@ export const usePaymentStore = create((set, get) => ({
             if (paymentHistory.length > 0) {
                 const firstPayment = paymentHistory[0];
                 if (firstPayment.userId) {
-                    get().getPaymentHistory(firstPayment.userId);
+                    await get().getPaymentHistory(firstPayment.userId);
                 }
             }
 
