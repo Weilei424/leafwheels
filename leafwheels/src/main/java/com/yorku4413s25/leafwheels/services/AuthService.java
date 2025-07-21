@@ -1,9 +1,11 @@
 package com.yorku4413s25.leafwheels.services;
 
+import com.yorku4413s25.leafwheels.constants.Role;
 import com.yorku4413s25.leafwheels.web.models.*;
 
 public interface AuthService {
     AuthResponseDto signup(SignupRequestDto request);
+    AuthResponseDto signupWithRole(SignupRequestDto request, Role role);
     AuthResponseDto signin(SigninRequestDto request);
     AuthResponseDto refreshToken(RefreshTokenRequestDto request);
     void signout(String refreshToken);

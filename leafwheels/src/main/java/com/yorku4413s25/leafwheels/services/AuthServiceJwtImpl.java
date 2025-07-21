@@ -44,6 +44,12 @@ public class AuthServiceJwtImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponseDto signup(SignupRequestDto request) {
+        return signupWithRole(request, Role.USER);
+    }
+
+    @Override
+    @Transactional
+    public AuthResponseDto signupWithRole(SignupRequestDto request, Role role) {
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new IllegalArgumentException("Passwords do not match");
         }
@@ -57,7 +63,7 @@ public class AuthServiceJwtImpl implements AuthService {
                 .lastName(request.getLastName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER)
+                .role(role)
                 .accountEnabled(true)
                 .accountLocked(false)
                 .accountExpired(false)

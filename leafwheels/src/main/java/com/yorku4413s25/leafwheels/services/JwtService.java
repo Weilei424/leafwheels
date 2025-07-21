@@ -4,6 +4,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import com.yorku4413s25.leafwheels.constants.Role;
+import com.yorku4413s25.leafwheels.security.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -43,7 +45,21 @@ public class JwtService {
     }
 
     public String generateAccessToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+        // Check if user is admin and generate non-expiring token
+        if (isAdminUser(userDetails)) {
+            return generateAdminAccessToken(extraClaims, userDetails);
+        }
         return buildToken(extraClaims, userDetails, accessTokenExpiration);
+    }
+
+    public String generateAdminAccessToken(UserDetails userDetails) {
+        return generateAdminAccessToken(new HashMap<>(), userDetails);
+    }
+
+    public String generateAdminAccessToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+        // Generate token that expires in 100 years (effectively non-expiring)
+        long hundredYears = 100L * 365 * 24 * 60 * 60 * 1000; // 100 years in milliseconds
+        return buildToken(extraClaims, userDetails, hundredYears);
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
@@ -69,6 +85,15 @@ public class JwtService {
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+    }
+
+    private boolean isAdminUser(UserDetails userDetails) {
+        if (userDetails instanceof CustomUserDetailsService.UserPrincipal) {
+            CustomUserDetailsService.UserPrincipal userPrincipal = 
+                    (CustomUserDetailsService.UserPrincipal) userDetails;
+            return userPrincipal.getUser().getRole() == Role.ADMIN;
+        }
+        return false;
     }
 
     private boolean isTokenExpired(String token) {
