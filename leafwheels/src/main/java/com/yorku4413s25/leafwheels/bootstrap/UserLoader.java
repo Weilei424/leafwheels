@@ -90,9 +90,9 @@ public class UserLoader implements CommandLineRunner {
             System.out.println("Admin2 (admin2@example.com) - Access Token: " + admin2Response.getAccessToken());
             System.out.println("=======================================\n");
 
-            System.out.println("Seeded 7 user records with proper JWT tokens.");
+            System.out.println("SUCCESS: Seeded 7 user records with proper JWT tokens.");
         } catch (Exception e) {
-            System.out.println("Users may already exist or error occurred: " + e.getMessage());
+            System.out.println("FAILED: Users may already exist or error occurred: " + e.getMessage());
         }
     }
 }
