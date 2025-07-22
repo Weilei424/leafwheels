@@ -25,43 +25,47 @@ public class ReviewLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (reviewRepository.count() == 0) {
-            List<Vehicle> vehicles = vehicleRepository.findAll();
-            List<Review> reviews = new ArrayList<>();
-            
-            // Generate fake user IDs for reviews
-            List<UUID> userIds = generateFakeUserIds(50);
-            
-            // Group vehicles by make/model to create reviews for make/model combinations
-            Map<String, List<Vehicle>> vehiclesByMakeModel = vehicles.stream()
-                    .collect(Collectors.groupingBy(v -> v.getMake() + ":" + v.getModel()));
-            
-            for (Map.Entry<String, List<Vehicle>> entry : vehiclesByMakeModel.entrySet()) {
-                String[] parts = entry.getKey().split(":");
-                Make make = Make.valueOf(parts[0]);
-                String model = parts[1];
+        try {
+            if (reviewRepository.count() == 0) {
+                List<Vehicle> vehicles = vehicleRepository.findAll();
+                List<Review> reviews = new ArrayList<>();
                 
-                // 70% chance this make/model has reviews
-                if (random.nextDouble() < 0.7) {
-                    int numReviews = Math.min(generateNumReviews(), userIds.size()); // Can't have more reviews than users
+                // Generate fake user IDs for reviews
+                List<UUID> userIds = generateFakeUserIds(50);
+                
+                // Group vehicles by make/model to create reviews for make/model combinations
+                Map<String, List<Vehicle>> vehiclesByMakeModel = vehicles.stream()
+                        .collect(Collectors.groupingBy(v -> v.getMake() + ":" + v.getModel()));
+                
+                for (Map.Entry<String, List<Vehicle>> entry : vehiclesByMakeModel.entrySet()) {
+                    String[] parts = entry.getKey().split(":");
+                    Make make = Make.valueOf(parts[0]);
+                    String model = parts[1];
                     
-                    // Shuffle user IDs to ensure unique users for this make/model
-                    List<UUID> shuffledUserIds = new ArrayList<>(userIds);
-                    Collections.shuffle(shuffledUserIds, random);
-                    
-                    for (int i = 0; i < numReviews; i++) {
-                        Review review = createRealisticReview(make, model, shuffledUserIds.get(i));
-                        reviews.add(review);
+                    // 70% chance this make/model has reviews
+                    if (random.nextDouble() < 0.7) {
+                        int numReviews = Math.min(generateNumReviews(), userIds.size()); // Can't have more reviews than users
+                        
+                        // Shuffle user IDs to ensure unique users for this make/model
+                        List<UUID> shuffledUserIds = new ArrayList<>(userIds);
+                        Collections.shuffle(shuffledUserIds, random);
+                        
+                        for (int i = 0; i < numReviews; i++) {
+                            Review review = createRealisticReview(make, model, shuffledUserIds.get(i));
+                            reviews.add(review);
+                        }
                     }
                 }
+                
+                reviewRepository.saveAll(reviews);
+                
+                System.out.println("SUCCESS: Seeded " + reviews.size() + " review records for " + 
+                                 vehiclesByMakeModel.size() + " make/model combinations.");
+            } else {
+                System.out.println("Reviews already present — skipping seeding.");
             }
-            
-            reviewRepository.saveAll(reviews);
-            
-            System.out.println("Seeded " + reviews.size() + " review records for " + 
-                             vehiclesByMakeModel.size() + " make/model combinations.");
-        } else {
-            System.out.println("Reviews already present — skipping seeding.");
+        } catch (Exception e) {
+            System.out.println("FAILED: Error seeding review data: " + e.getMessage());
         }
     }
     

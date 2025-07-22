@@ -16,7 +16,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-@Order(5)
+@Order(6)
 public class CartLoader implements CommandLineRunner {
 
     private final CartService cartService;
@@ -26,16 +26,20 @@ public class CartLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        List<User> users = userRepository.findAll().stream()
-                .filter(user -> user.getRole() == Role.USER)
-                .limit(1)
-                .toList();
-        
-        if (users.isEmpty() || cartService.getCartByUserId(users.get(0).getId()).getItems().isEmpty()) {
-            loadCartData();
-            System.out.println("Seeded cart records for 4 USER role users.");
-        } else {
-            System.out.println("Carts already present — skipping seeding.");
+        try {
+            List<User> users = userRepository.findAll().stream()
+                    .filter(user -> user.getRole() == Role.USER)
+                    .limit(1)
+                    .toList();
+            
+            if (users.isEmpty() || cartService.getCartByUserId(users.get(0).getId()).getItems().isEmpty()) {
+                loadCartData();
+                System.out.println("SUCCESS: Seeded cart records for 4 USER role users.");
+            } else {
+                System.out.println("Carts already present — skipping seeding.");
+            }
+        } catch (Exception e) {
+            System.out.println("FAILED: Error seeding cart data: " + e.getMessage());
         }
     }
 

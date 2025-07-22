@@ -24,16 +24,21 @@ public class VehicleHistoryLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (vehicleHistoryRepository.count() == 0) {
-            loadVehicleHistoryData();
-            System.out.println("Seeded vehicle history records.");
-        } else {
-            System.out.println("Vehicle history already present — skipping seeding.");
+        try {
+            if (vehicleHistoryRepository.count() == 0) {
+                int recordsSeeded = loadVehicleHistoryData();
+                System.out.println("SUCCESS: Seeded " + recordsSeeded + " vehicle history records.");
+            } else {
+                System.out.println("Vehicle history already present — skipping seeding.");
+            }
+        } catch (Exception e) {
+            System.out.println("FAILED: Error seeding vehicle history data: " + e.getMessage());
         }
     }
 
-    private void loadVehicleHistoryData() {
+    private int loadVehicleHistoryData() {
         List<Vehicle> vehicles = vehicleRepository.findAll();
+        int recordsSeeded = 0;
 
         if (vehicles.size() >= 20) {
             // Vehicle 2: Nissan Leaf (USED - 15000km) - 1 accident
@@ -46,6 +51,7 @@ public class VehicleHistoryLoader implements CommandLineRunner {
                             .accidentDescription("Fender bender at intersection. Front bumper replacement and headlight alignment. No structural damage.")
                             .build()
             );
+            recordsSeeded++;
 
             // Vehicle 4: Chevrolet Bolt EV (USED - 22000km) - 1 accident
             Vehicle chevyBolt = vehicles.get(3);
@@ -57,6 +63,7 @@ public class VehicleHistoryLoader implements CommandLineRunner {
                             .accidentDescription("Minor door ding and scratch on passenger side. Paint touch-up and door panel repair.")
                             .build()
             );
+            recordsSeeded++;
 
             // Vehicle 6: Hyundai Kona Electric (USED - 28000km) - 2 accidents
             Vehicle hyundaiKona = vehicles.get(5);
@@ -74,6 +81,7 @@ public class VehicleHistoryLoader implements CommandLineRunner {
                             .accidentDescription("Parking lot incident. Rear bumper and taillight replacement.")
                             .build()
             ));
+            recordsSeeded += 2;
 
             // Vehicle 9: KIA EV6 (USED - 18000km) - 1 accident
             Vehicle kiaEV6 = vehicles.get(8);
@@ -85,7 +93,9 @@ public class VehicleHistoryLoader implements CommandLineRunner {
                             .accidentDescription("Rock chip on windshield expanded to crack. Full windshield replacement including recalibration of driver assist systems.")
                             .build()
             );
-
+            recordsSeeded++;
         }
+        
+        return recordsSeeded;
     }
 }

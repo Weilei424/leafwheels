@@ -152,7 +152,7 @@ public class VehicleLoader implements CommandLineRunner {
             vehicles.forEach(Vehicle::updateDiscountCalculations);
             
             vehicleRepository.saveAll(vehicles);
-            System.out.println("Seeded 20 vehicle records.");
+            System.out.println("SUCCESS: Seeded 20 vehicle records.");
         } else {
             System.out.println("Vehicles already present — skipping seeding.");
         }

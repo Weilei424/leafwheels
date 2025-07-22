@@ -13,7 +13,7 @@ import java.util.*;
 
 @Component
 @RequiredArgsConstructor
-@org.springframework.core.annotation.Order(5)
+@org.springframework.core.annotation.Order(7)
 public class OrderLoader implements CommandLineRunner {
 
     private final OrderRepository orderRepository;
@@ -24,14 +24,15 @@ public class OrderLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (orderRepository.count() == 0) {
-            List<User> users = userRepository.findAll();
-            List<Vehicle> vehicles = vehicleRepository.findAll();
-            List<Accessory> accessories = accessoryRepository.findAll();
-            if (users.size() < 2 || vehicles.size() < 2 || accessories.size() < 3) {
-                System.out.println("Not enough seed data for users/vehicles/accessories. Orders not seeded.");
-                return;
-            }
+        try {
+            if (orderRepository.count() == 0) {
+                List<User> users = userRepository.findAll();
+                List<Vehicle> vehicles = vehicleRepository.findAll();
+                List<Accessory> accessories = accessoryRepository.findAll();
+                if (users.size() < 2 || vehicles.size() < 2 || accessories.size() < 3) {
+                    System.out.println("FAILED: Not enough seed data for users/vehicles/accessories. Orders not seeded.");
+                    return;
+                }
 
             // Order 1: Accessories only
             Order order1 = Order.builder()
@@ -129,11 +130,14 @@ public class OrderLoader implements CommandLineRunner {
                     .build();
             order5.getItems().add(oi5a);
 
-            orderRepository.saveAll(List.of(order1, order2, order3, order4, order5));
+                orderRepository.saveAll(List.of(order1, order2, order3, order4, order5));
 
-            System.out.println("Seeded 5 orders with items (accessory-only, vehicle-only, mixed).");
-        } else {
-            System.out.println("Orders already present — skipping seeding.");
+                System.out.println("SUCCESS: Seeded 5 orders with items (accessory-only, vehicle-only, mixed).");
+            } else {
+                System.out.println("Orders already present — skipping seeding.");
+            }
+        } catch (Exception e) {
+            System.out.println("FAILED: Error seeding order data: " + e.getMessage());
         }
     }
 }

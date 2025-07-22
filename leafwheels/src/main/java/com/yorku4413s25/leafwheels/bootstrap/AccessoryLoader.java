@@ -36,7 +36,7 @@ public class AccessoryLoader implements CommandLineRunner {
             accessories.forEach(Accessory::updateDiscountCalculations);
             
             accessoryRepository.saveAll(accessories);
-            System.out.println("Seeded 10 accessory records.");
+            System.out.println("SUCCESS: Seeded 10 accessory records.");
         } else {
             System.out.println("Accessories already present — skipping seeding.");
         }
