@@ -13,8 +13,18 @@ export default defineConfig({
     },
   },
   server: {
+    port: 3000,
     proxy: {
-      '/api': 'http://localhost:8080/',
+      '/api': {
+        //target: 'http://localhost:8080',
+        target: 'http://backend:8080',
+        changeOrigin: true,
+      },
     },
+  },
+
+  build: {
+    sourcemap: true,
+    minify: false,
   },
 })

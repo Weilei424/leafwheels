@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
-import usePagination from "../../../hooks/usePagination.js";
+import usePagination from "../../../hooks/UsePagination.js";
 
 const Pagination = ({ items, pageLimit, setPageItems }) => {
     const { pageNumber, pageCount, changePage, pageData, nextPage, previousPage } = usePagination(items, pageLimit);

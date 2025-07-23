@@ -49,6 +49,7 @@ export const useUserStore = create((set, get) => ({
                 lastName,
                 email,
                 password,
+                confirmPassword,
             });
 
             set({ user: res.data, loading: false });
@@ -65,7 +66,7 @@ export const useUserStore = create((set, get) => ({
         set({loading: true});
 
         try {
-            const res = await axios.post("/api/v1/auth/login", {email, password});
+            const res = await axios.post("/api/v1/auth/signin", {email, password});
             console.log(res.data);
             set({user: res.data, loading: false});
             toast.success("Login successful!"); // Notify user.
