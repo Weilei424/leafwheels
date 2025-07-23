@@ -1,33 +1,13 @@
-# Multi-stage build for Vite React app
-FROM node:18-alpine AS build
+FROM node:20
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json ./
+COPY ./package*.json ./
 
-# Install dependencies (including dev dependencies for build)
-RUN npm ci
+RUN npm install
 
-# Copy source code
 COPY . .
 
-# Build the app
-RUN npm run build
+EXPOSE 3000
 
-# Production stage
-FROM node:18-alpine AS production
-
-WORKDIR /app
-
-# Install serve globally
-RUN npm install -g serve
-
-# Copy built app from build stage
-COPY --from=build /app/dist ./dist
-
-# Expose port 80
-EXPOSE 80
-
-# Serve the app
-CMD ["serve", "-s", "dist", "-l", "80"]
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
