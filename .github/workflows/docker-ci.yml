@@ -31,7 +31,7 @@ jobs:
           sleep 10
           docker compose up -d backend || echo "Backend service failed"
           sleep 10
-          docker compose up -d frontend || echo "Frontend service failed (expected)"
+          docker compose up -d frontend || echo "Frontend service failed"
         fi
     
     - name: Wait for services to be ready
@@ -66,23 +66,16 @@ jobs:
         
         echo "Backend: $BACKEND_RUNNING, Postgres: $POSTGRES_RUNNING, Redis: $REDIS_RUNNING, Frontend: $FRONTEND_RUNNING"
         
-        # Only require that at least some core infrastructure is working
-        if [ "$POSTGRES_RUNNING" = "yes" ] && [ "$REDIS_RUNNING" = "yes" ]; then
-          echo "✓ Core infrastructure (database + cache) is running"
-          if [ "$BACKEND_RUNNING" = "yes" ]; then
-            echo "✓ Backend is also running - full stack operational"
-          else
-            echo "⚠ Backend not running but core infrastructure OK"
-          fi
+        # Require all critical services to be running
+        if [ "$POSTGRES_RUNNING" = "yes" ] && [ "$REDIS_RUNNING" = "yes" ] && [ "$BACKEND_RUNNING" = "yes" ] && [ "$FRONTEND_RUNNING" = "yes" ]; then
+          echo "✓ All services are running - full stack operational"
         else
-          echo "✗ Core infrastructure not running properly"
+          echo "✗ Not all critical services are running properly:"
+          [ "$POSTGRES_RUNNING" = "no" ] && echo "  - PostgreSQL is not running"
+          [ "$REDIS_RUNNING" = "no" ] && echo "  - Redis is not running"
+          [ "$BACKEND_RUNNING" = "no" ] && echo "  - Backend is not running"
+          [ "$FRONTEND_RUNNING" = "no" ] && echo "  - Frontend is not running"
           exit 1
-        fi
-        
-        if [ "$FRONTEND_RUNNING" = "yes" ]; then
-          echo "✓ Frontend container is running"
-        else
-          echo "⚠ Frontend container is not running (acceptable)"
         fi
     
     - name: Check backend health
@@ -93,12 +86,14 @@ jobs:
     
     - name: Check frontend accessibility
       run: |
-        echo "Checking if frontend container is running..."
-        if docker ps --format "{{.Names}}" | grep -q "leafwheels-frontend"; then
-          echo "Frontend container is running, checking accessibility..."
-          curl -f http://localhost:3000 || echo "Frontend not accessible via curl but container is running - PASS"
+        echo "Checking frontend accessibility..."
+        # Wait a moment for frontend to be ready
+        sleep 5
+        if curl -f http://localhost:3000; then
+          echo "✓ Frontend is accessible"
         else
-          echo "Frontend container not running but that's okay - PASS"
+          echo "✗ Frontend is not accessible"
+          exit 1
         fi
     
     - name: Check Redis connectivity
