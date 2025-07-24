@@ -39,7 +39,7 @@ public class PaymentController {
         @ApiResponse(responseCode = "404", description = "User or cart not found")
     })
     @PostMapping("/session")
-    @PreAuthorize("@securityService.isCurrentUser(#userId, authentication.principal.id) or hasRole('ADMIN')")
+    @PreAuthorize("@securityService.isCurrentUser(#userId, authentication) or hasRole('ADMIN')")
     public ResponseEntity<Void> createPaymentSession(
             @Parameter(description = "User ID to create payment session for", required = true)
             @RequestParam UUID userId,
@@ -92,7 +92,7 @@ public class PaymentController {
         @ApiResponse(responseCode = "404", description = "Payment not found for the given order ID")
     })
     @GetMapping("/{orderId}/status")
-    @PreAuthorize("@securityService.isOrderOwnedByUser(#orderId, authentication.principal.id) or hasRole('ADMIN')")
+    @PreAuthorize("@securityService.isOrderOwnedByUser(#orderId, authentication) or hasRole('ADMIN')")
     public ResponseEntity<PaymentResponseDto> getPaymentStatus(
             @Parameter(description = "Order ID to get payment status for", required = true)
             @PathVariable UUID orderId) {
@@ -113,7 +113,7 @@ public class PaymentController {
         @ApiResponse(responseCode = "404", description = "User not found")
     })
     @GetMapping("/user/{userId}")
-    @PreAuthorize("@securityService.isCurrentUser(#userId, authentication.principal.id) or hasRole('ADMIN')")
+    @PreAuthorize("@securityService.isCurrentUser(#userId, authentication) or hasRole('ADMIN')")
     public ResponseEntity<List<PaymentResponseDto>> getPaymentsByUser(
             @Parameter(description = "User ID to get payment history for", required = true)
             @PathVariable UUID userId) {
@@ -131,7 +131,7 @@ public class PaymentController {
         @ApiResponse(responseCode = "404", description = "Payment not found for the given order ID")
     })
     @PostMapping("/{orderId}/cancel")
-    @PreAuthorize("@securityService.isOrderOwnedByUser(#orderId, authentication.principal.id) or hasRole('ADMIN')")
+    @PreAuthorize("@securityService.isOrderOwnedByUser(#orderId, authentication) or hasRole('ADMIN')")
     public ResponseEntity<Void> cancelPayment(
             @Parameter(description = "Order ID to cancel payment for", required = true)
             @PathVariable UUID orderId) {

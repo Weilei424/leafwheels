@@ -96,7 +96,7 @@ public class ReviewController {
             @ApiResponse(responseCode = "404", description = "Review not found", content = @Content)
     })
     @DeleteMapping("/{reviewId}")
-    @PreAuthorize("@securityService.isReviewOwnedByUser(#reviewId, authentication.principal.id) or hasRole('ADMIN')")
+    @PreAuthorize("@securityService.isReviewOwnedByUser(#reviewId, authentication) or hasRole('ADMIN')")
     public ResponseEntity<Void> deleteReview(@PathVariable UUID reviewId) {
         reviewService.deleteReview(reviewId);
         return ResponseEntity.noContent().build();
