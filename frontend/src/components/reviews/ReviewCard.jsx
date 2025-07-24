@@ -1,17 +1,19 @@
-import {useState} from "react";
+import { useState } from "react";
 import StarRating from "./StarRating.jsx";
-import {motion} from "framer-motion";
-
+import { motion } from "framer-motion";
+import { useUserStore } from "../../stores/useUserStore.js"; // ✅ Add this import
 
 const ReviewCard = ({ review, canDelete = false, onDelete }) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const { user } = useUserStore(); // ✅ Add this line
 
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this review?")) return;
 
     setIsDeleting(true);
     try {
-      await onDelete(review.id);
+      // ✅ Use reviewId instead of id
+      await onDelete(review.reviewId);
     } catch (error) {
       console.error("Failed to delete review:", error);
     } finally {
@@ -45,9 +47,7 @@ const ReviewCard = ({ review, canDelete = false, onDelete }) => {
                   disabled={isDeleting}
                   className="text-red-600 hover:text-red-700 disabled:opacity-50 p-1"
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2h8a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 112 0v3a1 1 0 11-2 0V9zm4 0a1 1 0 112 0v3a1 1 0 11-2 0V9z" clipRule="evenodd" />
-                </svg>
+                <img className="w-5 h-5" src="/Icons/delete.png" alt="Loading" />
               </motion.button>
           )}
         </div>
@@ -65,4 +65,5 @@ const ReviewCard = ({ review, canDelete = false, onDelete }) => {
       </motion.div>
   );
 };
+
 export default ReviewCard;

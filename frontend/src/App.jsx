@@ -1,6 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { ToastContainer } from "react-toastify";
+import { useUserStore } from "./stores/useUserStore.js";
+
+// Components
+import Navbar from "./components/common/Navigation/Navbar.jsx";
+import Footer from "./components/common/Footer/Footer.jsx";
+
+// Pages
 import HomePage from "./pages/Home/Home.jsx";
 import SignUpPage from "./pages/Auth/Signup.jsx";
 import LoginPage from "./pages/Auth/Login.jsx";
@@ -9,242 +16,53 @@ import StorePage from "./pages/Store/StorePage.jsx";
 import VehiclePage from "./pages/Store/VehiclePage.jsx";
 import AccessoryPage from "./pages/Store/AccessoryPage.jsx";
 import CartPage from "./pages/Cart/Cart.jsx";
-import {AllReviewsPage, UserReviewsPage, VehicleReviewsPage} from "./pages/Reviews/Reviews.jsx";
+import UserPage from "./pages/User/User.jsx";
+import { AllReviewsPage, UserReviewsPage, VehicleReviewsPage } from "./pages/Reviews/Reviews.jsx";
 import PaymentHistoryPage from "./pages/Payment/PaymentHistoryPage.jsx";
 import CheckoutPage from "./pages/Payment/PaymentCheckout.jsx";
 
+// Loading spinner
+const Loading = () => <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-gray-300 border-t-green-600 rounded-full animate-spin"></div></div>;
 
+// Main layout with navbar + footer
+const Layout = ({ children }) => <div className="min-h-screen flex flex-col"><Navbar /><main className="flex-1 pt-10">{children}</main><Footer /></div>;
 
-import Navbar from "./components/common/Navigation/Navbar.jsx";
-import Footer from "./components/common/Footer/Footer.jsx";
+// Auth layout (just the page, no navbar/footer)
+const AuthLayout = ({ children }) => <div className="min-h-screen">{children}</div>;
 
-import { useUserStore } from "./stores/useUserStore";
-import {ToastContainer} from "react-toastify";
-
-const Layout = ({ children }) => (
-    <div className="flex flex-col min-h-screen bg-white">
-        {/* header */}
-        <motion.header
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100"
-        >
-            <Navbar />
-        </motion.header>
-
-        {/* Main content with consistent background */}
-        <motion.main
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="flex-grow mt-10"
-        >
-            <AnimatePresence mode="wait">
-                {children}
-            </AnimatePresence>
-        </motion.main>
-
-        {/*  footer */}
-        <motion.footer
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className=" border-t border-gray-100"
-        >
-            <Footer />
-        </motion.footer>
-    </div>
-);
-
-// auth layout for login/signup pages
-const AuthLayout = ({ children }) => (
-    <div className="min-h-screen justify-center">
-        <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3 }}
-        >
-            {children}
-        </motion.div>
-    </div>
-);
-
-// Page transition wrapper
-const PageWrapper = ({ children }) => (
-    <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
-    >
-        {children}
-    </motion.div>
-);
+// Protected route wrapper
+const Protected = ({ children }) => {
+    const { isAuthenticated, checkingAuth } = useUserStore();
+    if (checkingAuth) return <Loading />;
+    if (!isAuthenticated()) return <Navigate to="/login" />;
+    return children;
+};
 
 function App() {
-    const { user } = useUserStore();
+    const { checkingAuth, checkAuth, isAuthenticated, getUserRole } = useUserStore();
+    useEffect(() => { checkAuth(); }, []);
+    if (checkingAuth) return <Loading />;
 
     return (
         <>
             <Routes>
-                {/* Auth routes -  auth layout */}
-                <Route
-                    path="/login"
-                    element={
-                        !user ? (
-                            <AuthLayout>
-                                <PageWrapper>
-                                    <LoginPage />
-                                </PageWrapper>
-                            </AuthLayout>
-                        ) : (
-                            <Navigate to="/" replace />
-                        )
-                    }
-                />
-                <Route
-                    path="/signup"
-                    element={
-                        !user ? (
-                            <AuthLayout>
-                                <PageWrapper>
-                                    <SignUpPage />
-                                </PageWrapper>
-                            </AuthLayout>
-                        ) : (
-                            <Navigate to="/" replace />
-                        )
-                    }
-                />
-
-                {/* Main app routes - with layout */}
-                <Route
-                    path="/"
-                    element={
-                        <Layout>
-                            <PageWrapper>
-                                <HomePage />
-                            </PageWrapper>
-                        </Layout>
-                    }
-                />
-                <Route
-                    path="/store"
-                    element={
-                        <Layout>
-                            <PageWrapper>
-                                <StorePage />
-                            </PageWrapper>
-                        </Layout>
-                    }
-                />
-                <Route
-                    path="/cart"
-                    element={
-                        <Layout>
-                            <PageWrapper>
-                                <CartPage />
-                            </PageWrapper>
-                        </Layout>
-                    }
-                />
-                <Route
-                    path="/vehicle/:id"
-                    element={
-                        <Layout>
-                            <PageWrapper>
-                                <VehiclePage />
-                            </PageWrapper>
-                        </Layout>
-                    }
-                />
-                <Route
-                    path="/accessory/:id"
-                    element={
-                        <Layout>
-                            <PageWrapper>
-                                <AccessoryPage />
-                            </PageWrapper>
-                        </Layout>
-                    }
-                />
-
-                {/* Payment routes */}
-                <Route
-                    path="/checkout"
-                    element={
-                        <Layout>
-                            <PageWrapper>
-                                <CheckoutPage />
-                            </PageWrapper>
-                        </Layout>
-                    }
-                />
-                <Route
-                    path="/payment-history"
-                    element={
-                        <Layout>
-                            <PageWrapper>
-                                <PaymentHistoryPage />
-                            </PageWrapper>
-                        </Layout>
-                    }
-                />
-
-                <Route
-                    path="/vehicle/:make/:model/reviews"
-                    element={
-                        <Layout>
-                            <PageWrapper>
-                                <VehicleReviewsPage />
-                            </PageWrapper>
-                        </Layout>
-                    }
-                />
-                <Route
-                    path="/my-reviews"
-                    element={
-                        <Layout>
-                            <PageWrapper>
-                                <UserReviewsPage />
-                            </PageWrapper>
-                        </Layout>
-                    }
-                />
-
-                <Route
-                    path="/reviews"
-                    element={
-                        <Layout>
-                            <PageWrapper>
-                                <AllReviewsPage />
-                            </PageWrapper>
-                        </Layout>
-                    }
-                />
-
-                <Route
-                    path="/admin"
-                    element={
-                        <Layout>
-                            <PageWrapper>
-                                <AdminPage />
-                            </PageWrapper>
-                        </Layout>
-                    }
-                />
-
-                {/* Catch all - redirect to home */}
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="/login" element={isAuthenticated() ? <Navigate to="/" /> : <AuthLayout><LoginPage /></AuthLayout>} />
+                <Route path="/signup" element={isAuthenticated() ? <Navigate to="/" /> : <AuthLayout><SignUpPage /></AuthLayout>} />
+                <Route path="/" element={<Protected><Layout><HomePage /></Layout></Protected>} />
+                <Route path="/store" element={<Protected><Layout><StorePage /></Layout></Protected>} />
+                <Route path="/vehicle/:id" element={<Protected><Layout><VehiclePage /></Layout></Protected>} />
+                <Route path="/accessory/:id" element={<Protected><Layout><AccessoryPage /></Layout></Protected>} />
+                <Route path="/profile" element={<Protected><Layout><UserPage /></Layout></Protected>} />
+                <Route path="/reviews" element={<Protected><Layout><AllReviewsPage /></Layout></Protected>} />
+                <Route path="/vehicle/:make/:model/reviews" element={<Protected><Layout><VehicleReviewsPage /></Layout></Protected>} />
+                <Route path="/cart" element={<Protected><Layout><CartPage /></Layout></Protected>} />
+                <Route path="/checkout" element={<Protected><Layout><CheckoutPage /></Layout></Protected>} />
+                <Route path="/payment-history" element={<Protected><Layout><PaymentHistoryPage /></Layout></Protected>} />
+                <Route path="/my-reviews" element={<Protected><Layout><UserReviewsPage /></Layout></Protected>} />
+                <Route path="/admin" element={<Protected>{getUserRole() === 'ADMIN' ? <Layout><AdminPage /></Layout> : <Navigate to="/" />}</Protected>} />
+                <Route path="*" element={<Navigate to="/" />} />
             </Routes>
-            {/*  toast notifications */}
-            <ToastContainer
-                stacked
-                autoClose={1000}
-                hideProgressBar
-                position="top-right"
-            />
-
+            <ToastContainer position="top-right" autoClose={1000} stacked hideProgressBar />
         </>
     );
 }

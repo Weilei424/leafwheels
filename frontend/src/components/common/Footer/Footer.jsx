@@ -36,7 +36,7 @@ const Footer = () => {
                     <motion.div variants={itemVariants} className="lg:col-span-1">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-8 h-8  rounded-lg flex items-center justify-center">
-                                <img src="../../../../public/logo.png" alt="LeafWheels Logo" />
+                                <img src="/logo.png" alt="LeafWheels Logo" />
 
                             </div>
                             <h2 className="text-xl font-light text-gray-900">LeafWheels</h2>
