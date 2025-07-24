@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -34,6 +35,7 @@ public class ReviewController {
             @ApiResponse(responseCode = "400", description = "Invalid input or duplicate review", content = @Content)
     })
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ReviewDto> createReview(@Valid @RequestBody ReviewDto dto) {
         ReviewDto created = reviewService.createReview(dto);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
@@ -94,6 +96,7 @@ public class ReviewController {
             @ApiResponse(responseCode = "404", description = "Review not found", content = @Content)
     })
     @DeleteMapping("/{reviewId}")
+    @PreAuthorize("@securityService.isReviewOwnedByUser(#reviewId, authentication) or hasRole('ADMIN')")
     public ResponseEntity<Void> deleteReview(@PathVariable UUID reviewId) {
         reviewService.deleteReview(reviewId);
         return ResponseEntity.noContent().build();

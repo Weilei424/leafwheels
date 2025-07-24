@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -42,6 +43,7 @@ public class VehicleHistoryController {
             @ApiResponse(responseCode = "404", description = "Vehicle not found", content = @Content)
     })
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<VehicleHistoryDto> createVehicleHistory(@RequestBody @Valid VehicleHistoryDto vehicleHistoryDto) {
         return new ResponseEntity<>(vehicleHistoryService.create(vehicleHistoryDto), HttpStatus.CREATED);
     }
@@ -52,6 +54,7 @@ public class VehicleHistoryController {
             @ApiResponse(responseCode = "404", description = "Vehicle history not found", content = @Content)
     })
     @PutMapping("/{vehicleHistoryId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<VehicleHistoryDto> updateVehicleHistoryById(@PathVariable UUID vehicleHistoryId,
                                                                       @RequestBody @Valid VehicleHistoryDto vehicleHistoryDto) {
         return new ResponseEntity<>(vehicleHistoryService.updateById(vehicleHistoryId, vehicleHistoryDto), HttpStatus.OK);
@@ -63,6 +66,7 @@ public class VehicleHistoryController {
             @ApiResponse(responseCode = "404", description = "Vehicle history not found", content = @Content)
     })
     @DeleteMapping("/{vehicleHistoryId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteVehicleHistoryById(@PathVariable UUID vehicleHistoryId) {
         vehicleHistoryService.delete(vehicleHistoryId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

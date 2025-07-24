@@ -34,7 +34,25 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(req ->
                         req.requestMatchers(
+                                        // Authentication endpoints
                                         "/api/v1/auth/**",
+                                        // Public shopping endpoints (GET only)
+                                        "/api/v1/vehicle/all",
+                                        "/api/v1/vehicle/*",
+                                        "/api/v1/vehicle/filter",
+                                        "/api/v1/vehicle/by-status",
+                                        "/api/v1/vehicle/excluding-status", 
+                                        "/api/v1/vehicle/available",
+                                        "/api/v1/accessories/all",
+                                        "/api/v1/accessories/*",
+                                        "/api/v1/reviews",
+                                        "/api/v1/reviews/user/*",
+                                        "/api/v1/reviews/make/*/model/*",
+                                        "/api/v1/reviews/make/*/model/*/summary",
+                                        "/api/v1/loan-calculator/**",
+                                        "/api/v1/vehiclehistory/*/",
+                                        "/api/v1/vehiclehistory/vehicle/*",
+                                        // Documentation and monitoring
                                         "/v2/api-docs",
                                         "/v3/api-docs",
                                         "/v3/api-docs/**",

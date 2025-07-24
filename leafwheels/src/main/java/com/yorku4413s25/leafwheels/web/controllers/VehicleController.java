@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.math.BigDecimal;
 import org.springframework.web.bind.annotation.*;
@@ -48,6 +49,7 @@ public class VehicleController {
             @ApiResponse(responseCode = "400", description = "Invalid input", content = @Content)
     })
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<VehicleDto> createVehicle(@RequestBody VehicleRequestDto vehicleRequestDto) {
         VehicleDto vehicleDto = convertToVehicleDto(vehicleRequestDto);
         validateDiscountMutualExclusivity(vehicleDto);
@@ -60,6 +62,7 @@ public class VehicleController {
             @ApiResponse(responseCode = "404", description = "Vehicle not found", content = @Content)
     })
     @PutMapping("/{vehicleId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<VehicleDto> updateVehicleById(@PathVariable UUID vehicleId,
                                                         @RequestBody VehicleRequestDto vehicleRequestDto) {
         VehicleDto vehicleDto = convertToVehicleDto(vehicleRequestDto);
@@ -73,6 +76,7 @@ public class VehicleController {
             @ApiResponse(responseCode = "404", description = "Vehicle not found", content = @Content)
     })
     @DeleteMapping("/{vehicleId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteVehicleById(@PathVariable UUID vehicleId) {
         vehicleService.delete(vehicleId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -158,6 +162,7 @@ public class VehicleController {
             @ApiResponse(responseCode = "404", description = "Vehicle not found", content = @Content)
     })
     @PostMapping("/{vehicleId}/images")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<VehicleDto> addImageUrls(
             @PathVariable UUID vehicleId,
             @RequestBody List<String> imageUrls) {

@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -33,6 +34,7 @@ public class CartController {
             @ApiResponse(responseCode = "404", description = "Cart not found", content = @Content)
     })
     @GetMapping("/{userId}")
+    @PreAuthorize("@securityService.isCurrentUser(#userId, authentication) or hasRole('ADMIN')")
     public ResponseEntity<CartDto> getCart(@PathVariable UUID userId) {
         return new ResponseEntity<>(cartService.getCartByUserId(userId), HttpStatus.OK);
     }
@@ -46,6 +48,7 @@ public class CartController {
             @ApiResponse(responseCode = "400", description = "Invalid input or not enough stock", content = @Content)
     })
     @PostMapping("/{userId}/items")
+    @PreAuthorize("@securityService.isCurrentUser(#userId, authentication) or hasRole('ADMIN')")
     public ResponseEntity<CartDto> addItem(@PathVariable UUID userId, @RequestBody CreateCartItemDto dto) {
         return new ResponseEntity<>(cartService.addItemToCart(userId, dto), HttpStatus.OK);
     }
@@ -59,6 +62,7 @@ public class CartController {
             @ApiResponse(responseCode = "404", description = "Item not found", content = @Content)
     })
     @DeleteMapping("/{userId}/items/{itemId}")
+    @PreAuthorize("@securityService.isCurrentUser(#userId, authentication) or hasRole('ADMIN')")
     public ResponseEntity<CartDto> removeItem(@PathVariable UUID userId, @PathVariable UUID itemId) {
         return new ResponseEntity<>(cartService.removeItemFromCart(userId, itemId), HttpStatus.OK);
     }
@@ -72,6 +76,7 @@ public class CartController {
             @ApiResponse(responseCode = "404", description = "Cart not found", content = @Content)
     })
     @DeleteMapping("/{userId}")
+    @PreAuthorize("@securityService.isCurrentUser(#userId, authentication) or hasRole('ADMIN')")
     public ResponseEntity<Void> clearCart(@PathVariable UUID userId) {
         cartService.clearCart(userId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
