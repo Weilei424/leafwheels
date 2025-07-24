@@ -155,9 +155,9 @@ export const useReviewStore = create((set, get) => ({
             await axios.delete(`/api/v1/reviews/${reviewId}`);
 
             set((prevState) => ({
-                reviews: prevState.reviews.filter(review => review.id !== reviewId),
-                userReviews: prevState.userReviews.filter(review => review.id !== reviewId),
-                makeModelReviews: prevState.makeModelReviews.filter(review => review.id !== reviewId),
+                reviews: prevState.reviews.filter(review => review.reviewId !== reviewId),
+                userReviews: prevState.userReviews.filter(review => review.reviewId !== reviewId),
+                makeModelReviews: prevState.makeModelReviews.filter(review => review.reviewId !== reviewId),
                 loading: false,
             }));
 

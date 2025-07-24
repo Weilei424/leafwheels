@@ -18,7 +18,7 @@ export const VehicleReviewsPage = () => {
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="py-8 px-4 max-w-4xl mx-auto"
+            className="px-4 p-15 max-w-4xl mx-auto"
         >
             <motion.h1
                 initial={{ opacity: 0, y: -20 }}
@@ -28,7 +28,7 @@ export const VehicleReviewsPage = () => {
                 {make} {model} Reviews
             </motion.h1>
 
-            <div className="grid lg:grid-cols-3 gap-8">
+            <div className="grid lg:grid-cols-3 gap-8 py-2">
                 <div className="lg:col-span-2 space-y-8">
                     {/* Review Form */}
                     {user && !hasReviewed && (
