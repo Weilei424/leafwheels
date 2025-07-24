@@ -391,7 +391,7 @@ Store in Database
 
 ### 4. Token Security
 
-- **Access Token Lifespan**: 15 minutes
+- **Access Token Lifespan**: 1 hour
 - **Refresh Token Lifespan**: 7 days
 - **Token Rotation**: New refresh token on each refresh
 - **Secure Storage**: Redis with TTL
