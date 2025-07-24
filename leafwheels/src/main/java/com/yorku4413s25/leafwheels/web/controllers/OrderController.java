@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,6 +32,7 @@ public class OrderController {
             @ApiResponse(responseCode = "400", description = "Invalid request", content = @Content)
     })
     @PostMapping("/{userId}")
+    @PreAuthorize("@securityService.isCurrentUser(#userId, authentication.principal.id) or hasRole('ADMIN')")
     public ResponseEntity<OrderDto> createOrder(@PathVariable UUID userId, @RequestBody CreateOrderRequestDto dto) {
         return new ResponseEntity<>(orderService.createOrder(userId, dto), HttpStatus.CREATED);
     }
@@ -41,6 +43,7 @@ public class OrderController {
             @ApiResponse(responseCode = "404", description = "Order not found", content = @Content)
     })
     @GetMapping("/{orderId}")
+    @PreAuthorize("@securityService.isOrderOwnedByUser(#orderId, authentication.principal.id) or hasRole('ADMIN')")
     public ResponseEntity<OrderDto> getOrder(@PathVariable UUID orderId) {
         return new ResponseEntity<>(orderService.getOrderById(orderId), HttpStatus.OK);
     }
@@ -51,6 +54,7 @@ public class OrderController {
             @ApiResponse(responseCode = "404", description = "No orders for user", content = @Content)
     })
     @GetMapping("/user/{userId}")
+    @PreAuthorize("@securityService.isCurrentUser(#userId, authentication.principal.id) or hasRole('ADMIN')")
     public ResponseEntity<List<OrderDto>> getOrdersByUser(@PathVariable UUID userId) {
         return new ResponseEntity<>(orderService.getOrdersByUserId(userId), HttpStatus.OK);
     }
@@ -61,6 +65,7 @@ public class OrderController {
             @ApiResponse(responseCode = "400", description = "Cart is empty or not found", content = @Content)
     })
     @PostMapping("/from-cart/{userId}")
+    @PreAuthorize("@securityService.isCurrentUser(#userId, authentication.principal.id) or hasRole('ADMIN')")
     public ResponseEntity<OrderDto> createOrderFromCart(@PathVariable UUID userId) {
         return new ResponseEntity<>(orderService.createOrderFromCart(userId), HttpStatus.CREATED);
     }
@@ -71,6 +76,7 @@ public class OrderController {
             @ApiResponse(responseCode = "404", description = "Order not found", content = @Content)
     })
     @PostMapping("/{orderId}/cancel")
+    @PreAuthorize("@securityService.isOrderOwnedByUser(#orderId, authentication.principal.id) or hasRole('ADMIN')")
     public ResponseEntity<Void> cancelOrder(@PathVariable UUID orderId) {
         orderService.cancelOrder(orderId);
         return new ResponseEntity<>(HttpStatus.OK);

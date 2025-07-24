@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpSession;
@@ -38,6 +39,7 @@ public class PaymentController {
         @ApiResponse(responseCode = "404", description = "User or cart not found")
     })
     @PostMapping("/session")
+    @PreAuthorize("@securityService.isCurrentUser(#userId, authentication.principal.id) or hasRole('ADMIN')")
     public ResponseEntity<Void> createPaymentSession(
             @Parameter(description = "User ID to create payment session for", required = true)
             @RequestParam UUID userId,
@@ -62,6 +64,7 @@ public class PaymentController {
         @ApiResponse(responseCode = "404", description = "Cart or session not found")
     })
     @PostMapping("/process")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PaymentResponseDto> processPayment(
             @Parameter(description = "Payment details including card information and billing address", required = true)
             @RequestBody PaymentRequestDto paymentRequest,
@@ -89,6 +92,7 @@ public class PaymentController {
         @ApiResponse(responseCode = "404", description = "Payment not found for the given order ID")
     })
     @GetMapping("/{orderId}/status")
+    @PreAuthorize("@securityService.isOrderOwnedByUser(#orderId, authentication.principal.id) or hasRole('ADMIN')")
     public ResponseEntity<PaymentResponseDto> getPaymentStatus(
             @Parameter(description = "Order ID to get payment status for", required = true)
             @PathVariable UUID orderId) {
@@ -109,6 +113,7 @@ public class PaymentController {
         @ApiResponse(responseCode = "404", description = "User not found")
     })
     @GetMapping("/user/{userId}")
+    @PreAuthorize("@securityService.isCurrentUser(#userId, authentication.principal.id) or hasRole('ADMIN')")
     public ResponseEntity<List<PaymentResponseDto>> getPaymentsByUser(
             @Parameter(description = "User ID to get payment history for", required = true)
             @PathVariable UUID userId) {
@@ -126,6 +131,7 @@ public class PaymentController {
         @ApiResponse(responseCode = "404", description = "Payment not found for the given order ID")
     })
     @PostMapping("/{orderId}/cancel")
+    @PreAuthorize("@securityService.isOrderOwnedByUser(#orderId, authentication.principal.id) or hasRole('ADMIN')")
     public ResponseEntity<Void> cancelPayment(
             @Parameter(description = "Order ID to cancel payment for", required = true)
             @PathVariable UUID orderId) {

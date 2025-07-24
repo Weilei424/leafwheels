@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 
@@ -82,6 +83,7 @@ public class AccessoryController {
             )
     })
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AccessoryDto> createAccessory(@RequestBody AccessoryRequestDto requestDto) {
         AccessoryDto dto = convertToAccessoryDto(requestDto);
         validateDiscountMutualExclusivity(dto);
@@ -105,6 +107,7 @@ public class AccessoryController {
             )
     })
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteAccessory(@PathVariable UUID id) {
         accessoryService.deleteAccessory(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -132,6 +135,7 @@ public class AccessoryController {
             )
     })
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AccessoryDto> updateAccessory(@PathVariable UUID id, @RequestBody AccessoryRequestDto requestDto) {
         AccessoryDto dto = convertToAccessoryDto(requestDto);
         validateDiscountMutualExclusivity(dto);
@@ -155,6 +159,7 @@ public class AccessoryController {
             )
     })
     @PostMapping("/{id}/images")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AccessoryDto> addImageUrls(
             @PathVariable UUID id,
             @RequestBody List<String> imageUrls) {
