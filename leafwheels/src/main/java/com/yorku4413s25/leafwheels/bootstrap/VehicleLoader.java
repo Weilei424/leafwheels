@@ -132,7 +132,7 @@ public class VehicleLoader implements CommandLineRunner {
                     Vehicle.builder().year(2024).make(Make.CHEVROLET).model("Blazer EV").bodyType(BodyType.SUV)
                             .exteriorColor("Red").doors(4).seats(5).mileage(45).batteryRange(557)
                             .trim("SS").price(new BigDecimal("65995.00"))
-                            .vin("1GNPVBEK0P6000123").discountPercentage(new BigDecimal("0.025")).discountAmount(BigDecimal.ZERO)
+                            .vin("1GNPVBEK0P6000123").discountPercentage(new BigDecimal("0.03")).discountAmount(BigDecimal.ZERO)
                             .condition(Condition.NEW).description("Performance electric SUV").status(VehicleStatus.AVAILABLE).build(),
 
                     Vehicle.builder().year(2024).make(Make.AUDI).model("Q8 e-tron").bodyType(BodyType.SUV)
