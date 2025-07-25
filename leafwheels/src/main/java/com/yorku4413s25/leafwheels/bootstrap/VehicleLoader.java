@@ -350,7 +350,104 @@ public class VehicleLoader implements CommandLineRunner {
                             .exteriorColor("Diamond White Pearl").doors(4).seats(7).mileage(38500).batteryRange(61)
                             .trim("GT").price(new BigDecimal("42395.00"))
                             .vin("JA4J4TA81PZ001041").discountPercentage(new BigDecimal("0.07")).discountAmount(BigDecimal.ZERO)
-                            .condition(Condition.USED).description("Plug-in hybrid family SUV").status(VehicleStatus.AVAILABLE).build()
+                            .condition(Condition.USED).description("Plug-in hybrid family SUV").status(VehicleStatus.AVAILABLE).build(),
+
+                    // Additional 16 USED vehicles with vehicle history
+                    Vehicle.builder().year(2022).make(Make.TESLA).model("Model 3").bodyType(BodyType.SEDAN)
+                            .exteriorColor("Blue").doors(4).seats(5).mileage(45000).batteryRange(358)
+                            .trim("Long Range").price(new BigDecimal("38990.00"))
+                            .vin("5YJ3E1EB1MF001051").discountPercentage(new BigDecimal("0.05")).discountAmount(BigDecimal.ZERO)
+                            .condition(Condition.USED).description("Pre-owned Tesla sedan").status(VehicleStatus.AVAILABLE).build(),
+
+                    Vehicle.builder().year(2021).make(Make.BMW).model("iX3").bodyType(BodyType.SUV)
+                            .exteriorColor("Mineral Grey").doors(4).seats(5).mileage(52000).batteryRange(459)
+                            .trim("Impressive").price(new BigDecimal("51200.00"))
+                            .vin("WBA5J1C05LC001052").discountPercentage(BigDecimal.ZERO).discountAmount(new BigDecimal("3800.00"))
+                            .condition(Condition.USED).description("German electric SUV").status(VehicleStatus.AVAILABLE).build(),
+
+                    Vehicle.builder().year(2022).make(Make.AUDI).model("e-tron").bodyType(BodyType.SUV)
+                            .exteriorColor("Manhattan Grey").doors(4).seats(5).mileage(38000).batteryRange(436)
+                            .trim("55 quattro").price(new BigDecimal("54800.00"))
+                            .vin("WA1LAAGE4NB001053").discountPercentage(new BigDecimal("0.06")).discountAmount(BigDecimal.ZERO)
+                            .condition(Condition.USED).description("Luxury electric SUV with history").status(VehicleStatus.AVAILABLE).build(),
+
+                    Vehicle.builder().year(2021).make(Make.FORD).model("Mustang Mach-E").bodyType(BodyType.SUV)
+                            .exteriorColor("Space White").doors(4).seats(5).mileage(41500).batteryRange(459)
+                            .trim("Premium").price(new BigDecimal("45990.00"))
+                            .vin("3FMTK3SU2MMA01054").discountPercentage(new BigDecimal("0.04")).discountAmount(BigDecimal.ZERO)
+                            .condition(Condition.USED).description("Electric performance SUV").status(VehicleStatus.AVAILABLE).build(),
+
+                    Vehicle.builder().year(2022).make(Make.HYUNDAI).model("IONIQ 5").bodyType(BodyType.SUV)
+                            .exteriorColor("Shooting Star").doors(4).seats(5).mileage(33000).batteryRange(516)
+                            .trim("Limited").price(new BigDecimal("43500.00"))
+                            .vin("KMHL14JA4NA001055").discountPercentage(BigDecimal.ZERO).discountAmount(new BigDecimal("2700.00"))
+                            .condition(Condition.USED).description("Korean electric crossover").status(VehicleStatus.AVAILABLE).build(),
+
+                    Vehicle.builder().year(2021).make(Make.VOLKSWAGEN).model("ID.4").bodyType(BodyType.SUV)
+                            .exteriorColor("Kings Red").doors(4).seats(5).mileage(47000).batteryRange(516)
+                            .trim("Pro S").price(new BigDecimal("36800.00"))
+                            .vin("WVGFPE2W1MW001056").discountPercentage(new BigDecimal("0.08")).discountAmount(BigDecimal.ZERO)
+                            .condition(Condition.USED).description("German electric SUV").status(VehicleStatus.AVAILABLE).build(),
+
+                    Vehicle.builder().year(2022).make(Make.CADILLAC).model("LYRIQ").bodyType(BodyType.SUV)
+                            .exteriorColor("Stellar Black").doors(4).seats(5).mileage(29000).batteryRange(516)
+                            .trim("Luxury").price(new BigDecimal("49800.00"))
+                            .vin("1GYKPFRS4NF001057").discountPercentage(new BigDecimal("0.03")).discountAmount(BigDecimal.ZERO)
+                            .condition(Condition.USED).description("American luxury electric SUV").status(VehicleStatus.AVAILABLE).build(),
+
+                    Vehicle.builder().year(2021).make(Make.POLESTAR).model("2").bodyType(BodyType.SEDAN)
+                            .exteriorColor("Snow").doors(4).seats(5).mileage(36500).batteryRange(540)
+                            .trim("Long Range").price(new BigDecimal("42900.00"))
+                            .vin("LPSEDD4A5MG001058").discountPercentage(new BigDecimal("0.05")).discountAmount(BigDecimal.ZERO)
+                            .condition(Condition.USED).description("Scandinavian electric fastback").status(VehicleStatus.AVAILABLE).build(),
+
+                    Vehicle.builder().year(2022).make(Make.GENESIS).model("GV60").bodyType(BodyType.SUV)
+                            .exteriorColor("Uyuni White").doors(4).seats(5).mileage(31500).batteryRange(516)
+                            .trim("Performance").price(new BigDecimal("52400.00"))
+                            .vin("KMUC65GA3NA001059").discountPercentage(BigDecimal.ZERO).discountAmount(new BigDecimal("4100.00"))
+                            .condition(Condition.USED).description("Luxury Korean electric SUV").status(VehicleStatus.AVAILABLE).build(),
+
+                    Vehicle.builder().year(2021).make(Make.JAGUAR).model("I-PACE").bodyType(BodyType.SUV)
+                            .exteriorColor("Santorini Black").doors(4).seats(5).mileage(44000).batteryRange(468)
+                            .trim("S").price(new BigDecimal("58900.00"))
+                            .vin("SADHD2S15MA001060").discountPercentage(new BigDecimal("0.07")).discountAmount(BigDecimal.ZERO)
+                            .condition(Condition.USED).description("British luxury electric SUV").status(VehicleStatus.AVAILABLE).build(),
+
+                    Vehicle.builder().year(2022).make(Make.VOLVO).model("XC40 Recharge").bodyType(BodyType.SUV)
+                            .exteriorColor("Crystal White").doors(4).seats(5).mileage(39000).batteryRange(423)
+                            .trim("Core").price(new BigDecimal("42700.00"))
+                            .vin("YV4AC2PK5N1001061").discountPercentage(new BigDecimal("0.04")).discountAmount(BigDecimal.ZERO)
+                            .condition(Condition.USED).description("Swedish electric compact SUV").status(VehicleStatus.AVAILABLE).build(),
+
+                    Vehicle.builder().year(2021).make(Make.MERCEDES_BENZ).model("EQC").bodyType(BodyType.SUV)
+                            .exteriorColor("Polar White").doors(4).seats(5).mileage(43500).batteryRange(471)
+                            .trim("400 4MATIC").price(new BigDecimal("54800.00"))
+                            .vin("W1N0G7DB6MF001062").discountPercentage(new BigDecimal("0.06")).discountAmount(BigDecimal.ZERO)
+                            .condition(Condition.USED).description("German luxury electric SUV").status(VehicleStatus.AVAILABLE).build(),
+
+                    Vehicle.builder().year(2022).make(Make.KIA).model("EV6").bodyType(BodyType.SUV)
+                            .exteriorColor("Runway Red").doors(4).seats(5).mileage(34000).batteryRange(516)
+                            .trim("GT-Line").price(new BigDecimal("44500.00"))
+                            .vin("KNDPN3AC1N7001063").discountPercentage(new BigDecimal("0.03")).discountAmount(BigDecimal.ZERO)
+                            .condition(Condition.USED).description("Korean electric crossover").status(VehicleStatus.AVAILABLE).build(),
+
+                    Vehicle.builder().year(2021).make(Make.NISSAN).model("Ariya").bodyType(BodyType.SUV)
+                            .exteriorColor("Pearl Black").doors(4).seats(5).mileage(37000).batteryRange(482)
+                            .trim("Platinum+").price(new BigDecimal("48900.00"))
+                            .vin("JN1EZ2C20M0001064").discountPercentage(new BigDecimal("0.05")).discountAmount(BigDecimal.ZERO)
+                            .condition(Condition.USED).description("Japanese electric SUV").status(VehicleStatus.AVAILABLE).build(),
+
+                    Vehicle.builder().year(2022).make(Make.LEXUS).model("UX 300e").bodyType(BodyType.SUV)
+                            .exteriorColor("Atomic Silver").doors(4).seats(5).mileage(28000).batteryRange(315)
+                            .trim("Luxury").price(new BigDecimal("48300.00"))
+                            .vin("JTMZFREV4ND001065").discountPercentage(BigDecimal.ZERO).discountAmount(new BigDecimal("3200.00"))
+                            .condition(Condition.USED).description("Luxury compact electric SUV").status(VehicleStatus.AVAILABLE).build(),
+
+                    Vehicle.builder().year(2021).make(Make.PORSCHE).model("Taycan 4S").bodyType(BodyType.SEDAN)
+                            .exteriorColor("Carrara White").doors(4).seats(4).mileage(25000).batteryRange(610)
+                            .trim("4S").price(new BigDecimal("95900.00"))
+                            .vin("WP0AAEB19MS001066").discountPercentage(new BigDecimal("0.04")).discountAmount(BigDecimal.ZERO)
+                            .condition(Condition.USED).description("High-performance electric sports sedan").status(VehicleStatus.AVAILABLE).build()
 
             );
             
