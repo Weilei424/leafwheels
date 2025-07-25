@@ -30,8 +30,8 @@ public class ReviewLoader implements CommandLineRunner {
                 List<Vehicle> vehicles = vehicleRepository.findAll();
                 List<Review> reviews = new ArrayList<>();
                 
-                // Generate fake user IDs for reviews
-                List<UUID> userIds = generateFakeUserIds(50);
+                // Generate fake user IDs for reviews (increased to support more reviews)
+                List<UUID> userIds = generateFakeUserIds(200);
                 
                 // Group vehicles by make/model to create reviews for make/model combinations
                 Map<String, List<Vehicle>> vehiclesByMakeModel = vehicles.stream()
@@ -42,9 +42,9 @@ public class ReviewLoader implements CommandLineRunner {
                     Make make = Make.valueOf(parts[0]);
                     String model = parts[1];
                     
-                    // 70% chance this make/model has reviews
-                    if (random.nextDouble() < 0.7) {
-                        int numReviews = Math.min(generateNumReviews(), userIds.size()); // Can't have more reviews than users
+                    // 90% chance this make/model has reviews
+                    if (random.nextDouble() < 0.9) {
+                        int numReviews = Math.min(random.nextInt(16) + 5, userIds.size()); // Generate 5-20 reviews per make/model
                         
                         // Shuffle user IDs to ensure unique users for this make/model
                         List<UUID> shuffledUserIds = new ArrayList<>(userIds);
