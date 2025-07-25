@@ -5,6 +5,10 @@ import com.yorku4413s25.leafwheels.constants.Condition;
 import com.yorku4413s25.leafwheels.constants.Make;
 import com.yorku4413s25.leafwheels.constants.VehicleStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import com.yorku4413s25.leafwheels.validation.OneDiscountType;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -19,6 +23,7 @@ import java.util.UUID;
 @ToString
 @Builder
 @Table(name = "vehicles")
+@OneDiscountType
 public class Vehicle extends BaseEntity{
 
     @Id
@@ -65,6 +70,9 @@ public class Vehicle extends BaseEntity{
     private BigDecimal discountPrice;
 
     @Column(precision = 5, scale = 2, nullable = true)
+    @DecimalMax(value = "1.00", message = "Discount percentage cannot exceed 100%")
+    @DecimalMin(value = "0.00", message = "Discount percentage cannot be negative")
+    @Digits(integer = 3, fraction = 2, message = "Discount percentage must have at most 2 decimal places")
     private BigDecimal discountPercentage = BigDecimal.ZERO;
 
     @Column(precision = 12, scale = 2, nullable = true)
@@ -115,11 +123,17 @@ public class Vehicle extends BaseEntity{
 
     public void setDiscountPercentage(BigDecimal discountPercentage) {
         this.discountPercentage = discountPercentage;
+        if (discountPercentage != null && discountPercentage.compareTo(BigDecimal.ZERO) > 0) {
+            this.discountAmount = BigDecimal.ZERO;
+        }
         updateDiscountCalculations();
     }
     
     public void setDiscountAmount(BigDecimal discountAmount) {
         this.discountAmount = discountAmount;
+        if (discountAmount != null && discountAmount.compareTo(BigDecimal.ZERO) > 0) {
+            this.discountPercentage = BigDecimal.ZERO;
+        }
         updateDiscountCalculations();
     }
 

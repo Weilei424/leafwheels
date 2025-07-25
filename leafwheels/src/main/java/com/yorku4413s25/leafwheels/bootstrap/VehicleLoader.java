@@ -53,7 +53,7 @@ public class VehicleLoader implements CommandLineRunner {
                     Vehicle.builder().year(2024).make(Make.TESLA).model("Model 3").bodyType(BodyType.SEDAN)
                             .exteriorColor("Black").doors(4).seats(5).mileage(150).batteryRange(576)
                             .trim("Long Range").price(new BigDecimal("51990.00"))
-                            .vin("5YJ3E1EA7RF000001").discountPercentage(new BigDecimal("0.035")).discountAmount(BigDecimal.ZERO)
+                            .vin("5YJ3E1EA7RF000001").discountPercentage(new BigDecimal("0.04")).discountAmount(BigDecimal.ZERO)
                             .condition(Condition.NEW).description("Top-selling electric sedan").status(VehicleStatus.AVAILABLE).build(),
 
                     Vehicle.builder().year(2019).make(Make.HYUNDAI).model("Kona Electric").bodyType(BodyType.SUV)
@@ -71,7 +71,7 @@ public class VehicleLoader implements CommandLineRunner {
                     Vehicle.builder().year(2023).make(Make.BMW).model("i4").bodyType(BodyType.SEDAN)
                             .exteriorColor("Blue").doors(4).seats(5).mileage(200).batteryRange(475)
                             .trim("eDrive40").price(new BigDecimal("55900.00"))
-                            .vin("WBY73AW0XP7F00003").discountPercentage(new BigDecimal("0.025")).discountAmount(BigDecimal.ZERO)
+                            .vin("WBY73AW0XP7F00003").discountPercentage(new BigDecimal("0.08")).discountAmount(BigDecimal.ZERO)
                             .condition(Condition.NEW).description("Luxury electric sedan").status(VehicleStatus.AVAILABLE).build(),
 
                     Vehicle.builder().year(2021).make(Make.KIA).model("EV6").bodyType(BodyType.CROSSOVER)
