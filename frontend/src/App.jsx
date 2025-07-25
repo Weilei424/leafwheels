@@ -20,6 +20,8 @@ import UserPage from "./pages/User/User.jsx";
 import { AllReviewsPage, UserReviewsPage, VehicleReviewsPage } from "./pages/Reviews/Reviews.jsx";
 import PaymentHistoryPage from "./pages/Payment/PaymentHistoryPage.jsx";
 import CheckoutPage from "./pages/Payment/PaymentCheckout.jsx";
+import OrderHistory from "./pages/Order/OrderHistoryPage.jsx";
+import OrderDetailsPage from "./pages/Order/OrderDetailsPage.jsx";
 
 // Loading spinner
 const Loading = () => <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-gray-300 border-t-green-600 rounded-full animate-spin"></div></div>;
@@ -56,13 +58,16 @@ function App() {
                 <Route path="/reviews" element={<Protected><Layout><AllReviewsPage /></Layout></Protected>} />
                 <Route path="/vehicle/:make/:model/reviews" element={<Protected><Layout><VehicleReviewsPage /></Layout></Protected>} />
                 <Route path="/cart" element={<Protected><Layout><CartPage /></Layout></Protected>} />
+                <Route path="/order-history" element={<Protected><Layout><OrderHistory /></Layout></Protected>} />
+                <Route path="/orders/:orderId" element={<Protected><Layout><OrderDetailsPage /></Layout></Protected>} />
+
                 <Route path="/checkout" element={<Protected><Layout><CheckoutPage /></Layout></Protected>} />
                 <Route path="/payment-history" element={<Protected><Layout><PaymentHistoryPage /></Layout></Protected>} />
                 <Route path="/my-reviews" element={<Protected><Layout><UserReviewsPage /></Layout></Protected>} />
                 <Route path="/admin" element={<Protected>{getUserRole() === 'ADMIN' ? <Layout><AdminPage /></Layout> : <Navigate to="/" />}</Protected>} />
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>
-            <ToastContainer position="top-right" autoClose={1000} stacked hideProgressBar />
+            <ToastContainer position="top-right" autoClose={200} stacked hideProgressBar />
         </>
     );
 }

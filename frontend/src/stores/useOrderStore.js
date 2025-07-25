@@ -17,7 +17,7 @@ export const useOrderStore = create((set, get) => ({
     clearUserOrders: () => set({ userOrders: [] }),
 
     /**
-     * Create a new order
+     * Create a new order with specific items
      * Endpoint: POST /api/v1/orders/{userId}
      * Body: CreateOrderRequestDto
      */
@@ -51,7 +51,9 @@ export const useOrderStore = create((set, get) => ({
     getOrderById: async (orderId) => {
         set({ loading: true, error: null });
         try {
+            console.log("Fetching order with ID:", orderId); // ✅ DEBUG
             const response = await axios.get(`/api/v1/orders/${orderId}`);
+            console.log("Order response:", response.data); // ✅ DEBUG
 
             set({
                 currentOrder: response.data,
@@ -60,10 +62,11 @@ export const useOrderStore = create((set, get) => ({
 
             return response.data;
         } catch (error) {
+            console.error("Error fetching order:", error); // ✅ DEBUG
             const errorMessage = error.response?.data?.message ||
                 error.response?.data?.error ||
                 "Failed to fetch order";
-            set({ error: errorMessage, loading: false });
+            set({ error: errorMessage, loading: false, currentOrder: null });
             toast.error(errorMessage);
             throw error;
         }
@@ -95,7 +98,7 @@ export const useOrderStore = create((set, get) => ({
     },
 
     /**
-     * Create order from cart
+     * Create order from cart - ✅ THIS IS WHAT WE USE IN PAYMENT FLOW
      * Endpoint: POST /api/v1/orders/from-cart/{userId}
      */
     createOrderFromCart: async (userId) => {
@@ -110,7 +113,7 @@ export const useOrderStore = create((set, get) => ({
                 loading: false,
             }));
 
-            toast.success("Order created from cart successfully!");
+            toast.success("Order created successfully!");
             return response.data;
         } catch (error) {
             const errorMessage = error.response?.data?.message ||
@@ -156,122 +159,29 @@ export const useOrderStore = create((set, get) => ({
     },
 
     /**
-     * Helper function to get order status color
+     * Helper function to get status color for UI
      */
-    getOrderStatusColor: (status) => {
-        switch (status?.toUpperCase()) {
+    getStatusColor: (status) => {
+        switch (status) {
             case 'PLACED':
-                return 'text-blue-600 bg-blue-100';
+                return 'bg-blue-100 text-blue-800';
             case 'PAID':
-                return 'text-green-600 bg-green-100';
+                return 'bg-green-100 text-green-800';
             case 'SHIPPED':
-                return 'text-indigo-600 bg-indigo-100';
+                return 'bg-purple-100 text-purple-800';
             case 'DELIVERED':
-                return 'text-green-700 bg-green-200';
+                return 'bg-emerald-100 text-emerald-800';
             case 'CANCELED':
-                return 'text-red-600 bg-red-100';
+                return 'bg-red-100 text-red-800';
             default:
-                return 'text-gray-600 bg-gray-100';
-        }
-    },
-
-    /**
-     * Helper function to get order status text
-     */
-    getOrderStatusText: (status) => {
-        switch (status?.toUpperCase()) {
-            case 'PLACED':
-                return 'Placed';
-            case 'PAID':
-                return 'Paid';
-            case 'SHIPPED':
-                return 'Shipped';
-            case 'DELIVERED':
-                return 'Delivered';
-            case 'CANCELED':
-                return 'Cancelled';
-            default:
-                return status || 'Unknown';
+                return 'bg-gray-100 text-gray-800';
         }
     },
 
     /**
      * Helper function to check if order can be cancelled
      */
-    canCancelOrder: (order) => {
-        const cancelableStatuses = ['PLACED', 'PAID'];
-        return cancelableStatuses.includes(order.status?.toUpperCase());
-    },
-
-    /**
-     * Helper function to calculate order totals
-     */
-    calculateOrderTotals: (order) => {
-        if (!order || !order.items) {
-            return {
-                itemsCount: 0,
-                subtotal: 0,
-                tax: 0,
-                total: 0
-            };
-        }
-
-        const itemsCount = order.items.length;
-        const subtotal = order.items.reduce((sum, item) => {
-            const unitPrice = typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : (item.unitPrice || 0);
-            const quantity = item.quantity || 1;
-            return sum + (unitPrice * quantity);
-        }, 0);
-
-        // Assuming tax is included in totalPrice or calculate if needed
-        const total = typeof order.totalPrice === 'string' ? parseFloat(order.totalPrice) : (order.totalPrice || subtotal);
-        const tax = total - subtotal; // This assumes tax is the difference
-
-        return {
-            itemsCount,
-            subtotal: subtotal.toFixed(2),
-            tax: Math.max(0, tax).toFixed(2),
-            total: total.toFixed(2)
-        };
-    },
-
-    /**
-     * Helper function to format order date
-     */
-    formatOrderDate: (dateString) => {
-        if (!dateString) return 'Unknown';
-
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        } catch (error) {
-            return 'Invalid Date';
-        }
-    },
-
-    /**
-     * Helper function to get orders by status
-     */
-    getOrdersByStatus: (status) => {
-        const { userOrders } = get();
-        return userOrders.filter(order =>
-            order.status?.toUpperCase() === status?.toUpperCase()
-        );
-    },
-
-    /**
-     * Helper function to get recent orders
-     */
-    getRecentOrders: (limit = 5) => {
-        const { userOrders } = get();
-        return [...userOrders]
-            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-            .slice(0, limit);
-    },
+    canCancelOrder: (status) => {
+        return ['PLACED', 'PAID'].includes(status);
+    }
 }));

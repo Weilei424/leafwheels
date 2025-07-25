@@ -17,7 +17,7 @@ const AccessoryPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 text-gray-900 px-6 py-12 max-w-5xl mt-10 mx-auto">
+        <div className="min-h-screen  text-gray-900 px-6 py-12 max-w-5xl mt-10 mx-auto">
             {/* Top Section - Image + Basic Info */}
             <div className="grid md:grid-cols-2 gap-12">
                 {/* Accessory Image */}

@@ -39,7 +39,7 @@ const ProfilePage = () => {
             {/* Profile Card */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 {/* Avatar Section */}
-                <div className="bg-gray-50 px-8 py-12 text-center">
+                <div className=" px-8 py-12 text-center">
                     <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <span className="text-2xl font-medium text-green-600">
                             {user?.firstName?.[0]}{user?.lastName?.[0]}
@@ -60,7 +60,7 @@ const ProfilePage = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     First Name
                                 </label>
-                                <div className="px-4 py-3 bg-gray-50 rounded-lg text-gray-900">
+                                <div className="px-4 py-3  rounded-lg text-gray-900">
                                     {user?.firstName}
                                 </div>
                             </div>
@@ -69,7 +69,7 @@ const ProfilePage = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Last Name
                                 </label>
-                                <div className="px-4 py-3 bg-gray-50 rounded-lg text-gray-900">
+                                <div className="px-4 py-3  rounded-lg text-gray-900">
                                     {user?.lastName}
                                 </div>
                             </div>
@@ -80,7 +80,7 @@ const ProfilePage = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Email Address
                             </label>
-                            <div className="px-4 py-3 bg-gray-50 rounded-lg text-gray-900">
+                            <div className="px-4 py-3  rounded-lg text-gray-900">
                                 {user?.email}
                             </div>
                         </div>
@@ -91,7 +91,7 @@ const ProfilePage = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Account Role
                                 </label>
-                                <div className="px-4 py-3 bg-gray-50 rounded-lg text-gray-900 capitalize">
+                                <div className="px-4 py-3  rounded-lg text-gray-900 capitalize">
                                     {getUserRole()}
                                 </div>
                             </div>
@@ -100,7 +100,7 @@ const ProfilePage = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Member Since
                                 </label>
-                                <div className="px-4 py-3 bg-gray-50 rounded-lg text-gray-900">
+                                <div className="px-4 py-3  rounded-lg text-gray-900">
                                     {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                                 </div>
                             </div>

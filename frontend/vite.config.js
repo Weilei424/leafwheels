@@ -1,5 +1,5 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
 import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
@@ -8,16 +8,16 @@ export default defineConfig({
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+        sans: ["Inter", "ui-sans-serif", "system-ui"],
       },
     },
   },
   server: {
     port: 3000,
     proxy: {
-      '/api': {
-        //target: 'http://localhost:8080',
-        target: 'http://backend:8080',
+      "/api": {
+        target: "http://localhost:8080",
+        // target: 'http://backend:8080',
         changeOrigin: true,
       },
     },
@@ -27,4 +27,4 @@ export default defineConfig({
     sourcemap: true,
     minify: false,
   },
-})
+});

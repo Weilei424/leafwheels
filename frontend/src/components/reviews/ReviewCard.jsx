@@ -5,10 +5,12 @@ import { useUserStore } from "../../stores/useUserStore.js"; // ✅ Add this imp
 
 const ReviewCard = ({ review, canDelete = false, onDelete }) => {
   const [isDeleting, setIsDeleting] = useState(false);
-  const { user } = useUserStore(); // ✅ Add this line
+  const { user } = useUserStore();
 
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this review?")) return;
+
+
 
     setIsDeleting(true);
     try {
@@ -20,6 +22,10 @@ const ReviewCard = ({ review, canDelete = false, onDelete }) => {
       setIsDeleting(false);
     }
   };
+
+
+
+
 
   return (
       <motion.div
@@ -36,7 +42,7 @@ const ReviewCard = ({ review, canDelete = false, onDelete }) => {
             </span>
             </div>
             <h4 className="font-medium text-gray-900">{review.title}</h4>
-            <p className="text-sm text-gray-600">by {review.userName || "Anonymous"}</p>
+            <p className="text-sm text-gray-600">by {user.firstName}</p>
           </div>
 
           {canDelete && (
@@ -47,7 +53,7 @@ const ReviewCard = ({ review, canDelete = false, onDelete }) => {
                   disabled={isDeleting}
                   className="text-red-600 hover:text-red-700 disabled:opacity-50 p-1"
               >
-                <img className="w-5 h-5" src="/Icons/delete.png" alt="Loading" />
+                <img className="w-9 h-7" src="/delete.png" alt="Loading" />
               </motion.button>
           )}
         </div>

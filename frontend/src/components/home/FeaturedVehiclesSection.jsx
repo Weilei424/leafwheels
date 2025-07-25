@@ -17,7 +17,7 @@ const FeaturedVehiclesSection = ({ vehicles }) => {
             Featured Vehicles
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Discover our handpicked selection of premium electric and hybrid
+            Discover our handpicked selection of premium electric
             vehicles
           </p>
         </motion.div>

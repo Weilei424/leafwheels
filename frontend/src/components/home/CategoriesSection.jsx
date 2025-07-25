@@ -13,14 +13,6 @@ const CategoriesSection = () => {
         "https://images.unsplash.com/photo-1593941707882-a5bac6861d75?w=400&h=300&fit=crop",
     },
     {
-      name: "Hybrid Vehicles",
-      description: "Best of both worlds",
-      href: "/store?category=hybrid",
-      icon: "🔋",
-      image:
-        "https://images.unsplash.com/photo-1619976403073-7cbdbc2a9b83?w=400&h=300&fit=crop",
-    },
-    {
       name: "Accessories",
       description: "Enhance your driving experience",
       href: "/store?category=accessories",

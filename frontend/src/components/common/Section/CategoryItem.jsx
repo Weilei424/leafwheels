@@ -4,7 +4,7 @@ const CategoryItem = ({ category }) => {
     return (
         <Link to={"/category" + category.href}>
             <div className="relative rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer">
-                <div className="flex justify-center p-6 bg-gray-50 rounded-md">
+                <div className="flex justify-center p-6  rounded-md">
                     <img
                         src={category.imageUrl}
                         alt={category.name}

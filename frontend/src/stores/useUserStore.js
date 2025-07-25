@@ -238,6 +238,7 @@ export const useUserStore = create(
 
             // Get user role
             getUserRole: () => {
+                if (!get().user) return null;
                 const { user } = get();
                 return user.role
             },

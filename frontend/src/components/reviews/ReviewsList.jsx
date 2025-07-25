@@ -49,14 +49,14 @@ export const ReviewsList = ({ make, model, title = "Reviews" }) => {
       <div className="space-y-4">
         <AnimatePresence>
           {makeModelReviews.map((review, index) => (
-            <ReviewCard
-              key={
-                review.id ? `review-${review.id}` : `review-fallback-${index}`
-              }
-              review={review}
-              canDelete={user?.id === review.userId}
-              onDelete={deleteReview}
-            />
+              <ReviewCard
+                  key={
+                    review.reviewId ? `review-${review.reviewId}` : `review-fallback-${index}`
+                  }
+                  review={review}
+                  canDelete={user?.id === review.userId}
+                  onDelete={deleteReview}
+              />
           ))}
         </AnimatePresence>
       </div>

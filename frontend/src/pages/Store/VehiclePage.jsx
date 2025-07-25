@@ -134,7 +134,7 @@ const VehiclePage = () => {
           className="bg-white p-6 rounded-2xl shadow-sm"
         >
           <img
-            src={vehicle.imageUrls?.[0] || "/placeholder-vehicle.jpg"}
+            // src={vehicle.imageUrls?.[0] || "/placeholder-vehicle.jpg"}
             alt={`${vehicle.make} ${vehicle.model}`}
             onError={(e) => (e.target.src = "/placeholder-vehicle.jpg")}
             className="w-full max-h-[500px] object-cover rounded-xl"
