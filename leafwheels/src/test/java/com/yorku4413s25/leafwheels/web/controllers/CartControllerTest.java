@@ -95,7 +95,7 @@ class CartControllerTest {
                 .id(UUID.randomUUID())
                 .userId(userId)
                 .items(new ArrayList<>())
-                .totalPrice(BigDecimal.ZERO)
+                .totalPrice(java.math.BigDecimal.ZERO)
                 .build();
 
         when(cartService.clearCart(userId)).thenReturn(emptyCart);
@@ -113,7 +113,7 @@ class CartControllerTest {
                 .id(UUID.randomUUID())
                 .userId(userId)
                 .items(new ArrayList<>())
-                .totalPrice(BigDecimal.ZERO)
+                .totalPrice(java.math.BigDecimal.ZERO)
                 .build();
     }
 
