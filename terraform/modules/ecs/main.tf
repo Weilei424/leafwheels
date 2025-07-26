@@ -128,9 +128,9 @@ resource "aws_cloudwatch_log_group" "frontend" {
 
 # ECS Task Definition for Backend
 resource "aws_ecs_task_definition" "backend" {
-  family                = "${var.name_prefix}-backend"
+  family                   = "${var.name_prefix}-backend"
   requires_compatibilities = ["EC2"]
-  network_mode         = "bridge"
+  network_mode             = "bridge"
 
   container_definitions = jsonencode([{
     name      = "backend"
@@ -199,9 +199,9 @@ resource "aws_ecs_task_definition" "backend" {
 
 # ECS Task Definition for Frontend
 resource "aws_ecs_task_definition" "frontend" {
-  family                = "${var.name_prefix}-frontend"
+  family                   = "${var.name_prefix}-frontend"
   requires_compatibilities = ["EC2"]
-  network_mode         = "bridge"
+  network_mode             = "bridge"
 
   container_definitions = jsonencode([{
     name      = "frontend"
@@ -277,9 +277,9 @@ resource "aws_ecs_service" "frontend" {
 
 # ECS Task Definition for PostgreSQL
 resource "aws_ecs_task_definition" "postgres" {
-  family                = "${var.name_prefix}-postgres"
+  family                   = "${var.name_prefix}-postgres"
   requires_compatibilities = ["EC2"]
-  network_mode         = "bridge"
+  network_mode             = "bridge"
 
   volume {
     name = "postgres-data"
@@ -340,9 +340,9 @@ resource "aws_ecs_task_definition" "postgres" {
 
 # ECS Task Definition for Redis
 resource "aws_ecs_task_definition" "redis" {
-  family                = "${var.name_prefix}-redis"
+  family                   = "${var.name_prefix}-redis"
   requires_compatibilities = ["EC2"]
-  network_mode         = "bridge"
+  network_mode             = "bridge"
 
   volume {
     name = "redis-data"
