@@ -106,3 +106,398 @@ resource "aws_ecs_cluster_capacity_providers" "main" {
     capacity_provider = aws_ecs_capacity_provider.main.name
   }
 }
+
+# CloudWatch Log Groups
+resource "aws_cloudwatch_log_group" "backend" {
+  name              = "/ecs/${var.name_prefix}-backend"
+  retention_in_days = 7
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-backend-logs"
+  })
+}
+
+resource "aws_cloudwatch_log_group" "frontend" {
+  name              = "/ecs/${var.name_prefix}-frontend"
+  retention_in_days = 7
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-frontend-logs"
+  })
+}
+
+# ECS Task Definition for Backend
+resource "aws_ecs_task_definition" "backend" {
+  family                = "${var.name_prefix}-backend"
+  requires_compatibilities = ["EC2"]
+  network_mode         = "bridge"
+
+  container_definitions = jsonencode([{
+    name      = "backend"
+    image     = var.backend_image
+    memory    = 512
+    essential = true
+
+    portMappings = [{
+      containerPort = 8080
+      hostPort      = 0
+      protocol      = "tcp"
+    }]
+
+    environment = [
+      {
+        name  = "SPRING_DATASOURCE_URL"
+        value = "jdbc:postgresql://postgres.${var.name_prefix}.local:5432/${var.database_name}"
+      },
+      {
+        name  = "SPRING_DATASOURCE_USERNAME"
+        value = var.database_username
+      },
+      {
+        name  = "SPRING_DATASOURCE_PASSWORD"
+        value = var.database_password
+      },
+      {
+        name  = "SPRING_DATA_REDIS_HOST"
+        value = "redis.${var.name_prefix}.local"
+      },
+      {
+        name  = "SPRING_DATA_REDIS_PORT"
+        value = "6379"
+      },
+      {
+        name  = "JWT_SECRET"
+        value = var.jwt_secret
+      },
+      {
+        name  = "JWT_ACCESS_TOKEN_EXPIRATION"
+        value = "900000"
+      },
+      {
+        name  = "JWT_REFRESH_TOKEN_EXPIRATION"
+        value = "604800000"
+      },
+      {
+        name  = "JWT_ISSUER"
+        value = "leafwheels-aws"
+      }
+    ]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"  = aws_cloudwatch_log_group.backend.name
+        "awslogs-region" = var.aws_region
+      }
+    }
+  }])
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-backend-task"
+  })
+}
+
+# ECS Task Definition for Frontend
+resource "aws_ecs_task_definition" "frontend" {
+  family                = "${var.name_prefix}-frontend"
+  requires_compatibilities = ["EC2"]
+  network_mode         = "bridge"
+
+  container_definitions = jsonencode([{
+    name      = "frontend"
+    image     = var.frontend_image
+    memory    = 256
+    essential = true
+
+    portMappings = [{
+      containerPort = 3000
+      hostPort      = 0
+      protocol      = "tcp"
+    }]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"  = aws_cloudwatch_log_group.frontend.name
+        "awslogs-region" = var.aws_region
+      }
+    }
+  }])
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-frontend-task"
+  })
+}
+
+# ECS Service for Backend
+resource "aws_ecs_service" "backend" {
+  name            = "${var.name_prefix}-backend"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.backend.arn
+  desired_count   = 2
+
+  deployment_maximum_percent         = 200
+  deployment_minimum_healthy_percent = 50
+
+  load_balancer {
+    target_group_arn = var.backend_target_group_arn
+    container_name   = "backend"
+    container_port   = 8080
+  }
+
+  depends_on = [var.backend_target_group_arn]
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-backend-service"
+  })
+}
+
+# ECS Service for Frontend
+resource "aws_ecs_service" "frontend" {
+  name            = "${var.name_prefix}-frontend"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.frontend.arn
+  desired_count   = 2
+
+  deployment_maximum_percent         = 200
+  deployment_minimum_healthy_percent = 50
+
+  load_balancer {
+    target_group_arn = var.frontend_target_group_arn
+    container_name   = "frontend"
+    container_port   = 3000
+  }
+
+  depends_on = [var.frontend_target_group_arn]
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-frontend-service"
+  })
+}
+
+# ECS Task Definition for PostgreSQL
+resource "aws_ecs_task_definition" "postgres" {
+  family                = "${var.name_prefix}-postgres"
+  requires_compatibilities = ["EC2"]
+  network_mode         = "bridge"
+
+  volume {
+    name = "postgres-data"
+
+    efs_volume_configuration {
+      file_system_id     = var.efs_file_system_id
+      root_directory     = "/postgres"
+      transit_encryption = "ENABLED"
+    }
+  }
+
+  container_definitions = jsonencode([{
+    name      = "postgres"
+    image     = "postgres:16"
+    memory    = 512
+    essential = true
+
+    portMappings = [{
+      containerPort = 5432
+      hostPort      = 0
+      protocol      = "tcp"
+    }]
+
+    environment = [
+      {
+        name  = "POSTGRES_DB"
+        value = var.database_name
+      },
+      {
+        name  = "POSTGRES_USER"
+        value = var.database_username
+      },
+      {
+        name  = "POSTGRES_PASSWORD"
+        value = var.database_password
+      }
+    ]
+
+    mountPoints = [{
+      sourceVolume  = "postgres-data"
+      containerPath = "/var/lib/postgresql/data"
+      readOnly      = false
+    }]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"  = aws_cloudwatch_log_group.postgres.name
+        "awslogs-region" = var.aws_region
+      }
+    }
+  }])
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-postgres-task"
+  })
+}
+
+# ECS Task Definition for Redis
+resource "aws_ecs_task_definition" "redis" {
+  family                = "${var.name_prefix}-redis"
+  requires_compatibilities = ["EC2"]
+  network_mode         = "bridge"
+
+  volume {
+    name = "redis-data"
+
+    efs_volume_configuration {
+      file_system_id     = var.efs_file_system_id
+      root_directory     = "/redis"
+      transit_encryption = "ENABLED"
+    }
+  }
+
+  container_definitions = jsonencode([{
+    name      = "redis"
+    image     = "redis:7-alpine"
+    memory    = 256
+    essential = true
+
+    portMappings = [{
+      containerPort = 6379
+      hostPort      = 0
+      protocol      = "tcp"
+    }]
+
+    command = ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+
+    mountPoints = [{
+      sourceVolume  = "redis-data"
+      containerPath = "/data"
+      readOnly      = false
+    }]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"  = aws_cloudwatch_log_group.redis.name
+        "awslogs-region" = var.aws_region
+      }
+    }
+  }])
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-redis-task"
+  })
+}
+
+# CloudWatch Log Group for PostgreSQL
+resource "aws_cloudwatch_log_group" "postgres" {
+  name              = "/ecs/${var.name_prefix}-postgres"
+  retention_in_days = 7
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-postgres-logs"
+  })
+}
+
+# CloudWatch Log Group for Redis
+resource "aws_cloudwatch_log_group" "redis" {
+  name              = "/ecs/${var.name_prefix}-redis"
+  retention_in_days = 7
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-redis-logs"
+  })
+}
+
+# ECS Service for PostgreSQL
+resource "aws_ecs_service" "postgres" {
+  name            = "${var.name_prefix}-postgres"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.postgres.arn
+  desired_count   = 1
+
+  deployment_maximum_percent         = 100
+  deployment_minimum_healthy_percent = 0
+
+  service_registries {
+    registry_arn   = aws_service_discovery_service.postgres.arn
+    container_name = "postgres"
+    container_port = 5432
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-postgres-service"
+  })
+}
+
+# ECS Service for Redis
+resource "aws_ecs_service" "redis" {
+  name            = "${var.name_prefix}-redis"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.redis.arn
+  desired_count   = 1
+
+  deployment_maximum_percent         = 100
+  deployment_minimum_healthy_percent = 0
+
+  service_registries {
+    registry_arn   = aws_service_discovery_service.redis.arn
+    container_name = "redis"
+    container_port = 6379
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-redis-service"
+  })
+}
+
+# Service Discovery Namespace
+resource "aws_service_discovery_private_dns_namespace" "main" {
+  name = "${var.name_prefix}.local"
+  vpc  = var.vpc_id
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-service-discovery"
+  })
+}
+
+# Service Discovery Service for PostgreSQL
+resource "aws_service_discovery_service" "postgres" {
+  name = "postgres"
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+
+    dns_records {
+      ttl  = 10
+      type = "SRV"
+    }
+
+    routing_policy = "MULTIVALUE"
+  }
+
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-postgres-discovery"
+  })
+}
+
+# Service Discovery Service for Redis
+resource "aws_service_discovery_service" "redis" {
+  name = "redis"
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+
+    dns_records {
+      ttl  = 10
+      type = "SRV"
+    }
+
+    routing_policy = "MULTIVALUE"
+  }
+
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-redis-discovery"
+  })
+}
