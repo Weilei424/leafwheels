@@ -40,22 +40,24 @@ public class DatabaseMetricsService {
                 .description("Database query execution time")
                 .register(meterRegistry);
         
-        this.databaseConnectionsGauge = Gauge.builder("leafwheels.database.tables.count")
+        this.databaseConnectionsGauge = Gauge.builder("leafwheels.database.tables.count", this, DatabaseMetricsService::getTableCount)
                 .description("Number of tables in database")
-                .register(meterRegistry, this, DatabaseMetricsService::getTableCount);
+                .register(meterRegistry);
     }
     
     public void recordQuery(String operation) {
-        databaseQueriesCounter.increment(
-            "operation", operation
-        );
+        Counter.builder("leafwheels.database.queries")
+                .tag("operation", operation)
+                .register(meterRegistry)
+                .increment();
     }
     
     public void recordError(String operation, Exception error) {
-        databaseErrorsCounter.increment(
-            "operation", operation,
-            "error_type", error.getClass().getSimpleName()
-        );
+        Counter.builder("leafwheels.database.errors")
+                .tag("operation", operation)
+                .tag("error_type", error.getClass().getSimpleName())
+                .register(meterRegistry)
+                .increment();
     }
     
     public Timer.Sample startQueryTimer() {
