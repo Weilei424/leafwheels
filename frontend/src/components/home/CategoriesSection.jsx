@@ -7,7 +7,7 @@ const CategoriesSection = () => {
     {
       name: "Electric Cars",
       description: "Zero emissions, maximum performance",
-      href: "/store?category=electric",
+      href: "/store?category=Vehicles",
       icon: "⚡",
       image:
         "https://images.unsplash.com/photo-1593941707882-a5bac6861d75?w=400&h=300&fit=crop",
@@ -15,7 +15,7 @@ const CategoriesSection = () => {
     {
       name: "Accessories",
       description: "Enhance your driving experience",
-      href: "/store?category=accessories",
+      href: "store?category=Accessories",
       icon: "🔧",
       image:
         "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=300&fit=crop",

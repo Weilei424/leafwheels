@@ -43,6 +43,7 @@ export const useCartStore = create((set, get) => ({
 
             if (type === "VEHICLE") {
                 payload.vehicleId = id;
+
             } else if (type === "ACCESSORY") {
                 payload.accessoryId = id;
             }
@@ -50,7 +51,6 @@ export const useCartStore = create((set, get) => ({
 
             console.log(payload)
             const response = await axios.post(`/api/v1/carts/${userId}/items`, payload);
-
 
             const cartData = response.data;
             const items = cartData?.items || [];
