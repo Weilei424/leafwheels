@@ -14,6 +14,9 @@ import com.yorku4413s25.leafwheels.web.mappers.OrderMapper;
 import com.yorku4413s25.leafwheels.web.models.CreateOrderItemDto;
 import com.yorku4413s25.leafwheels.web.models.CreateOrderRequestDto;
 import com.yorku4413s25.leafwheels.web.models.OrderDto;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +27,6 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
@@ -33,6 +35,37 @@ public class OrderServiceImpl implements OrderService {
     private final OrderMapper orderMapper;
     private final OrderItemMapper orderItemMapper;
     private final CartRepository cartRepository;
+    private final MeterRegistry meterRegistry;
+    
+    private final Counter orderCreationsCounter;
+    private final Counter orderCancellationsCounter;
+    private final Gauge totalOrdersGauge;
+    
+    public OrderServiceImpl(OrderRepository orderRepository,
+                           VehicleRepository vehicleRepository,
+                           AccessoryRepository accessoryRepository,
+                           OrderMapper orderMapper,
+                           OrderItemMapper orderItemMapper,
+                           CartRepository cartRepository,
+                           MeterRegistry meterRegistry) {
+        this.orderRepository = orderRepository;
+        this.vehicleRepository = vehicleRepository;
+        this.accessoryRepository = accessoryRepository;
+        this.orderMapper = orderMapper;
+        this.orderItemMapper = orderItemMapper;
+        this.cartRepository = cartRepository;
+        this.meterRegistry = meterRegistry;
+        
+        this.orderCreationsCounter = Counter.builder("leafwheels.orders.created")
+                .description("Number of orders created")
+                .register(meterRegistry);
+        this.orderCancellationsCounter = Counter.builder("leafwheels.orders.cancelled")
+                .description("Number of orders cancelled")
+                .register(meterRegistry);
+        this.totalOrdersGauge = Gauge.builder("leafwheels.orders.total", this, service -> service.orderRepository.count())
+                .description("Total number of orders")
+                .register(meterRegistry);
+    }
 
     @Override
     @Transactional
@@ -87,6 +120,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         Order savedOrder = orderRepository.save(order);
+        orderCreationsCounter.increment();
 
         return orderMapper.orderToOrderDto(savedOrder);
     }
@@ -143,6 +177,7 @@ public class OrderServiceImpl implements OrderService {
         orderItems.forEach(item -> item.setOrder(order));
 
         Order savedOrder = orderRepository.save(order);
+        orderCreationsCounter.increment();
 
         return orderMapper.orderToOrderDto(savedOrder);
     }
@@ -171,5 +206,6 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(OrderStatus.CANCELED);
         orderRepository.save(order);
+        orderCancellationsCounter.increment();
     }
 }

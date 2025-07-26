@@ -10,6 +10,8 @@ import com.yorku4413s25.leafwheels.web.mappers.PaymentMapper;
 import com.yorku4413s25.leafwheels.web.models.OrderDto;
 import com.yorku4413s25.leafwheels.web.models.PaymentRequestDto;
 import com.yorku4413s25.leafwheels.web.models.PaymentResponseDto;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,7 +24,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class PaymentServiceImpl implements PaymentService {
 
@@ -34,6 +35,41 @@ public class PaymentServiceImpl implements PaymentService {
     private final OrderService orderService;
     private final CartService cartService;
     private final CartChecksumService cartChecksumService;
+    private final MeterRegistry meterRegistry;
+    
+    private final Counter paymentAttemptsCounter;
+    private final Counter paymentSuccessCounter;
+    private final Counter paymentFailuresCounter;
+    
+    public PaymentServiceImpl(PaymentRepository paymentRepository,
+                             OrderRepository orderRepository,
+                             CartRepository cartRepository,
+                             VehicleRepository vehicleRepository,
+                             PaymentMapper paymentMapper,
+                             OrderService orderService,
+                             CartService cartService,
+                             CartChecksumService cartChecksumService,
+                             MeterRegistry meterRegistry) {
+        this.paymentRepository = paymentRepository;
+        this.orderRepository = orderRepository;
+        this.cartRepository = cartRepository;
+        this.vehicleRepository = vehicleRepository;
+        this.paymentMapper = paymentMapper;
+        this.orderService = orderService;
+        this.cartService = cartService;
+        this.cartChecksumService = cartChecksumService;
+        this.meterRegistry = meterRegistry;
+        
+        this.paymentAttemptsCounter = Counter.builder("leafwheels.payments.attempts")
+                .description("Total payment attempts")
+                .register(meterRegistry);
+        this.paymentSuccessCounter = Counter.builder("leafwheels.payments.success")
+                .description("Successful payments")
+                .register(meterRegistry);
+        this.paymentFailuresCounter = Counter.builder("leafwheels.payments.failures")
+                .description("Failed payments")
+                .register(meterRegistry);
+    }
 
     @Override
     @Transactional
@@ -80,6 +116,7 @@ public class PaymentServiceImpl implements PaymentService {
         Order order = orderRepository.findById(orderDto.getId())
             .orElseThrow(() -> new EntityNotFoundException(orderDto.getId(), Order.class));
 
+        paymentAttemptsCounter.increment();
         long totalPaymentAttempts = paymentRepository.countAllPayments();
         boolean isApproved = (totalPaymentAttempts % 3) != 2;
 
@@ -101,7 +138,8 @@ public class PaymentServiceImpl implements PaymentService {
             updateVehicleStatuses(order);
 
             cartService.clearCart(userId);
-
+            
+            paymentSuccessCounter.increment();
             log.info("Payment approved for order: {}", order.getId());
         } else {
             payment.setStatus(PaymentStatus.DENIED);
@@ -110,6 +148,7 @@ public class PaymentServiceImpl implements PaymentService {
             order.setStatus(OrderStatus.CANCELED);
             orderRepository.save(order);
 
+            paymentFailuresCounter.increment();
             log.info("Payment denied for order: {}", order.getId());
         }
 
