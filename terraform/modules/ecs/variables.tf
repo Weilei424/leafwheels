@@ -63,8 +63,58 @@ variable "desired_capacity" {
   default     = 1
 }
 
-variable "alb_target_group_arn" {
-  description = "ARN of the ALB target group"
+variable "backend_target_group_arn" {
+  description = "ARN of the ALB target group for backend"
+  type        = string
+}
+
+variable "frontend_target_group_arn" {
+  description = "ARN of the ALB target group for frontend"
+  type        = string
+}
+
+variable "backend_image" {
+  description = "Docker image for backend service"
+  type        = string
+}
+
+variable "frontend_image" {
+  description = "Docker image for frontend service"
+  type        = string
+}
+
+variable "database_name" {
+  description = "Database name"
+  type        = string
+  default     = "leafwheels"
+}
+
+variable "database_username" {
+  description = "Database username"
+  type        = string
+  default     = "user"
+}
+
+variable "database_password" {
+  description = "Database password"
+  type        = string
+  sensitive   = true
+}
+
+variable "efs_file_system_id" {
+  description = "EFS file system ID"
+  type        = string
+}
+
+
+variable "jwt_secret" {
+  description = "JWT secret key"
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_region" {
+  description = "AWS region"
   type        = string
 }
 

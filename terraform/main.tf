@@ -98,6 +98,30 @@ module "alb" {
   tags = local.common_tags
 }
 
+# Generate random password for database
+resource "random_password" "db_password" {
+  length  = 16
+  special = true
+}
+
+# Generate random JWT secret
+resource "random_password" "jwt_secret" {
+  length  = 64
+  special = false
+}
+
+module "efs" {
+  source = "./modules/efs"
+
+  name_prefix = local.name_prefix
+  environment = local.environment
+
+  subnet_ids        = module.vpc.private_subnet_ids
+  security_group_id = module.vpc.efs_security_group_id
+
+  tags = local.common_tags
+}
+
 module "ecs" {
   source = "./modules/ecs"
 
@@ -108,7 +132,21 @@ module "ecs" {
   subnet_ids           = module.vpc.private_subnet_ids
   ecs_instance_profile = module.iam.ecs_instance_profile_name
   ecs_security_group   = module.vpc.ecs_security_group_id
-  alb_target_group_arn = module.alb.target_group_arn
+
+  backend_target_group_arn  = module.alb.backend_target_group_arn
+  frontend_target_group_arn = module.alb.frontend_target_group_arn
+
+  backend_image  = "${module.ecr.backend_repository_url}:latest"
+  frontend_image = "${module.ecr.frontend_repository_url}:latest"
+
+  database_username = "user"
+  database_password = random_password.db_password.result
+
+  efs_file_system_id = module.efs.efs_file_system_id
+
+  jwt_secret = random_password.jwt_secret.result
+
+  aws_region = var.aws_region
 
   ami_id = data.aws_ami.ecs_optimized.id
 
