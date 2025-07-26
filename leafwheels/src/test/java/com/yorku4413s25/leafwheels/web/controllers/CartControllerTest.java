@@ -91,11 +91,19 @@ class CartControllerTest {
     @Test
     void clearCartShouldReturnNoContentWhenCartExists() throws Exception {
         UUID userId = UUID.randomUUID();
+        CartDto emptyCart = CartDto.builder()
+                .id(UUID.randomUUID())
+                .userId(userId)
+                .items(new ArrayList<>())
+                .totalPrice(BigDecimal.ZERO)
+                .build();
 
-        doNothing().when(cartService).clearCart(userId);
+        when(cartService.clearCart(userId)).thenReturn(emptyCart);
 
         mockMvc.perform(delete("/api/v1/carts/{userId}", userId))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(userId.toString()))
+                .andExpect(jsonPath("$.totalPrice").value(0));
 
         verify(cartService).clearCart(userId);
     }
@@ -105,6 +113,7 @@ class CartControllerTest {
                 .id(UUID.randomUUID())
                 .userId(userId)
                 .items(new ArrayList<>())
+                .totalPrice(BigDecimal.ZERO)
                 .build();
     }
 
