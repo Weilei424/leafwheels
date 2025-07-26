@@ -72,13 +72,41 @@ public class CartController {
             description = "Remove all items from the user's cart."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Cart cleared"),
+            @ApiResponse(responseCode = "200", description = "Cart cleared", content = @Content(schema = @Schema(implementation = CartDto.class))),
             @ApiResponse(responseCode = "404", description = "Cart not found", content = @Content)
     })
     @DeleteMapping("/{userId}")
     @PreAuthorize("@securityService.isCurrentUser(#userId, authentication) or hasRole('ADMIN')")
-    public ResponseEntity<Void> clearCart(@PathVariable UUID userId) {
-        cartService.clearCart(userId);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    public ResponseEntity<CartDto> clearCart(@PathVariable UUID userId) {
+        return new ResponseEntity<>(cartService.clearCart(userId), HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Increment accessory quantity",
+            description = "Increase the quantity of an accessory in the cart by 1."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Accessory quantity incremented", content = @Content(schema = @Schema(implementation = CartDto.class))),
+            @ApiResponse(responseCode = "400", description = "Not enough stock", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Accessory not found in cart", content = @Content)
+    })
+    @PutMapping("/{userId}/accessories/{accessoryId}/increment")
+    @PreAuthorize("@securityService.isCurrentUser(#userId, authentication) or hasRole('ADMIN')")
+    public ResponseEntity<CartDto> incrementAccessory(@PathVariable UUID userId, @PathVariable UUID accessoryId) {
+        return new ResponseEntity<>(cartService.incrementAccessoryInCart(userId, accessoryId), HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Decrement accessory quantity",
+            description = "Decrease the quantity of an accessory in the cart by 1. Removes the item if quantity reaches 0."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Accessory quantity decremented", content = @Content(schema = @Schema(implementation = CartDto.class))),
+            @ApiResponse(responseCode = "404", description = "Accessory not found in cart", content = @Content)
+    })
+    @PutMapping("/{userId}/accessories/{accessoryId}/decrement")
+    @PreAuthorize("@securityService.isCurrentUser(#userId, authentication) or hasRole('ADMIN')")
+    public ResponseEntity<CartDto> decrementAccessory(@PathVariable UUID userId, @PathVariable UUID accessoryId) {
+        return new ResponseEntity<>(cartService.decrementAccessoryInCart(userId, accessoryId), HttpStatus.OK);
     }
 }
