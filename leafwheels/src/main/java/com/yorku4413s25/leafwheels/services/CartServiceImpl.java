@@ -185,7 +185,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public void clearCart(UUID userId) {
+    public CartDto clearCart(UUID userId) {
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException(userId, Cart.class));
 
@@ -200,6 +200,7 @@ public class CartServiceImpl implements CartService {
         cart.getItems().clear();
 
         cartRepository.save(cart);
+        return cartMapper.cartToCartDto(cart);
     }
 
     private Cart createEmptyCart(UUID userId) {

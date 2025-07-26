@@ -9,7 +9,7 @@ public interface CartService {
     CartDto getCartByUserId(UUID userId);
     CartDto addItemToCart(UUID userId, CreateCartItemDto dto);
     CartDto removeItemFromCart(UUID userId, UUID cartItemId);
-    void clearCart(UUID userId);
+    CartDto clearCart(UUID userId);
     CartDto incrementAccessoryInCart(UUID userId, UUID accessoryId);
     CartDto decrementAccessoryInCart(UUID userId, UUID accessoryId);
 }
