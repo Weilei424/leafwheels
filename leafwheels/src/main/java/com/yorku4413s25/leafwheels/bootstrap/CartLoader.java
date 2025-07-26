@@ -59,61 +59,61 @@ public class CartLoader implements CommandLineRunner {
             User alice = users.get(0);
             cartService.addItemToCart(alice.getId(), CreateCartItemDto.builder()
                     .type(ItemType.VEHICLE).vehicleId(vehicles.get(0).getId())
-                    .unitPrice(vehicles.get(0).getPrice()).quantity(1).build());
+                    .quantity(1).build());
             cartService.addItemToCart(alice.getId(), CreateCartItemDto.builder()
                     .type(ItemType.VEHICLE).vehicleId(vehicles.get(1).getId())
-                    .unitPrice(vehicles.get(1).getPrice()).quantity(1).build());
+                    .quantity(1).build());
             cartService.addItemToCart(alice.getId(), CreateCartItemDto.builder()
                     .type(ItemType.VEHICLE).vehicleId(vehicles.get(2).getId())
-                    .unitPrice(vehicles.get(2).getPrice()).quantity(1).build());
+                    .quantity(1).build());
             cartService.addItemToCart(alice.getId(), CreateCartItemDto.builder()
                     .type(ItemType.ACCESSORY).accessoryId(accessories.get(0).getId())
-                    .unitPrice(accessories.get(0).getPrice()).quantity(2).build());
+                    .quantity(2).build());
             cartService.addItemToCart(alice.getId(), CreateCartItemDto.builder()
                     .type(ItemType.ACCESSORY).accessoryId(accessories.get(1).getId())
-                    .unitPrice(accessories.get(1).getPrice()).quantity(1).build());
+                    .quantity(1).build());
 
             // Bob's Cart - 2 vehicles + 3 accessories  
             User bob = users.get(1);
             cartService.addItemToCart(bob.getId(), CreateCartItemDto.builder()
                     .type(ItemType.VEHICLE).vehicleId(vehicles.get(3).getId())
-                    .unitPrice(vehicles.get(3).getPrice()).quantity(1).build());
+                    .quantity(1).build());
             cartService.addItemToCart(bob.getId(), CreateCartItemDto.builder()
                     .type(ItemType.VEHICLE).vehicleId(vehicles.get(4).getId())
-                    .unitPrice(vehicles.get(4).getPrice()).quantity(1).build());
+                    .quantity(1).build());
             cartService.addItemToCart(bob.getId(), CreateCartItemDto.builder()
                     .type(ItemType.ACCESSORY).accessoryId(accessories.get(2).getId())
-                    .unitPrice(accessories.get(2).getPrice()).quantity(1).build());
+                    .quantity(1).build());
             cartService.addItemToCart(bob.getId(), CreateCartItemDto.builder()
                     .type(ItemType.ACCESSORY).accessoryId(accessories.get(3).getId())
-                    .unitPrice(accessories.get(3).getPrice()).quantity(3).build());
+                    .quantity(3).build());
             cartService.addItemToCart(bob.getId(), CreateCartItemDto.builder()
                     .type(ItemType.ACCESSORY).accessoryId(accessories.get(4).getId())
-                    .unitPrice(accessories.get(4).getPrice()).quantity(2).build());
+                    .quantity(2).build());
 
             // Carol's Cart - 3 vehicles + 1 accessory
             User carol = users.get(2);
             cartService.addItemToCart(carol.getId(), CreateCartItemDto.builder()
                     .type(ItemType.VEHICLE).vehicleId(vehicles.get(5).getId())
-                    .unitPrice(vehicles.get(5).getPrice()).quantity(1).build());
+                    .quantity(1).build());
             cartService.addItemToCart(carol.getId(), CreateCartItemDto.builder()
                     .type(ItemType.VEHICLE).vehicleId(vehicles.get(6).getId())
-                    .unitPrice(vehicles.get(6).getPrice()).quantity(1).build());
+                    .quantity(1).build());
             cartService.addItemToCart(carol.getId(), CreateCartItemDto.builder()
                     .type(ItemType.VEHICLE).vehicleId(vehicles.get(7).getId())
-                    .unitPrice(vehicles.get(7).getPrice()).quantity(1).build());
+                    .quantity(1).build());
             cartService.addItemToCart(carol.getId(), CreateCartItemDto.builder()
                     .type(ItemType.ACCESSORY).accessoryId(accessories.get(5).getId())
-                    .unitPrice(accessories.get(5).getPrice()).quantity(1).build());
+                    .quantity(1).build());
 
             // David's Cart - 2 vehicles + 0 accessories
             User david = users.get(3);
             cartService.addItemToCart(david.getId(), CreateCartItemDto.builder()
                     .type(ItemType.VEHICLE).vehicleId(vehicles.get(8).getId())
-                    .unitPrice(vehicles.get(8).getPrice()).quantity(1).build());
+                    .quantity(1).build());
             cartService.addItemToCart(david.getId(), CreateCartItemDto.builder()
                     .type(ItemType.VEHICLE).vehicleId(vehicles.get(9).getId())
-                    .unitPrice(vehicles.get(9).getPrice()).quantity(1).build());
+                    .quantity(1).build());
         }
     }
 }

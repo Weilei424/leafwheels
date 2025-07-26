@@ -45,6 +45,8 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public CartDto addItemToCart(UUID userId, CreateCartItemDto dto) {
+        validateCartItemDto(dto);
+        
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseGet(() -> {
                     Cart newCart = Cart.builder().userId(userId).items(new ArrayList<>()).build();
@@ -74,7 +76,7 @@ public class CartServiceImpl implements CartService {
                     .cart(cart)
                     .type(ItemType.VEHICLE)
                     .vehicle(vehicle)
-                    .unitPrice(vehicle.getPrice())
+                    .unitPrice(vehicle.getDiscountPrice() != null ? vehicle.getDiscountPrice() : vehicle.getPrice())
                     .quantity(1) // always 1 for vehicles
                     .build();
 
@@ -108,7 +110,7 @@ public class CartServiceImpl implements CartService {
                         .cart(cart)
                         .type(ItemType.ACCESSORY)
                         .accessory(accessory)
-                        .unitPrice(accessory.getPrice())
+                        .unitPrice(accessory.getDiscountPrice() != null ? accessory.getDiscountPrice() : accessory.getPrice())
                         .quantity(dto.getQuantity())
                         .build();
                 cart.getItems().add(cartItem);
@@ -208,31 +210,26 @@ public class CartServiceImpl implements CartService {
         return cartRepository.save(cart);
     }
 
-    private CartItem buildCartItem(CreateCartItemDto dto, Cart cart) {
-        CartItem.CartItemBuilder itemBuilder = CartItem.builder()
-                .cart(cart)
-                .type(dto.getType())
-                .unitPrice(dto.getUnitPrice())
-                .quantity(dto.getQuantity());
-
+    private void validateCartItemDto(CreateCartItemDto dto) {
         if (dto.getType() == ItemType.VEHICLE) {
-            if (dto.getVehicleId() == null) throw new IllegalArgumentException("vehicleId required");
-            Vehicle vehicle = vehicleRepository.findById(dto.getVehicleId())
-                    .orElseThrow(() -> new EntityNotFoundException(dto.getVehicleId(), Vehicle.class));
-            itemBuilder.vehicle(vehicle).accessory(null);
-            itemBuilder.unitPrice(vehicle.getPrice()); // Always use up-to-date price!
-            itemBuilder.quantity(1); // Vehicles: always 1
+            if (dto.getVehicleId() == null) {
+                throw new IllegalArgumentException("vehicleId is required for VEHICLE type cart item");
+            }
+            if (dto.getAccessoryId() != null) {
+                throw new IllegalArgumentException("accessoryId must be null for VEHICLE type cart item");
+            }
         } else if (dto.getType() == ItemType.ACCESSORY) {
-            if (dto.getAccessoryId() == null) throw new IllegalArgumentException("accessoryId required");
-            Accessory accessory = accessoryRepository.findById(dto.getAccessoryId())
-                    .orElseThrow(() -> new EntityNotFoundException(dto.getAccessoryId(), Accessory.class));
-            itemBuilder.accessory(accessory).vehicle(null);
-            itemBuilder.unitPrice(accessory.getPrice());
+            if (dto.getAccessoryId() == null) {
+                throw new IllegalArgumentException("accessoryId is required for ACCESSORY type cart item");
+            }
+            if (dto.getVehicleId() != null) {
+                throw new IllegalArgumentException("vehicleId must be null for ACCESSORY type cart item");
+            }
         } else {
-            throw new IllegalArgumentException("Unsupported cart item type: " + dto.getType());
+            throw new IllegalArgumentException("Invalid cart item type: " + dto.getType());
         }
-        return itemBuilder.build();
     }
+
 
     private boolean isSameCartItem(CartItem a, CartItem b) {
         if (a.getType() != b.getType()) return false;
