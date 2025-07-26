@@ -64,23 +64,29 @@ jobs:
     - name: Comment PR
       if: github.event_name == 'pull_request' && always()
       uses: actions/github-script@v7
+      env:
+        PLAN_OUTPUT: ${{ steps.terraform-plan.outputs.plan_output }}
       with:
         script: |
-          const planOutput = `${{ steps.terraform-plan.outputs.plan_output }}`;
+          const planOutput = process.env.PLAN_OUTPUT || '';
           
           // GitHub comment limit is ~65k chars, leave some buffer for the rest of the comment
           const maxLength = 60000;
           
+          const fmtStatus = '${{ steps.terraform-fmt.outcome }}' === 'success' ? '✅ Passed' : '❌ Failed - Run `terraform fmt -recursive` to fix';
+          const validateStatus = '${{ steps.terraform-validate.outcome }}' === 'success' ? '✅ Passed' : '❌ Failed';
+          const planStatus = '${{ secrets.AWS_ACCESS_KEY_ID }}' ? '✅ Generated successfully' : '⚠️ Skipped (requires AWS credentials)';
+          
           const summaryComment = `## Terraform Check Results
           
           ### Format Check
-          ${{ steps.terraform-fmt.outcome == 'success' && '✅ Passed' || '❌ Failed - Run `terraform fmt -recursive` to fix' }}
+          ${fmtStatus}
           
           ### Validation Check  
-          ${{ steps.terraform-validate.outcome == 'success' && '✅ Passed' || '❌ Failed' }}
+          ${validateStatus}
           
           ### Plan Check
-          ${{ secrets.AWS_ACCESS_KEY_ID && '✅ Generated successfully' || '⚠️ Skipped (requires AWS credentials)' }}
+          ${planStatus}
           ${planOutput.length > maxLength ? '\n📋 **Plan output posted in separate comments below due to length**' : ''}
           `;
           
