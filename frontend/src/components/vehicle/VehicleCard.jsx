@@ -77,10 +77,8 @@ const VehicleCard = ({ vehicle, onAddToCart }) => {
             {/* Button */}
             <div className="p-4 pt-0">
                 <button
-                    onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (canAddToCart) onAddToCart(vehicle);
+                    onClick={() => {
+                        if (canAddToCart) onAddToCart();
                     }}
                     disabled={!canAddToCart}
                     className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-all
