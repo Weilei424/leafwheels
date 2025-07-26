@@ -239,7 +239,7 @@ export const AllReviewsPage = () => {
                     </span>
                                     </div>
                                     <h4 className="font-medium text-gray-900">{review.title}</h4>
-                                    <p className="text-sm text-gray-600">by {review.userName || "Anonymous"}</p>
+                                    <p className="text-sm text-gray-600">by {user.firstName || "Anonymous"}</p>
                                 </div>
 
                                 <p className="text-gray-700 text-sm line-clamp-3 mb-4">{review.comment}</p>

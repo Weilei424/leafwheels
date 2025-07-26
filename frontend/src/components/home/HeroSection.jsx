@@ -29,7 +29,7 @@ import { motion } from "framer-motion";
                 transition={{ delay: 0.4 }}
                 className="text-xl text-gray-600 leading-relaxed"
               >
-                Discover premium electric and hybrid vehicles that combine
+                Discover premium electric vehicles that combine
                 cutting-edge technology with sustainable transportation.
               </motion.p>
             </div>

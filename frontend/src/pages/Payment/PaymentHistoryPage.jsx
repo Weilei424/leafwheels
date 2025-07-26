@@ -40,7 +40,7 @@ const PaymentHistoryPage = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen bg-gray-50 py-8"
+      className="min-h-screen  py-8"
     >
       <div className="max-w-4xl mx-auto px-4">
         <motion.h1

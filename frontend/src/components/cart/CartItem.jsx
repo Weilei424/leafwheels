@@ -2,6 +2,13 @@ import React from 'react';
 import { motion } from "framer-motion";
 
 const CartItem = ({ item = {}, onRemove }) => {
+    console.log(item)
+    let isDiscounted = false
+    if (item.onDeal && item.discountPercentage > 0 && item.discountPrice < item.price){
+        isDiscounted = true
+    }
+
+
     return (
         <motion.div
             layout
@@ -14,8 +21,8 @@ const CartItem = ({ item = {}, onRemove }) => {
                 {/* Image */}
                 <div className="flex-shrink-0">
                     <img
-                        className="w-20 h-20 rounded-lg object-cover bg-gray-50"
-                        src={item.image || '/images/placeholder.jpg'}
+                        className="w-20 h-20 rounded-lg object-cover "
+                        // src={item.image || '/images/placeholder.jpg'}
                         alt={item.name}
                     />
                 </div>
@@ -37,9 +44,23 @@ const CartItem = ({ item = {}, onRemove }) => {
 
                 {/* Price */}
                 <div className="text-right">
-                    <p className="text-lg font-semibold text-gray-900">
-                        ${item.price ? item.price.toLocaleString() : '0'}
-                    </p>
+                    {isDiscounted ? (
+                        <div>
+                            <p className="text-lg font-semibold text-gray-900">
+                                ${item.discountPrice?.toLocaleString()}
+                            </p>
+                            <p className="text-sm text-gray-400 line-through">
+                                ${item.price?.toLocaleString()}
+                            </p>
+                            <p className="text-xs text-red-600 font-medium">
+                                {Math.round(item.discountPercentage * 100)}% OFF
+                            </p>
+                        </div>
+                    ) : (
+                        <p className="text-lg font-semibold text-gray-900">
+                            ${item.price?.toLocaleString()}
+                        </p>
+                    )}
                 </div>
             </div>
         </motion.div>

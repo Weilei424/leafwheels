@@ -9,7 +9,7 @@ const FeaturedProducts = ({ featuredProducts }) => {
                             key={product._id}
                             className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col"
                         >
-                            <div className="flex justify-center p-4 bg-gray-50 rounded-md">
+                            <div className="flex justify-center p-4  rounded-md">
                                 <img
                                     src={product.image}
                                     alt={product.name}

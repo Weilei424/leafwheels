@@ -1,68 +1,99 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
-const AccessoryCard = ({ accessory }) => (
-    <Link to={`/accessory/${accessory.id}`}>
-        <div className="
-        rounded-lg           /* Rounded corners */
-        border               /* Border */
-        border-gray-200      /* Light gray border */
-        bg-white             /* White background */
-        p-4                  /* Padding */
-        shadow-sm            /* Subtle shadow */
-        hover:shadow-md      /* Larger shadow on hover */
-        transition-shadow    /* Smooth shadow transition */
-        flex flex-col        /* Vertical layout */
-      "
+const AccessoryCard = ({ accessory, onAddToCart }) => {
+    if (!accessory) return null;
+
+    // Use backend calculated values directly
+    const originalPrice = Number(accessory.price || 0);
+    const discountPercent = Number(accessory.discountPercentage || 0);
+
+    const isOnDeal = accessory.onDeal && discountPercent > 0;
+    const finalPrice = isOnDeal
+        ? originalPrice * (1 - discountPercent)
+        : originalPrice;
+
+    // Check stock availability
+    const canAddToCart = accessory.quantity > 0;
+
+    // Stock status display
+    const getStockStatus = () => {
+        if (accessory.quantity === 0) return { label: "Out of Stock", color: "text-red-500" };
+        if (accessory.quantity <= 5) return { label: `${accessory.quantity} left`, color: "text-amber-600" };
+        return { label: "In Stock", color: "text-green-600" };
+    };
+
+    const stockStatus = getStockStatus();
+
+
+    return (
+        <motion.div
+            whileHover={{ y: -4 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden relative"
         >
-            {/* Image container */}
-            <div
-                className="
-          flex justify-center
-          p-4
-          bg-gray-50
-          rounded-md
-        "
-            >
-                <img
-                    src={accessory.image}
-                    alt={accessory.name}
-                    className="h-48 object-contain"
-                />
-            </div>
+            {/* Discount Badge */}
+            {isOnDeal  && (
+                <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-medium px-2 py-1 rounded-full z-10">
+                    {Math.round(discountPercent * 100)}% OFF
+                </div>
+            )}
 
-            {/* details */}
-            <div className="mt-4 flex flex-col flex-grow">
-                <h3 className="text-gray-900 text-lg font-sans">{accessory.name}</h3>
+            <Link to={`/accessory/${accessory.id}`} className="block">
+                {/* Image */}
+                <div className="aspect-[4/3] bg-gray-50 flex items-center justify-center p-4">
+                    <img
+                        // src={accessory.imageUrls?.[0] || "/placeholder-accessory.jpg"}
+                        alt={accessory.name}
+                        className="max-w-full max-h-full object-contain"
+                        onError={(e) => {
+                            e.target.src = "/placeholder-accessory.jpg";
+                        }}
+                    />
+                </div>
 
-                {/*<p className="text-gray-600 text-sm mt-1 line-clamp-3">*/}
-                {/*    {accessory.description}*/}
-                {/*</p>*/}
+                {/* Info */}
+                <div className="p-4 space-y-2">
+                    <h3 className="font-medium text-gray-900">
+                        {accessory.name}
+                    </h3>
 
-                <p className="text-black font-semibold mt-1">
-                    ${accessory.price.toFixed(2)}
-                </p>
+                    <span className={`text-xs font-medium ${stockStatus.color}`}>
+                        {stockStatus.label}
+                    </span>
 
+                    <div className="text-lg font-semibold text-gray-900">
+                        ${finalPrice.toLocaleString()}
+                        {isOnDeal && (
+                            <span className="ml-2 text-sm text-gray-400 line-through">
+                                ${originalPrice.toLocaleString()}
+                            </span>
+                        )}
+                    </div>
+                </div>
+            </Link>
+
+            {/* Button */}
+            <div className="p-4 pt-0">
                 <button
-                    className="
-            bg-green-600
-            hover:bg-green-700
-            text-white
-            font-semibold
-            py-2 px-4
-            mt-2
-            rounded
-            focus:outline-none
-            focus:ring-2 focus:ring-green-500
-            transition-colors duration-300
-          "
-                    aria-label={`Add ${accessory.name} to cart`}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (canAddToCart) onAddToCart(accessory);
+                    }}
+                    disabled={!canAddToCart}
+                    className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-all
+                        ${canAddToCart
+                        ? "bg-green-600 text-white hover:bg-green-700"
+                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    }`}
                 >
-                    Add to Cart
+                    {canAddToCart ? "Add to Cart" : "Out of Stock"}
                 </button>
             </div>
-        </div>
-    </Link>
-);
+        </motion.div>
+    );
+};
 
 export default AccessoryCard;

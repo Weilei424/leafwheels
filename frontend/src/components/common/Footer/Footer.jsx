@@ -42,7 +42,7 @@ const Footer = () => {
                             <h2 className="text-xl font-light text-gray-900">LeafWheels</h2>
                         </div>
                         <p className="text-gray-600 text-sm leading-relaxed mb-6">
-                            Your trusted partner for premium electric and hybrid vehicles.
+                            Your trusted partner for premium electric vehicles.
                             Driving towards a sustainable future, one wheel at a time.
                         </p>
 
@@ -76,7 +76,6 @@ const Footer = () => {
                             {[
                                 { name: "Browse Vehicles", href: "/store" },
                                 { name: "Electric Cars", href: "/store?category=electric" },
-                                { name: "Hybrid Vehicles", href: "/store?category=hybrid" },
                                 { name: "Test Drive", href: "/test-drive" },
                                 { name: "Financing", href: "/financing" },
                             ].map((link, index) => (

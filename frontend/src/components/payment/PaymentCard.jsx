@@ -11,9 +11,9 @@ const PaymentCard = ({ payment, onCancel, index }) => {
       case "PENDING":
         return "text-yellow-600 bg-yellow-50";
       case "CANCELLED":
-        return "text-gray-600 bg-gray-50";
+        return "text-gray-600 ";
       default:
-        return "text-gray-600 bg-gray-50";
+        return "text-gray-600 ";
     }
   };
 
