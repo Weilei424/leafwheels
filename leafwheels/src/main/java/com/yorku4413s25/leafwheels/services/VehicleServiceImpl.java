@@ -10,6 +10,8 @@ import com.yorku4413s25.leafwheels.exception.EntityNotFoundException;
 import com.yorku4413s25.leafwheels.repositories.VehicleRepository;
 import com.yorku4413s25.leafwheels.web.mappers.VehicleMapper;
 import com.yorku4413s25.leafwheels.web.models.VehicleDto;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,16 +27,39 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@AllArgsConstructor
 @Service
 @Transactional
 public class VehicleServiceImpl implements VehicleService {
 
     private final VehicleRepository vehicleRepository;
     private final VehicleMapper vehicleMapper;
+    private final MeterRegistry meterRegistry;
+    
+    private final Counter vehicleViewsCounter;
+    private final Counter vehicleSearchesCounter;
+    private final Counter vehicleCreationsCounter;
+    
+    public VehicleServiceImpl(VehicleRepository vehicleRepository, 
+                             VehicleMapper vehicleMapper, 
+                             MeterRegistry meterRegistry) {
+        this.vehicleRepository = vehicleRepository;
+        this.vehicleMapper = vehicleMapper;
+        this.meterRegistry = meterRegistry;
+        
+        this.vehicleViewsCounter = Counter.builder("leafwheels.vehicle.views")
+                .description("Number of vehicle detail views")
+                .register(meterRegistry);
+        this.vehicleSearchesCounter = Counter.builder("leafwheels.vehicle.searches")
+                .description("Number of vehicle searches performed")
+                .register(meterRegistry);
+        this.vehicleCreationsCounter = Counter.builder("leafwheels.vehicle.creations")
+                .description("Number of vehicles created")
+                .register(meterRegistry);
+    }
 
     @Override
     public VehicleDto getById(UUID vehicleId) {
+        vehicleViewsCounter.increment();
         return vehicleMapper.vehicleToVehicleDto(
                 vehicleRepository.findById(vehicleId)
                         .orElseThrow(() -> new EntityNotFoundException(vehicleId, Vehicle.class))
@@ -43,6 +68,7 @@ public class VehicleServiceImpl implements VehicleService {
 
     @Override
     public VehicleDto create(VehicleDto vehicleDto) {
+        vehicleCreationsCounter.increment();
         Vehicle vehicle = vehicleMapper.vehicleDtoToVehicle(vehicleDto);
         if (vehicle.getDiscountPercentage() == null) {
             vehicle.setDiscountPercentage(BigDecimal.ZERO);
@@ -98,6 +124,7 @@ public class VehicleServiceImpl implements VehicleService {
             Boolean hasAccidentHistory,
             Pageable pageable
     ) {
+        vehicleSearchesCounter.increment();
         List<Specification<Vehicle>> specs = new ArrayList<>();
 
         addIfNotNull(specs, year, VehicleSpecification::hasYear);
