@@ -20,8 +20,5 @@ public class CreateCartItemDto {
     private UUID accessoryId;
 
     @NonNull
-    private BigDecimal unitPrice;
-
-    @NonNull
     private int quantity;
 }

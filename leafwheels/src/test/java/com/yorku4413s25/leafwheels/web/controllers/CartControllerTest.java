@@ -13,7 +13,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -112,7 +111,6 @@ class CartControllerTest {
         return CreateCartItemDto.builder()
                 .type(ItemType.VEHICLE)
                 .vehicleId(UUID.randomUUID())
-                .unitPrice(new BigDecimal("25000"))
                 .quantity(1)
                 .build();
     }
