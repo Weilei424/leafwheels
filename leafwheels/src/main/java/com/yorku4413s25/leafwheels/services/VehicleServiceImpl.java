@@ -34,6 +34,7 @@ public class VehicleServiceImpl implements VehicleService {
     private final VehicleRepository vehicleRepository;
     private final VehicleMapper vehicleMapper;
     private final MeterRegistry meterRegistry;
+    private final DatabaseMetricsService databaseMetricsService;
     
     private final Counter vehicleViewsCounter;
     private final Counter vehicleSearchesCounter;
@@ -41,10 +42,12 @@ public class VehicleServiceImpl implements VehicleService {
     
     public VehicleServiceImpl(VehicleRepository vehicleRepository, 
                              VehicleMapper vehicleMapper, 
-                             MeterRegistry meterRegistry) {
+                             MeterRegistry meterRegistry,
+                             DatabaseMetricsService databaseMetricsService) {
         this.vehicleRepository = vehicleRepository;
         this.vehicleMapper = vehicleMapper;
         this.meterRegistry = meterRegistry;
+        this.databaseMetricsService = databaseMetricsService;
         
         this.vehicleViewsCounter = Counter.builder("leafwheels.vehicle.views")
                 .description("Number of vehicle detail views")
@@ -60,21 +63,41 @@ public class VehicleServiceImpl implements VehicleService {
     @Override
     public VehicleDto getById(UUID vehicleId) {
         vehicleViewsCounter.increment();
-        return vehicleMapper.vehicleToVehicleDto(
-                vehicleRepository.findById(vehicleId)
-                        .orElseThrow(() -> new EntityNotFoundException(vehicleId, Vehicle.class))
-        );
+        
+        var timer = databaseMetricsService.startQueryTimer();
+        try {
+            databaseMetricsService.recordQuery("vehicle_select");
+            VehicleDto result = vehicleMapper.vehicleToVehicleDto(
+                    vehicleRepository.findById(vehicleId)
+                            .orElseThrow(() -> new EntityNotFoundException(vehicleId, Vehicle.class))
+            );
+            databaseMetricsService.recordQueryTime(timer, "vehicle_select");
+            return result;
+        } catch (Exception e) {
+            databaseMetricsService.recordError("vehicle_select", e);
+            throw e;
+        }
     }
 
     @Override
     public VehicleDto create(VehicleDto vehicleDto) {
         vehicleCreationsCounter.increment();
-        Vehicle vehicle = vehicleMapper.vehicleDtoToVehicle(vehicleDto);
-        if (vehicle.getDiscountPercentage() == null) {
-            vehicle.setDiscountPercentage(BigDecimal.ZERO);
+        
+        var timer = databaseMetricsService.startQueryTimer();
+        try {
+            databaseMetricsService.recordQuery("vehicle_insert");
+            Vehicle vehicle = vehicleMapper.vehicleDtoToVehicle(vehicleDto);
+            if (vehicle.getDiscountPercentage() == null) {
+                vehicle.setDiscountPercentage(BigDecimal.ZERO);
+            }
+            vehicle.updateDiscountCalculations();
+            VehicleDto result = vehicleMapper.vehicleToVehicleDto(vehicleRepository.save(vehicle));
+            databaseMetricsService.recordQueryTime(timer, "vehicle_insert");
+            return result;
+        } catch (Exception e) {
+            databaseMetricsService.recordError("vehicle_insert", e);
+            throw e;
         }
-        vehicle.updateDiscountCalculations();
-        return vehicleMapper.vehicleToVehicleDto(vehicleRepository.save(vehicle));
     }
 
     @Override
