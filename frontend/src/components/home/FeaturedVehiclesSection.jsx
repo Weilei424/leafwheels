@@ -1,9 +1,21 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import VehicleCard from "../../components/vehicle/VehicleCard.jsx";
+import {handleAddToCart} from "../../hooks/handleAddToCart.js";
+
+
+
 
 const FeaturedVehiclesSection = ({ vehicles }) => {
+
+  const onAddToCart = (vehicle) => {
+    handleAddToCart({
+      product: vehicle,
+      type: "VEHICLE"
+    });
+  };
+
+
   return (
     <section className="py-20 ">
       <div className="max-w-7xl mx-auto px-4">
@@ -24,20 +36,23 @@ const FeaturedVehiclesSection = ({ vehicles }) => {
 
         {vehicles.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {vehicles.map((vehicle, index) => (
-              <motion.div
-                key={vehicle.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <VehicleCard
-                  vehicle={{ ...vehicle, category: "Vehicles" }}
-                  onAddToCart={() => {}}
-                />
-              </motion.div>
-            ))}
+            {vehicles.map((vehicle, index) => {
+
+              return (
+                  <motion.div
+                      key={vehicle.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      viewport={{ once: true }}
+                  >
+                    <VehicleCard
+                        vehicle={vehicle}
+                        onAddToCart={() => onAddToCart(vehicle)}
+                    />
+                  </motion.div>
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-12">
