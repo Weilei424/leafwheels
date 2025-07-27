@@ -7,23 +7,23 @@ variable "aws_region" {
 variable "instance_type" {
   description = "EC2 instance type for ECS cluster"
   type        = string
-  default     = "t2.micro"
+  default     = "t3.small"
 }
 
 variable "min_capacity" {
   description = "Minimum number of instances in ECS cluster"
   type        = number
-  default     = 1
+  default     = 2
 }
 
 variable "max_capacity" {
   description = "Maximum number of instances in ECS cluster"
   type        = number
-  default     = 1
+  default     = 4
 }
 
 variable "desired_capacity" {
   description = "Desired number of instances in ECS cluster"
   type        = number
-  default     = 1
+  default     = 3
 }
