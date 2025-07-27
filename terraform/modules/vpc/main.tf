@@ -88,6 +88,8 @@ resource "aws_route_table" "private" {
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-private-rt"
   })
+
+  depends_on = [aws_nat_gateway.main]
 }
 
 resource "aws_route_table_association" "public" {
