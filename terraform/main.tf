@@ -150,5 +150,10 @@ module "ecs" {
 
   ami_id = data.aws_ami.ecs_optimized.id
 
+  min_capacity     = var.min_capacity
+  max_capacity     = var.max_capacity
+  desired_capacity = var.desired_capacity
+  instance_type    = var.instance_type
+
   tags = local.common_tags
 }
