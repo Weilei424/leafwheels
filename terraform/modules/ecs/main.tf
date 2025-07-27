@@ -25,6 +25,7 @@ resource "aws_launch_template" "ecs" {
 
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
     cluster_name = aws_ecs_cluster.main.name
+    aws_region   = var.aws_region
   }))
 
   tag_specifications {
