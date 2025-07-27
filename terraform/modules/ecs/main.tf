@@ -515,7 +515,7 @@ resource "aws_service_discovery_service" "postgres" {
 
     dns_records {
       ttl  = 10
-      type = "A"
+      type = "SRV"
     }
 
     routing_policy = "MULTIVALUE"
@@ -539,7 +539,7 @@ resource "aws_service_discovery_service" "redis" {
 
     dns_records {
       ttl  = 10
-      type = "A"
+      type = "SRV"
     }
 
     routing_policy = "MULTIVALUE"
