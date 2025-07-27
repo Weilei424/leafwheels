@@ -108,6 +108,15 @@ resource "aws_ecs_cluster_capacity_providers" "main" {
 }
 
 # CloudWatch Log Groups
+resource "aws_cloudwatch_log_group" "cluster" {
+  name              = "/ecs/${var.name_prefix}-cluster"
+  retention_in_days = 7
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-cluster-logs"
+  })
+}
+
 resource "aws_cloudwatch_log_group" "backend" {
   name              = "/ecs/${var.name_prefix}-backend"
   retention_in_days = 7
@@ -131,6 +140,8 @@ resource "aws_ecs_task_definition" "backend" {
   family                   = "${var.name_prefix}-backend"
   requires_compatibilities = ["EC2"]
   network_mode             = "bridge"
+  execution_role_arn       = var.ecs_task_execution_role_arn
+  task_role_arn            = var.ecs_task_role_arn
 
   container_definitions = jsonencode([{
     name      = "backend"
@@ -186,8 +197,9 @@ resource "aws_ecs_task_definition" "backend" {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        "awslogs-group"  = aws_cloudwatch_log_group.backend.name
-        "awslogs-region" = var.aws_region
+        "awslogs-group"         = aws_cloudwatch_log_group.backend.name
+        "awslogs-region"        = var.aws_region
+        "awslogs-stream-prefix" = "ecs"
       }
     }
   }])
@@ -202,6 +214,8 @@ resource "aws_ecs_task_definition" "frontend" {
   family                   = "${var.name_prefix}-frontend"
   requires_compatibilities = ["EC2"]
   network_mode             = "bridge"
+  execution_role_arn       = var.ecs_task_execution_role_arn
+  task_role_arn            = var.ecs_task_role_arn
 
   container_definitions = jsonencode([{
     name      = "frontend"
@@ -218,8 +232,9 @@ resource "aws_ecs_task_definition" "frontend" {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        "awslogs-group"  = aws_cloudwatch_log_group.frontend.name
-        "awslogs-region" = var.aws_region
+        "awslogs-group"         = aws_cloudwatch_log_group.frontend.name
+        "awslogs-region"        = var.aws_region
+        "awslogs-stream-prefix" = "ecs"
       }
     }
   }])
@@ -238,6 +253,12 @@ resource "aws_ecs_service" "backend" {
 
   deployment_maximum_percent         = 200
   deployment_minimum_healthy_percent = 50
+
+  capacity_provider_strategy {
+    capacity_provider = aws_ecs_capacity_provider.main.name
+    weight            = 100
+    base              = 1
+  }
 
   load_balancer {
     target_group_arn = var.backend_target_group_arn
@@ -262,6 +283,12 @@ resource "aws_ecs_service" "frontend" {
   deployment_maximum_percent         = 200
   deployment_minimum_healthy_percent = 50
 
+  capacity_provider_strategy {
+    capacity_provider = aws_ecs_capacity_provider.main.name
+    weight            = 100
+    base              = 1
+  }
+
   load_balancer {
     target_group_arn = var.frontend_target_group_arn
     container_name   = "frontend"
@@ -280,6 +307,8 @@ resource "aws_ecs_task_definition" "postgres" {
   family                   = "${var.name_prefix}-postgres"
   requires_compatibilities = ["EC2"]
   network_mode             = "bridge"
+  execution_role_arn       = var.ecs_task_execution_role_arn
+  task_role_arn            = var.ecs_task_role_arn
 
   volume {
     name = "postgres-data"
@@ -327,8 +356,9 @@ resource "aws_ecs_task_definition" "postgres" {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        "awslogs-group"  = aws_cloudwatch_log_group.postgres.name
-        "awslogs-region" = var.aws_region
+        "awslogs-group"         = aws_cloudwatch_log_group.postgres.name
+        "awslogs-region"        = var.aws_region
+        "awslogs-stream-prefix" = "ecs"
       }
     }
   }])
@@ -343,6 +373,8 @@ resource "aws_ecs_task_definition" "redis" {
   family                   = "${var.name_prefix}-redis"
   requires_compatibilities = ["EC2"]
   network_mode             = "bridge"
+  execution_role_arn       = var.ecs_task_execution_role_arn
+  task_role_arn            = var.ecs_task_role_arn
 
   volume {
     name = "redis-data"
@@ -377,8 +409,9 @@ resource "aws_ecs_task_definition" "redis" {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        "awslogs-group"  = aws_cloudwatch_log_group.redis.name
-        "awslogs-region" = var.aws_region
+        "awslogs-group"         = aws_cloudwatch_log_group.redis.name
+        "awslogs-region"        = var.aws_region
+        "awslogs-stream-prefix" = "ecs"
       }
     }
   }])
@@ -418,6 +451,12 @@ resource "aws_ecs_service" "postgres" {
   deployment_maximum_percent         = 100
   deployment_minimum_healthy_percent = 0
 
+  capacity_provider_strategy {
+    capacity_provider = aws_ecs_capacity_provider.main.name
+    weight            = 100
+    base              = 1
+  }
+
   service_registries {
     registry_arn   = aws_service_discovery_service.postgres.arn
     container_name = "postgres"
@@ -438,6 +477,12 @@ resource "aws_ecs_service" "redis" {
 
   deployment_maximum_percent         = 100
   deployment_minimum_healthy_percent = 0
+
+  capacity_provider_strategy {
+    capacity_provider = aws_ecs_capacity_provider.main.name
+    weight            = 100
+    base              = 1
+  }
 
   service_registries {
     registry_arn   = aws_service_discovery_service.redis.arn
@@ -469,12 +514,15 @@ resource "aws_service_discovery_service" "postgres" {
 
     dns_records {
       ttl  = 10
-      type = "SRV"
+      type = "A"
     }
 
     routing_policy = "MULTIVALUE"
   }
 
+  health_check_custom_config {
+    failure_threshold = 1
+  }
 
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-postgres-discovery"
@@ -490,12 +538,15 @@ resource "aws_service_discovery_service" "redis" {
 
     dns_records {
       ttl  = 10
-      type = "SRV"
+      type = "A"
     }
 
     routing_policy = "MULTIVALUE"
   }
 
+  health_check_custom_config {
+    failure_threshold = 1
+  }
 
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-redis-discovery"

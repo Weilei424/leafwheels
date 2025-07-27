@@ -14,7 +14,7 @@ cat > /etc/docker/daemon.json <<EOF
   "log-driver": "awslogs",
   "log-opts": {
     "awslogs-group": "/ecs/${cluster_name}",
-    "awslogs-region": "us-east-1",
+    "awslogs-region": "${aws_region}",
     "awslogs-stream-prefix": "ecs"
   }
 }
