@@ -42,7 +42,7 @@ variable "instance_type" {
 variable "key_name" {
   description = "Key pair name for EC2 instances"
   type        = string
-  default     = null
+  default     = "debug-ecs"
 }
 
 variable "min_capacity" {

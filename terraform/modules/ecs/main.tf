@@ -11,102 +11,105 @@ resource "aws_ecs_cluster" "main" {
   })
 }
 
-resource "aws_launch_template" "ecs" {
-  name_prefix   = "${var.name_prefix}-ecs-"
-  image_id      = var.ami_id
-  instance_type = var.instance_type
-  key_name      = var.key_name
+# Launch template not needed for Fargate
+# resource "aws_launch_template" "ecs" {
+#   name_prefix   = "${var.name_prefix}-ecs-"
+#   image_id      = var.ami_id
+#   instance_type = var.instance_type
+#   key_name      = var.key_name
+#
+#   vpc_security_group_ids = [var.ecs_security_group]
+#
+#   iam_instance_profile {
+#     name = var.ecs_instance_profile
+#   }
+#
+#   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
+#     cluster_name = aws_ecs_cluster.main.name
+#     aws_region   = var.aws_region
+#   }))
+#
+#   tag_specifications {
+#     resource_type = "instance"
+#     tags = merge(var.tags, {
+#       Name = "${var.name_prefix}-ecs-instance"
+#     })
+#   }
+#
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
 
-  vpc_security_group_ids = [var.ecs_security_group]
+# Auto Scaling Group not needed for Fargate
+# resource "aws_autoscaling_group" "ecs" {
+#   name                      = "${var.name_prefix}-ecs-asg"
+#   vpc_zone_identifier       = var.subnet_ids
+#   min_size                  = var.min_capacity
+#   max_size                  = var.max_capacity
+#   desired_capacity          = var.desired_capacity
+#   health_check_type         = "ELB"
+#   health_check_grace_period = 300
+#
+#   launch_template {
+#     id      = aws_launch_template.ecs.id
+#     version = "$Latest"
+#   }
+#
+#   tag {
+#     key                 = "Name"
+#     value               = "${var.name_prefix}-ecs-asg"
+#     propagate_at_launch = false
+#   }
+#
+#   tag {
+#     key                 = "AmazonECSManaged"
+#     value               = true
+#     propagate_at_launch = false
+#   }
+#
+#   dynamic "tag" {
+#     for_each = var.tags
+#     content {
+#       key                 = tag.key
+#       value               = tag.value
+#       propagate_at_launch = false
+#     }
+#   }
+#
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
 
-  iam_instance_profile {
-    name = var.ecs_instance_profile
-  }
+# Capacity provider not needed for Fargate
+# resource "aws_ecs_capacity_provider" "main" {
+#   name = "${var.name_prefix}-capacity-provider"
+#
+#   auto_scaling_group_provider {
+#     auto_scaling_group_arn         = aws_autoscaling_group.ecs.arn
+#     managed_termination_protection = "DISABLED"
+#
+#     managed_scaling {
+#       maximum_scaling_step_size = 1
+#       minimum_scaling_step_size = 1
+#       status                    = "ENABLED"
+#       target_capacity           = 100
+#     }
+#   }
+# }
 
-  user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    cluster_name = aws_ecs_cluster.main.name
-    aws_region   = var.aws_region
-  }))
-
-  tag_specifications {
-    resource_type = "instance"
-    tags = merge(var.tags, {
-      Name = "${var.name_prefix}-ecs-instance"
-    })
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_autoscaling_group" "ecs" {
-  name                      = "${var.name_prefix}-ecs-asg"
-  vpc_zone_identifier       = var.subnet_ids
-  min_size                  = var.min_capacity
-  max_size                  = var.max_capacity
-  desired_capacity          = var.desired_capacity
-  health_check_type         = "ELB"
-  health_check_grace_period = 300
-
-  launch_template {
-    id      = aws_launch_template.ecs.id
-    version = "$Latest"
-  }
-
-  tag {
-    key                 = "Name"
-    value               = "${var.name_prefix}-ecs-asg"
-    propagate_at_launch = false
-  }
-
-  tag {
-    key                 = "AmazonECSManaged"
-    value               = true
-    propagate_at_launch = false
-  }
-
-  dynamic "tag" {
-    for_each = var.tags
-    content {
-      key                 = tag.key
-      value               = tag.value
-      propagate_at_launch = false
-    }
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_ecs_capacity_provider" "main" {
-  name = "${var.name_prefix}-capacity-provider"
-
-  auto_scaling_group_provider {
-    auto_scaling_group_arn         = aws_autoscaling_group.ecs.arn
-    managed_termination_protection = "DISABLED"
-
-    managed_scaling {
-      maximum_scaling_step_size = 1
-      minimum_scaling_step_size = 1
-      status                    = "ENABLED"
-      target_capacity           = 100
-    }
-  }
-}
-
-resource "aws_ecs_cluster_capacity_providers" "main" {
-  cluster_name = aws_ecs_cluster.main.name
-
-  capacity_providers = [aws_ecs_capacity_provider.main.name]
-
-  default_capacity_provider_strategy {
-    base              = 1
-    weight            = 100
-    capacity_provider = aws_ecs_capacity_provider.main.name
-  }
-}
+# resource "aws_ecs_cluster_capacity_providers" "main" {
+#   cluster_name = aws_ecs_cluster.main.name
+#
+#   capacity_providers = [aws_ecs_capacity_provider.main.name]
+#
+#   default_capacity_provider_strategy {
+#     base              = 1
+#     weight            = 100
+#     capacity_provider = aws_ecs_capacity_provider.main.name
+#   }
+# }
 
 # CloudWatch Log Groups
 resource "aws_cloudwatch_log_group" "cluster" {
@@ -139,8 +142,10 @@ resource "aws_cloudwatch_log_group" "frontend" {
 # ECS Task Definition for Backend
 resource "aws_ecs_task_definition" "backend" {
   family                   = "${var.name_prefix}-backend"
-  requires_compatibilities = ["EC2"]
-  network_mode             = "bridge"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = "512"
+  memory                   = "1024"
   execution_role_arn       = var.ecs_task_execution_role_arn
   task_role_arn            = var.ecs_task_role_arn
 
@@ -152,7 +157,6 @@ resource "aws_ecs_task_definition" "backend" {
 
     portMappings = [{
       containerPort = 8080
-      hostPort      = 0
       protocol      = "tcp"
     }]
 
@@ -213,8 +217,10 @@ resource "aws_ecs_task_definition" "backend" {
 # ECS Task Definition for Frontend
 resource "aws_ecs_task_definition" "frontend" {
   family                   = "${var.name_prefix}-frontend"
-  requires_compatibilities = ["EC2"]
-  network_mode             = "bridge"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = "256"
+  memory                   = "512"
   execution_role_arn       = var.ecs_task_execution_role_arn
   task_role_arn            = var.ecs_task_role_arn
 
@@ -226,7 +232,6 @@ resource "aws_ecs_task_definition" "frontend" {
 
     portMappings = [{
       containerPort = 3000
-      hostPort      = 0
       protocol      = "tcp"
     }]
 
@@ -254,11 +259,12 @@ resource "aws_ecs_service" "backend" {
 
   deployment_maximum_percent         = 200
   deployment_minimum_healthy_percent = 50
+  launch_type                        = "FARGATE"
 
-  capacity_provider_strategy {
-    capacity_provider = aws_ecs_capacity_provider.main.name
-    weight            = 100
-    base              = 1
+  network_configuration {
+    subnets          = var.subnet_ids
+    security_groups  = [var.ecs_security_group]
+    assign_public_ip = false
   }
 
   load_balancer {
@@ -283,11 +289,12 @@ resource "aws_ecs_service" "frontend" {
 
   deployment_maximum_percent         = 200
   deployment_minimum_healthy_percent = 50
+  launch_type                        = "FARGATE"
 
-  capacity_provider_strategy {
-    capacity_provider = aws_ecs_capacity_provider.main.name
-    weight            = 100
-    base              = 1
+  network_configuration {
+    subnets          = var.subnet_ids
+    security_groups  = [var.ecs_security_group]
+    assign_public_ip = false
   }
 
   load_balancer {
@@ -306,8 +313,10 @@ resource "aws_ecs_service" "frontend" {
 # ECS Task Definition for PostgreSQL
 resource "aws_ecs_task_definition" "postgres" {
   family                   = "${var.name_prefix}-postgres"
-  requires_compatibilities = ["EC2"]
-  network_mode             = "bridge"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = "512"
+  memory                   = "1024"
   execution_role_arn       = var.ecs_task_execution_role_arn
   task_role_arn            = var.ecs_task_role_arn
 
@@ -316,7 +325,7 @@ resource "aws_ecs_task_definition" "postgres" {
 
     efs_volume_configuration {
       file_system_id     = var.efs_file_system_id
-      root_directory     = "/postgres"
+      root_directory     = "/"
       transit_encryption = "ENABLED"
     }
   }
@@ -329,7 +338,6 @@ resource "aws_ecs_task_definition" "postgres" {
 
     portMappings = [{
       containerPort = 5432
-      hostPort      = 0
       protocol      = "tcp"
     }]
 
@@ -350,7 +358,7 @@ resource "aws_ecs_task_definition" "postgres" {
 
     mountPoints = [{
       sourceVolume  = "postgres-data"
-      containerPath = "/var/lib/postgresql/data"
+      containerPath = "/var/lib/postgresql/data/postgres"
       readOnly      = false
     }]
 
@@ -372,8 +380,10 @@ resource "aws_ecs_task_definition" "postgres" {
 # ECS Task Definition for Redis
 resource "aws_ecs_task_definition" "redis" {
   family                   = "${var.name_prefix}-redis"
-  requires_compatibilities = ["EC2"]
-  network_mode             = "bridge"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = "256"
+  memory                   = "512"
   execution_role_arn       = var.ecs_task_execution_role_arn
   task_role_arn            = var.ecs_task_role_arn
 
@@ -382,7 +392,7 @@ resource "aws_ecs_task_definition" "redis" {
 
     efs_volume_configuration {
       file_system_id     = var.efs_file_system_id
-      root_directory     = "/redis"
+      root_directory     = "/"
       transit_encryption = "ENABLED"
     }
   }
@@ -395,7 +405,6 @@ resource "aws_ecs_task_definition" "redis" {
 
     portMappings = [{
       containerPort = 6379
-      hostPort      = 0
       protocol      = "tcp"
     }]
 
@@ -451,17 +460,17 @@ resource "aws_ecs_service" "postgres" {
 
   deployment_maximum_percent         = 100
   deployment_minimum_healthy_percent = 0
+  launch_type                        = "FARGATE"
 
-  capacity_provider_strategy {
-    capacity_provider = aws_ecs_capacity_provider.main.name
-    weight            = 100
-    base              = 1
+  network_configuration {
+    subnets          = var.subnet_ids
+    security_groups  = [var.ecs_security_group]
+    assign_public_ip = false
   }
 
   service_registries {
     registry_arn   = aws_service_discovery_service.postgres.arn
     container_name = "postgres"
-    container_port = 5432
   }
 
   tags = merge(var.tags, {
@@ -478,17 +487,17 @@ resource "aws_ecs_service" "redis" {
 
   deployment_maximum_percent         = 100
   deployment_minimum_healthy_percent = 0
+  launch_type                        = "FARGATE"
 
-  capacity_provider_strategy {
-    capacity_provider = aws_ecs_capacity_provider.main.name
-    weight            = 100
-    base              = 1
+  network_configuration {
+    subnets          = var.subnet_ids
+    security_groups  = [var.ecs_security_group]
+    assign_public_ip = false
   }
 
   service_registries {
     registry_arn   = aws_service_discovery_service.redis.arn
     container_name = "redis"
-    container_port = 6379
   }
 
   tags = merge(var.tags, {
@@ -515,7 +524,7 @@ resource "aws_service_discovery_service" "postgres" {
 
     dns_records {
       ttl  = 10
-      type = "SRV"
+      type = "A"
     }
 
     routing_policy = "MULTIVALUE"
@@ -539,7 +548,7 @@ resource "aws_service_discovery_service" "redis" {
 
     dns_records {
       ttl  = 10
-      type = "SRV"
+      type = "A"
     }
 
     routing_policy = "MULTIVALUE"
