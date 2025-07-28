@@ -38,9 +38,29 @@ output "cloudfront_domain_name" {
   value       = module.s3.cloudfront_domain_name
 }
 
-output "ecr_repository_url" {
-  description = "URL of the ECR repository"
-  value       = module.ecr.repository_url
+output "backend_ecr_repository_url" {
+  description = "URL of the backend ECR repository"
+  value       = module.ecr.backend_repository_url
+}
+
+output "frontend_ecr_repository_url" {
+  description = "URL of the frontend ECR repository"
+  value       = module.ecr.frontend_repository_url
+}
+
+output "efs_file_system_id" {
+  description = "EFS file system ID"
+  value       = module.efs.efs_file_system_id
+}
+
+output "postgres_service_discovery_name" {
+  description = "PostgreSQL service discovery DNS name"
+  value       = "postgres.leafwheels.local"
+}
+
+output "redis_service_discovery_name" {
+  description = "Redis service discovery DNS name"
+  value       = "redis.leafwheels.local"
 }
 
 output "ecs_task_execution_role_arn" {

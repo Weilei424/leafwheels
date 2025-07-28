@@ -88,6 +88,8 @@ resource "aws_route_table" "private" {
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-private-rt"
   })
+
+  depends_on = [aws_nat_gateway.main]
 }
 
 resource "aws_route_table_association" "public" {
@@ -163,5 +165,30 @@ resource "aws_security_group" "ecs" {
 
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-ecs-sg"
+  })
+}
+
+
+resource "aws_security_group" "efs" {
+  name        = "${var.name_prefix}-efs-sg"
+  description = "Security group for EFS"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port       = 2049
+    to_port         = 2049
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ecs.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-efs-sg"
   })
 }
