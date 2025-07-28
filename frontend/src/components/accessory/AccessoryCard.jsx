@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const AccessoryCard = ({ accessory, onAddToCart }) => {
+    const [quantity, setQuantity] = useState(1);
+
     if (!accessory) return null;
 
     // Use backend calculated values directly
@@ -15,7 +17,7 @@ const AccessoryCard = ({ accessory, onAddToCart }) => {
         : originalPrice;
 
     // Check stock availability
-    const canAddToCart = accessory.quantity > 0;
+    const canAddToCart = accessory.quantity > 0 && quantity <= accessory.quantity;
 
     // Stock status display
     const getStockStatus = () => {
@@ -26,6 +28,16 @@ const AccessoryCard = ({ accessory, onAddToCart }) => {
 
     const stockStatus = getStockStatus();
 
+    const handleQuantityChange = (e) => {
+        const value = Math.max(1, Math.min(Number(e.target.value), accessory.quantity));
+        setQuantity(value);
+    };
+
+    const handleAddToCart = (e) => {
+        e.preventDefault(); // Prevent link navigation
+        e.stopPropagation();
+        onAddToCart(accessory, quantity);
+    };
 
     return (
         <motion.div
@@ -34,7 +46,7 @@ const AccessoryCard = ({ accessory, onAddToCart }) => {
             className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden relative"
         >
             {/* Discount Badge */}
-            {isOnDeal  && (
+            {isOnDeal && (
                 <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-medium px-2 py-1 rounded-full z-10">
                     {Math.round(discountPercent * 100)}% OFF
                 </div>
@@ -74,14 +86,56 @@ const AccessoryCard = ({ accessory, onAddToCart }) => {
                 </div>
             </Link>
 
-            {/* Button */}
-            <div className="p-4 pt-0">
+            {/* Quantity and Add to Cart */}
+            <div className="p-4 pt-0 space-y-3">
+                {/* Quantity Selector */}
+                {accessory.quantity > 0 && (
+                    <div className="flex items-center gap-2">
+                        <label className="text-sm text-gray-600">Qty:</label>
+                        <div className="flex items-center border rounded-lg">
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setQuantity(Math.max(1, quantity - 1));
+                                }}
+                                disabled={quantity <= 1}
+                                className="px-2 py-1 text-gray-600 hover:text-gray-800 disabled:text-gray-300"
+                            >
+                                −
+                            </button>
+                            <input
+                                type="number"
+                                min="1"
+                                max={accessory.quantity}
+                                value={quantity}
+                                onChange={handleQuantityChange}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }}
+                                className="w-16 px-2 py-1 text-center border-0 focus:outline-none"
+                            />
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setQuantity(Math.min(accessory.quantity, quantity + 1));
+                                }}
+                                disabled={quantity >= accessory.quantity}
+                                className="px-2 py-1 text-gray-600 hover:text-gray-800 disabled:text-gray-300"
+                            >
+                                +
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Add to Cart Button */}
                 <button
-                    onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (canAddToCart) onAddToCart(accessory);
-                    }}
+                    onClick={handleAddToCart}
                     disabled={!canAddToCart}
                     className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-all
                         ${canAddToCart

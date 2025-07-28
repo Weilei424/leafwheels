@@ -84,7 +84,6 @@ const OrderDetailsPage = () => {
             </div>
         );
     }
-    console.log("here",  currentOrder)
 
     return (
         <motion.div
@@ -123,7 +122,7 @@ const OrderDetailsPage = () => {
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="lg:col-span-2 bg-white rounded-xl border border-gray-100 p-6 shadow-sm"
+                        className="lg:col-span-2 h-45 bg-white rounded-xl border border-gray-100 p-6 shadow-sm"
                     >
                         <h2 className="text-lg font-medium text-gray-900 mb-4">Order Items</h2>
 
@@ -148,7 +147,7 @@ const OrderDetailsPage = () => {
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: index * 0.1 }}
-                                            className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg"
+                                            className="flex items-center space-x-4 p-4 rounded-lg"
                                         >
                                             <div className="flex-1">
                                                 <h3 className="font-medium text-gray-900">

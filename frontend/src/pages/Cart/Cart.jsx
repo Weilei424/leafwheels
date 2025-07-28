@@ -1,4 +1,4 @@
-import React, {useMemo} from "react";
+import React, {useMemo, useCallback} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUserStore } from "../../stores/useUserStore.js";
 import { useCartStore } from "../../stores/useCartStore.js";
@@ -9,51 +9,79 @@ import CartLoanCalculator from "../../components/cart/CartLoanCalculator.jsx";
 
 const CartPage = () => {
     const { user } = useUserStore();
-    const { cart, getCartItems, removeFromCart, clearCart, loading } = useCartStore();
+    const {
+        cart,
+        getCartItems,
+        removeFromCart,
+        clearCart,
+        incrementAccessoryInCart,
+        decrementAccessoryInCart,
+        loading
+    } = useCartStore();
 
-    // Redirect if not authenticated (backup check)
     React.useEffect(() => {
-        if (user){
-             getCartItems(user.id);
+        if (user) {
+            getCartItems(user.id);
         }
     }, [getCartItems, user]);
 
-    const transformedCart = useMemo(
-        () =>
-            cart.map((item) => {
-                const isVehicle = item.type === "VEHICLE";
-                const product = isVehicle ? item.vehicle : item.accessory;
 
-                const {
-                    id,
-                    year,
-                    make,
-                    model,
-                    name,
-                    imageUrls,
-                    imageUrl,
-                    price,
-                    discountPrice,
-                    discountPercentage,
-                    onDeal,
-                } = product;
+    const transformedCart = useMemo(() => {
+        return cart.map((item) => {
+            const isVehicle = item.type === "VEHICLE";
+            const product = isVehicle ? item.vehicle : item.accessory;
 
-                return {
-                    _id: item.id,
-                    name: isVehicle ? `${year} ${make} ${model}` : name,
-                    image: imageUrls?.[0] || imageUrl || null,
-                    price,
-                    discountPrice,
-                    discountPercentage,
-                    onDeal,
-                    quantity: item.quantity,
-                    type: item.type,
-                };
-            }),
-        [cart]
-    );
+            if (!product) return null;
+
+            const {
+                id,
+                year,
+                make,
+                model,
+                name,
+                imageUrls,
+                imageUrl,
+                price,
+                discountPrice,
+                discountPercentage,
+                onDeal,
+            } = product;
+
+            return {
+                _id: item.id,
+                productId: id,
+                name: isVehicle ? `${year} ${make} ${model}` : name,
+                image: imageUrls?.[0] || imageUrl || null,
+                price,
+                discountPrice,
+                discountPercentage,
+                onDeal,
+                quantity: item.quantity,
+                type: item.type,
+            };
+        }).filter(Boolean);
+    }, [cart]);
 
 
+    const handleUpdateQuantity = useCallback((accessoryId, change) => {
+        if (change > 0) {
+            incrementAccessoryInCart(user.id, accessoryId);
+        } else if (change < 0) {
+            decrementAccessoryInCart(user.id, accessoryId);
+        }
+    }, [user?.id, incrementAccessoryInCart, decrementAccessoryInCart]);
+
+    const handleRemove = useCallback((itemId) => {
+        if (user?.id) {
+            removeFromCart(user.id, itemId);
+        }
+    }, [user?.id, removeFromCart]);
+
+    const handleClearCart = useCallback(() => {
+        if (user?.id) {
+            clearCart(user.id);
+        }
+    }, [user?.id, clearCart]);
 
     const hasItems = cart.length > 0;
 
@@ -104,7 +132,7 @@ const CartPage = () => {
                         <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            onClick={() => clearCart(user.id)}
+                            onClick={handleClearCart}
                             className="px-4 py-2 text-sm text-red-600 hover:text-red-700 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
                         >
                             Clear Cart
@@ -121,25 +149,18 @@ const CartPage = () => {
                 <div className="lg:grid lg:grid-cols-3 lg:gap-8">
                     {/* Cart Items */}
                     <div className="lg:col-span-2">
-                        <motion.div layout className="space-y-4">
-                            <AnimatePresence>
+                        <div className="space-y-4">
+                            <AnimatePresence mode="popLayout">
                                 {transformedCart.map((item) => (
-                                    <motion.div
-                                        key={item._id}
-                                        layout
-                                        initial={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.9 }}
-                                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                    >
-                                        <CartItem
-                                            item={item}
-                                            onRemove={() => removeFromCart(user.id, item._id)}
-                                        />
-                                    </motion.div>
+                                    <CartItem
+                                        key={item._id} // ✅ Use item ID as key, not quantity-based key
+                                        item={item}
+                                        onRemove={handleRemove}
+                                        onUpdateQuantity={handleUpdateQuantity}
+                                    />
                                 ))}
                             </AnimatePresence>
-                        </motion.div>
+                        </div>
                     </div>
 
                     {/* Sidebar */}

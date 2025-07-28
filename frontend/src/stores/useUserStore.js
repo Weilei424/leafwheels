@@ -47,7 +47,6 @@ export const useUserStore = create(
                     axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
                     set({ checkingAuth: false });
                 } catch (error) {
-                    console.log("Auth check failed:", error);
                     get().clearAuth();
                 }
             },
@@ -138,7 +137,6 @@ export const useUserStore = create(
                         });
                     }
                 } catch (error) {
-                    console.log("Logout error:", error);
                     // Continue with logout even if backend call fails
                 }
 
@@ -156,6 +154,7 @@ export const useUserStore = create(
                 }
 
                 try {
+
                     const response = await axios.post("/api/v1/auth/refresh", {
                         refreshToken,
                     });
@@ -174,7 +173,6 @@ export const useUserStore = create(
                     return { accessToken: newAccessToken, refreshToken: newRefreshToken };
 
                 } catch (error) {
-                    console.log("Token refresh failed:", error);
                     get().clearAuth();
                     throw error;
                 }
@@ -322,5 +320,5 @@ axios.interceptors.response.use(
 // ================= Initialize Auth on App Start =================
 // Check authentication status when the store is created
 if (typeof window !== 'undefined') {
-    useUserStore.getState().checkAuth().then(r => console.log(r));
+    useUserStore.getState().checkAuth();
 }
