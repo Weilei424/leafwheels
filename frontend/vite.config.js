@@ -13,6 +13,7 @@ export default defineConfig({
     },
   },
   server: {
+    allowedHosts: [ /^leafwheels-alb-.*\.us-east-1\.elb\.amazonaws\.com$/, /^leafwheels-alb-.*\.us-east-2\.elb\.amazonaws\.com$/, /^leafwheels.*\.amazonaws\.com$/ ],
     port: 3000,
     proxy: {
       "/api": {
