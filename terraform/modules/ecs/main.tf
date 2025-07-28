@@ -353,12 +353,16 @@ resource "aws_ecs_task_definition" "postgres" {
       {
         name  = "POSTGRES_PASSWORD"
         value = var.database_password
+      },
+      {
+        name  = "PGDATA"
+        value = "/var/lib/postgresql/data/pgdata"
       }
     ]
 
     mountPoints = [{
       sourceVolume  = "postgres-data"
-      containerPath = "/var/lib/postgresql/data/postgres"
+      containerPath = "/var/lib/postgresql/data"
       readOnly      = false
     }]
 
