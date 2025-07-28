@@ -13,12 +13,13 @@ export default defineConfig({
     },
   },
   server: {
-    allowedHosts: [ /^leafwheels-alb-.*\.us-east-1\.elb\.amazonaws\.com$/, /^leafwheels-alb-.*\.us-east-2\.elb\.amazonaws\.com$/, /^leafwheels.*\.amazonaws\.com$/ ],
+    allowedHosts: [ ],
     port: 3000,
     proxy: {
       "/api": {
-        target: "http://localhost:8080",
-        // target: 'http://backend:8080',
+         target: "http://localhost:8080",
+        // target:'http://backend:8080',
+        // target: 'leafwheels-alb-.*\\.us-east-1\\.elb\\.amazonaws\\.com:8080.*',
         changeOrigin: true,
       },
     },
