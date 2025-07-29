@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ChatController {
 
-    private ChatService chatService;
+    private final ChatService chatService;
     
     @PostMapping("/start")
     @Operation(summary = "Start a new chat session")

@@ -21,9 +21,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class RateLimitInterceptor implements HandlerInterceptor {
 
-    private RateLimitService rateLimitService;
-
-    private ObjectMapper objectMapper;
+    private final RateLimitService rateLimitService;
+    private final ObjectMapper objectMapper;
     
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
