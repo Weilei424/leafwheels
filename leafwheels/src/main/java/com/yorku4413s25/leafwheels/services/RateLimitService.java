@@ -98,14 +98,6 @@ public class RateLimitService {
                 .build();
     }
     
-    public void resetUserLimit(String userId) {
-        userBuckets.remove(userId);
-    }
-    
-    public void resetIpLimit(String ipAddress) {
-        ipBuckets.remove(ipAddress);
-    }
-    
     public RateLimitInfo getRateLimitInfo(String userId) {
         if (userId == null || userId.isEmpty()) {
             return new RateLimitInfo(0, requestsPerMinute, 0);

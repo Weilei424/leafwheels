@@ -83,49 +83,8 @@ public class ContentFilterService {
         return new FilterResult(true, content, null);
     }
     
-    public String sanitizeContent(String content) {
-        if (!filterEnabled || content == null) {
-            return content;
-        }
-        
-        String sanitized = content;
-
-        sanitized = sanitized.replaceAll("[<>\"'&]", "");
-
-        for (String blacklistedWord : blacklist) {
-            String replacement = "*".repeat(blacklistedWord.length());
-            sanitized = sanitized.replaceAll("(?i)" + Pattern.quote(blacklistedWord), replacement);
-        }
-        
-        return sanitized.trim();
-    }
-    
     public boolean isContentAllowed(String content) {
         return filterContent(content).isAllowed();
-    }
-    
-    public void addToWhitelist(String word) {
-        if (word != null && !word.trim().isEmpty()) {
-            whitelist.add(word.trim().toLowerCase());
-        }
-    }
-    
-    public void addToBlacklist(String word) {
-        if (word != null && !word.trim().isEmpty()) {
-            blacklist.add(word.trim().toLowerCase());
-        }
-    }
-    
-    public void removeFromWhitelist(String word) {
-        if (word != null) {
-            whitelist.remove(word.trim().toLowerCase());
-        }
-    }
-    
-    public void removeFromBlacklist(String word) {
-        if (word != null) {
-            blacklist.remove(word.trim().toLowerCase());
-        }
     }
     
     private void loadWhitelist() {
