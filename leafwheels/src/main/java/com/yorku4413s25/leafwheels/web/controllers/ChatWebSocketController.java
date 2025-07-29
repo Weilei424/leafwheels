@@ -21,11 +21,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ChatWebSocketController {
 
-    private ChatService chatService;
-
-    private RateLimitService rateLimitService;
-
-    private SimpMessagingTemplate messagingTemplate;
+    private final ChatService chatService;
+    private final RateLimitService rateLimitService;
+    private final SimpMessagingTemplate messagingTemplate;
     
     @MessageMapping("/chat.sendMessage")
     public void sendMessage(@Payload ChatRequestDto chatRequest, 
@@ -119,6 +117,7 @@ public class ChatWebSocketController {
         );
     }
     
+    // WebSocket endpoint for typing indicators - available for frontend integration
     @MessageMapping("/chat.typing")
     @SendTo("/topic/typing")
     public Map<String, Object> handleTypingIndicator(@Payload Map<String, Object> payload,
