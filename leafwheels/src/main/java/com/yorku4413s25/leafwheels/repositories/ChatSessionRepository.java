@@ -30,6 +30,4 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, Long> 
     @Query("UPDATE ChatSession cs SET cs.isActive = false WHERE cs.updatedAt < :cutoffTime")
     int deactivateInactiveSessions(@Param("cutoffTime") Instant cutoffTime);
     
-    @Query("SELECT COUNT(cs) FROM ChatSession cs WHERE cs.user = :user AND cs.createdAt > :since")
-    long countByUserAndCreatedAtAfter(@Param("user") User user, @Param("since") Instant since);
 }
