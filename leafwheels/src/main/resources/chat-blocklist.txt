@@ -1,0 +1,37 @@
+# Chat Content Blacklist
+# Add prohibited words/phrases, one per line
+# Lines starting with # are comments
+
+# Security-related terms
+hack
+exploit
+malware
+virus
+phishing
+scam
+fraud
+attack
+breach
+
+# Spam-related terms
+spam
+bot
+fake
+cheat
+trick
+
+# Inappropriate content
+abuse
+harassment
+threat
+hate
+
+# System manipulation attempts
+admin
+root
+password
+login
+credential
+token
+api_key
+secret
