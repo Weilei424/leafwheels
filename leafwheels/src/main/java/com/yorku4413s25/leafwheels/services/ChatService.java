@@ -27,13 +27,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ChatService {
 
-    private ChatSessionRepository chatSessionRepository;
-    private ChatMessageRepository chatMessageRepository;
-    private UserRepository userRepository;
-    private LexService lexService;
-    private ContentFilterService contentFilterService;
-    private ChatIntentHandlerService intentHandlerService;
-    private AnalyticsService analyticsService;
+    private final ChatSessionRepository chatSessionRepository;
+    private final ChatMessageRepository chatMessageRepository;
+    private final UserRepository userRepository;
+    private final LexService lexService;
+    private final ContentFilterService contentFilterService;
+    private final ChatIntentHandlerService intentHandlerService;
+    private final AnalyticsService analyticsService;
     
     @Value("${chatbot.max-session-duration:3600000}")
     private long maxSessionDuration;
