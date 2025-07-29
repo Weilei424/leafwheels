@@ -34,10 +34,10 @@ output "locale_id" {
 output "bot_configuration" {
   description = "Bot configuration for Spring Boot application"
   value = {
-    bot_id         = aws_lexv2models_bot.leafwheels_bot.id
-    bot_alias_id   = "TSTALIASID"
-    locale_id      = aws_lexv2models_bot_locale.en_us.locale_id
-    region         = data.aws_region.current.name
+    bot_id       = aws_lexv2models_bot.leafwheels_bot.id
+    bot_alias_id = "TSTALIASID"
+    locale_id    = aws_lexv2models_bot_locale.en_us.locale_id
+    region       = data.aws_region.current.name
   }
 }
 
