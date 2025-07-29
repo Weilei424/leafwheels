@@ -170,7 +170,7 @@ module "lex" {
 
   # Bot configuration
   idle_session_ttl_seconds = 300
-  enable_code_hook        = true
+  enable_code_hook         = true
 
   tags = local.common_tags
 }
