@@ -16,9 +16,23 @@ resource "aws_iam_role" "lex_bot_role" {
   tags = var.tags
 }
 
-resource "aws_iam_role_policy_attachment" "lex_bot_policy" {
-  role       = aws_iam_role.lex_bot_role.name
-  policy_arn = "arn:aws:iam::aws:policy/aws-service-role/AmazonLexV2BotPolicy"
+# Create custom IAM policy for Lex V2 bot service permissions
+resource "aws_iam_role_policy" "lex_bot_service_policy" {
+  name = "${var.name_prefix}-lex-bot-service-policy"
+  role = aws_iam_role.lex_bot_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "polly:SynthesizeSpeech"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
 }
 
 resource "aws_iam_role_policy" "lex_bot_custom_policy" {
