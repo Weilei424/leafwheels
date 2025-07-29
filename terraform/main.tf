@@ -160,3 +160,17 @@ module "ecs" {
 
   tags = local.common_tags
 }
+
+# AWS Lex Chatbot Module
+module "lex" {
+  source = "./modules/lex"
+
+  name_prefix = local.name_prefix
+  environment = local.environment
+
+  # Bot configuration
+  idle_session_ttl_seconds = 300
+  enable_code_hook        = true
+
+  tags = local.common_tags
+}
