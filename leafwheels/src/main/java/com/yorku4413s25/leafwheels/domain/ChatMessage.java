@@ -38,6 +38,16 @@ public class ChatMessage extends BaseEntity {
     @Column(name = "metadata", columnDefinition = "TEXT")
     private String metadata;
     
+    @Column(name = "timestamp", nullable = false)
+    private java.time.Instant timestamp;
+    
+    @PrePersist
+    protected void onCreate() {
+        if (timestamp == null) {
+            timestamp = java.time.Instant.now();
+        }
+    }
+    
     public enum MessageType {
         TEXT,
         SYSTEM,
