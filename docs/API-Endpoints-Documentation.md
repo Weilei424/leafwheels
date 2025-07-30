@@ -21,6 +21,21 @@
 
 ---
 
+## ChatController (`/api/v1/chat`)
+
+| Endpoint | Method | Access | Description |
+|----------|--------|---------|-------------|
+| `/health` | GET | 🌐 Public | Check chat service health status |
+| `/start` | POST | 🔒 Auth | Start a new chat session |
+| `/message` | POST | 🔒 Auth | Send a message to the chatbot |
+| `/session/{sessionId}` | DELETE | 🔒 Auth | End a chat session |
+| `/session/{sessionId}/history` | GET | 🔒 Auth | Get chat history for a session |
+| `/sessions` | GET | 🔒 Auth | Get user's chat sessions (paginated) |
+
+**Note:** The chatbot also supports WebSocket connections at `/ws/chat` for real-time communication. See the [Chatbot Documentation](CHATBOT_README.md) for detailed WebSocket API usage.
+
+---
+
 ## VehicleController (`/api/v1/vehicle`)
 
 | Endpoint | Method | Access | Description |
