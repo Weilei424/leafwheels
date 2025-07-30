@@ -685,15 +685,6 @@ resource "aws_ecs_task_definition" "prometheus" {
       protocol      = "tcp"
     }]
 
-    command = [
-      "--config.file=/etc/prometheus/prometheus.yml",
-      "--storage.tsdb.path=/prometheus",
-      "--web.console.libraries=/etc/prometheus/console_libraries",
-      "--web.console.templates=/etc/prometheus/consoles",
-      "--storage.tsdb.retention.time=200h",
-      "--web.enable-lifecycle"
-    ]
-
     environment = []
 
     healthCheck = {
@@ -706,13 +697,13 @@ resource "aws_ecs_task_definition" "prometheus" {
 
     mountPoints = [{
       sourceVolume  = "prometheus-data"
-      containerPath = "/prometheus"
+      containerPath = "/efs-data"
       readOnly      = false
     }]
 
     entryPoint = ["sh", "-c"]
     command = [
-      "mkdir -p /prometheus && prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus --web.console.libraries=/etc/prometheus/console_libraries --web.console.templates=/etc/prometheus/consoles --storage.tsdb.retention.time=200h --web.enable-lifecycle"
+      "mkdir -p /efs-data/prometheus && prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/efs-data/prometheus --web.console.libraries=/etc/prometheus/console_libraries --web.console.templates=/etc/prometheus/consoles --storage.tsdb.retention.time=200h --web.enable-lifecycle"
     ]
 
     logConfiguration = {
@@ -745,7 +736,7 @@ resource "aws_ecs_task_definition" "grafana" {
 
     efs_volume_configuration {
       file_system_id     = var.efs_file_system_id
-      root_directory     = "/grafana"
+      root_directory     = "/"
       transit_encryption = "ENABLED"
     }
   }
@@ -790,9 +781,14 @@ resource "aws_ecs_task_definition" "grafana" {
 
     mountPoints = [{
       sourceVolume  = "grafana-data"
-      containerPath = "/var/lib/grafana"
+      containerPath = "/efs-data"
       readOnly      = false
     }]
+
+    entryPoint = ["sh", "-c"]
+    command = [
+      "mkdir -p /efs-data/grafana && chown -R grafana:grafana /efs-data/grafana && ln -sf /efs-data/grafana /var/lib/grafana && exec /run.sh"
+    ]
 
     logConfiguration = {
       logDriver = "awslogs"
