@@ -36,6 +36,10 @@ public class SecurityConfig {
                         req.requestMatchers(
                                         // Authentication endpoints
                                         "/api/v1/auth/**",
+                                        // WebSocket endpoints
+                                        "/ws/**",
+                                        // Chat health check (public)
+                                        "/api/v1/chat/health",
                                         // Public shopping endpoints (GET only)
                                         "/api/v1/vehicle/all",
                                         "/api/v1/vehicle/*",
