@@ -133,8 +133,10 @@ module "ecs" {
   ecs_instance_profile = module.iam.ecs_instance_profile_name
   ecs_security_group   = module.vpc.ecs_security_group_id
 
-  backend_target_group_arn  = module.alb.backend_target_group_arn
-  frontend_target_group_arn = module.alb.frontend_target_group_arn
+  backend_target_group_arn    = module.alb.backend_target_group_arn
+  frontend_target_group_arn   = module.alb.frontend_target_group_arn
+  grafana_target_group_arn    = module.alb.grafana_target_group_arn
+  prometheus_target_group_arn = module.alb.prometheus_target_group_arn
 
   backend_image  = "${module.ecr.backend_repository_url}:latest"
   frontend_image = "${module.ecr.frontend_repository_url}:latest"

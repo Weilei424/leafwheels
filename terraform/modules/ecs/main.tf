@@ -586,3 +586,303 @@ resource "aws_service_discovery_service" "redis" {
     Name = "${var.name_prefix}-redis-discovery"
   })
 }
+
+# Service Discovery Service for Prometheus
+resource "aws_service_discovery_service" "prometheus" {
+  name = "prometheus"
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+
+    routing_policy = "MULTIVALUE"
+  }
+
+  health_check_custom_config {
+    failure_threshold = 1
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-prometheus-discovery"
+  })
+}
+
+# Service Discovery Service for Grafana
+resource "aws_service_discovery_service" "grafana" {
+  name = "grafana"
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+
+    routing_policy = "MULTIVALUE"
+  }
+
+  health_check_custom_config {
+    failure_threshold = 1
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-grafana-discovery"
+  })
+}
+
+# CloudWatch Log Groups for Monitoring
+resource "aws_cloudwatch_log_group" "prometheus" {
+  name              = "/ecs/${var.name_prefix}-prometheus"
+  retention_in_days = 7
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-prometheus-logs"
+  })
+}
+
+resource "aws_cloudwatch_log_group" "grafana" {
+  name              = "/ecs/${var.name_prefix}-grafana"
+  retention_in_days = 7
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-grafana-logs"
+  })
+}
+
+# ECS Task Definition for Prometheus
+resource "aws_ecs_task_definition" "prometheus" {
+  family                   = "${var.name_prefix}-prometheus"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = "512"
+  memory                   = "1024"
+  execution_role_arn       = var.ecs_task_execution_role_arn
+  task_role_arn            = var.ecs_task_role_arn
+
+  volume {
+    name = "prometheus-data"
+
+    efs_volume_configuration {
+      file_system_id     = var.efs_file_system_id
+      root_directory     = "/"
+      transit_encryption = "ENABLED"
+    }
+  }
+
+  container_definitions = jsonencode([{
+    name      = "prometheus"
+    image     = "prom/prometheus:latest"
+    memory    = 512
+    essential = true
+
+    portMappings = [{
+      containerPort = 9090
+      protocol      = "tcp"
+    }]
+
+    command = [
+      "--config.file=/etc/prometheus/prometheus.yml",
+      "--storage.tsdb.path=/prometheus",
+      "--web.console.libraries=/etc/prometheus/console_libraries",
+      "--web.console.templates=/etc/prometheus/consoles",
+      "--storage.tsdb.retention.time=200h",
+      "--web.enable-lifecycle"
+    ]
+
+    environment = []
+
+    healthCheck = {
+      command     = ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1"]
+      interval    = 30
+      timeout     = 5
+      retries     = 3
+      startPeriod = 30
+    }
+
+    mountPoints = [{
+      sourceVolume  = "prometheus-data"
+      containerPath = "/prometheus"
+      readOnly      = false
+    }]
+
+    entryPoint = ["sh", "-c"]
+    command = [
+      "mkdir -p /prometheus && prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus --web.console.libraries=/etc/prometheus/console_libraries --web.console.templates=/etc/prometheus/consoles --storage.tsdb.retention.time=200h --web.enable-lifecycle"
+    ]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.prometheus.name
+        "awslogs-region"        = var.aws_region
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
+  }])
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-prometheus-task"
+  })
+}
+
+# ECS Task Definition for Grafana
+resource "aws_ecs_task_definition" "grafana" {
+  family                   = "${var.name_prefix}-grafana"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = "512"
+  memory                   = "1024"
+  execution_role_arn       = var.ecs_task_execution_role_arn
+  task_role_arn            = var.ecs_task_role_arn
+
+  volume {
+    name = "grafana-data"
+
+    efs_volume_configuration {
+      file_system_id     = var.efs_file_system_id
+      root_directory     = "/grafana"
+      transit_encryption = "ENABLED"
+    }
+  }
+
+  container_definitions = jsonencode([{
+    name      = "grafana"
+    image     = "grafana/grafana:latest"
+    memory    = 512
+    essential = true
+
+    portMappings = [{
+      containerPort = 3000
+      protocol      = "tcp"
+    }]
+
+    environment = [
+      {
+        name  = "GF_SECURITY_ADMIN_USER"
+        value = "admin"
+      },
+      {
+        name  = "GF_SECURITY_ADMIN_PASSWORD"
+        value = "admin"
+      },
+      {
+        name  = "GF_USERS_ALLOW_SIGN_UP"
+        value = "false"
+      },
+      {
+        name  = "GF_INSTALL_PLUGINS"
+        value = ""
+      }
+    ]
+
+    healthCheck = {
+      command     = ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval    = 30
+      timeout     = 5
+      retries     = 3
+      startPeriod = 60
+    }
+
+    mountPoints = [{
+      sourceVolume  = "grafana-data"
+      containerPath = "/var/lib/grafana"
+      readOnly      = false
+    }]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.grafana.name
+        "awslogs-region"        = var.aws_region
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
+  }])
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-grafana-task"
+  })
+}
+
+# ECS Service for Prometheus
+resource "aws_ecs_service" "prometheus" {
+  name            = "${var.name_prefix}-prometheus"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.prometheus.arn
+  desired_count   = 1
+
+  deployment_maximum_percent         = 100
+  deployment_minimum_healthy_percent = 0
+  launch_type                        = "FARGATE"
+
+  network_configuration {
+    subnets          = var.subnet_ids
+    security_groups  = [var.ecs_security_group]
+    assign_public_ip = false
+  }
+
+  load_balancer {
+    target_group_arn = var.prometheus_target_group_arn
+    container_name   = "prometheus"
+    container_port   = 9090
+  }
+
+  service_registries {
+    registry_arn   = aws_service_discovery_service.prometheus.arn
+    container_name = "prometheus"
+  }
+
+  depends_on = [
+    var.prometheus_target_group_arn,
+    aws_ecs_service.backend,
+    aws_ecs_service.postgres,
+    aws_ecs_service.redis
+  ]
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-prometheus-service"
+  })
+}
+
+# ECS Service for Grafana
+resource "aws_ecs_service" "grafana" {
+  name            = "${var.name_prefix}-grafana"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.grafana.arn
+  desired_count   = 1
+
+  deployment_maximum_percent         = 100
+  deployment_minimum_healthy_percent = 0
+  launch_type                        = "FARGATE"
+
+  network_configuration {
+    subnets          = var.subnet_ids
+    security_groups  = [var.ecs_security_group]
+    assign_public_ip = false
+  }
+
+  load_balancer {
+    target_group_arn = var.grafana_target_group_arn
+    container_name   = "grafana"
+    container_port   = 3000
+  }
+
+  service_registries {
+    registry_arn   = aws_service_discovery_service.grafana.arn
+    container_name = "grafana"
+  }
+
+  depends_on = [
+    var.grafana_target_group_arn,
+    aws_ecs_service.prometheus
+  ]
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-grafana-service"
+  })
+}

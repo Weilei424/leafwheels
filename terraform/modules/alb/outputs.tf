@@ -32,3 +32,13 @@ output "listener_arn" {
   description = "ARN of the HTTP listener"
   value       = aws_lb_listener.http.arn
 }
+
+output "grafana_target_group_arn" {
+  description = "ARN of the Grafana target group"
+  value       = aws_lb_target_group.grafana.arn
+}
+
+output "prometheus_target_group_arn" {
+  description = "ARN of the Prometheus target group"
+  value       = aws_lb_target_group.prometheus.arn
+}
