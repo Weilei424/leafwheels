@@ -12,9 +12,7 @@ export const useOrderStore = create((set, get) => ({
 
     // Clear functions
     clearError: () => set({ error: null }),
-    clearOrders: () => set({ orders: [] }),
     clearCurrentOrder: () => set({ currentOrder: null }),
-    clearUserOrders: () => set({ userOrders: [] }),
 
     /**
      * Create a new order with specific items
@@ -51,9 +49,7 @@ export const useOrderStore = create((set, get) => ({
     getOrderById: async (orderId) => {
         set({ loading: true, error: null });
         try {
-            console.log("Fetching order with ID:", orderId); // ✅ DEBUG
             const response = await axios.get(`/api/v1/orders/${orderId}`);
-            console.log("Order response:", response.data); // ✅ DEBUG
 
             set({
                 currentOrder: response.data,
@@ -62,7 +58,6 @@ export const useOrderStore = create((set, get) => ({
 
             return response.data;
         } catch (error) {
-            console.error("Error fetching order:", error); // ✅ DEBUG
             const errorMessage = error.response?.data?.message ||
                 error.response?.data?.error ||
                 "Failed to fetch order";

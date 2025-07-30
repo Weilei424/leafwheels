@@ -6,7 +6,7 @@ export const useCartStore = create((set, get) => ({
     cart: [],
     subtotal: 0,
     total: 0,
-    tax: 0,
+
     savings: 0,
     loading: false,
 
@@ -20,7 +20,12 @@ export const useCartStore = create((set, get) => ({
             const items = cartData?.items || [];
 
             set({ cart: items, loading: false });
-            get().calculateTotals();
+
+
+            // Use backend total if available, otherwise calculate
+            set({ total: cartData.totalPrice });
+            get().calculateOtherTotals(); // Calculate subtotal, savings
+
         } catch (error) {
             const errorMessage = error.response?.data?.message || "Failed to load cart.";
             set({ cart: [], loading: false });
@@ -28,7 +33,7 @@ export const useCartStore = create((set, get) => ({
         }
     },
 
-    addToCart: async ({ id, type, userId }) => {
+    addToCart: async ({ id, type, userId, quantity = 1 }) => {
         if (!userId) {
             toast.error("Please log in to add items to cart");
             return;
@@ -38,26 +43,25 @@ export const useCartStore = create((set, get) => ({
         try {
             let payload = { type };
 
-
-            console.log("this is payload", payload)
-
             if (type === "VEHICLE") {
                 payload.vehicleId = id;
             } else if (type === "ACCESSORY") {
                 payload.accessoryId = id;
+                payload.quantity = quantity;
             }
 
-
-            console.log(payload)
             const response = await axios.post(`/api/v1/carts/${userId}/items`, payload);
-
-
             const cartData = response.data;
             const items = cartData?.items || [];
 
             set({ cart: items, loading: false });
-            get().calculateTotals();
-            toast.success("Item added to cart.");
+
+
+            // Use backend total if available
+            set({ total: cartData.totalPrice });
+            get().calculateOtherTotals();
+
+            toast.success(`${quantity > 1 ? `${quantity} items` : 'Item'} added to cart.`);
         } catch (error) {
             const errorMessage = error.response?.data?.message || "Failed to add item.";
             set({ loading: false });
@@ -78,7 +82,9 @@ export const useCartStore = create((set, get) => ({
             const items = cartData?.items || [];
 
             set({ cart: items, loading: false });
-            get().calculateTotals();
+            set({ total: cartData.totalPrice });
+            get().calculateOtherTotals();
+
             toast.success("Item removed.");
         } catch (error) {
             const errorMessage = error.response?.data?.message || "Failed to remove item.";
@@ -101,7 +107,6 @@ export const useCartStore = create((set, get) => ({
                 cart: [],
                 subtotal: 0,
                 total: 0,
-                tax: 0,
                 savings: 0,
                 loading: false
             });
@@ -115,53 +120,75 @@ export const useCartStore = create((set, get) => ({
     },
 
     /**
-     * Calculate cart totals with discounts
-     * Tax is calculated on final discounted price (13% flat rate)
+     * Calculate subtotal, and savings when backend provides total
      */
-    calculateTotals: () => {
-        const { cart } = get();
+    calculateOtherTotals: () => {
+        let { cart, total } = get();
+
 
         let subtotal = 0;
         let savings = 0;
 
         cart.forEach((item) => {
             const quantity = item.quantity || 1;
-            const unitPrice = item.unitPrice || 0;
+            const product = item.type === "VEHICLE" ? item.vehicle : item.accessory;
 
-            // Get the actual item (vehicle or accessory) based on type
-            const actualItem = item.type === "VEHICLE" ? item.vehicle : item.accessory;
+            if (!product) return;
 
-            if (!actualItem) {
-                // Fallback if no nested item
-                subtotal += unitPrice * quantity;
-                return;
-            }
+            const finalPrice = product.discountPrice
+            const originalPrice = product.price || 0;
 
-            // Check if item is discounted
-            const discountPrice = actualItem.discountPrice || 0
-            const originalPrice = actualItem.price || unitPrice
-            const discountPercentage = actualItem.discountPercentage || 0
-            const onDeal = actualItem.onDeal;
 
-            const isDiscounted = onDeal && discountPercentage > 0 && discountPrice > 0 && discountPrice < originalPrice;
-
-            const finalPrice = isDiscounted ? discountPrice : unitPrice;
             subtotal += finalPrice * quantity;
 
-            if (isDiscounted) {
-                savings += (unitPrice - discountPrice) * quantity;
+            if (originalPrice > finalPrice) {
+                savings += (originalPrice - finalPrice) * quantity;
             }
         });
 
-        // Tax calculated on discounted subtotal (13% flat rate)
-        const tax = subtotal * 0.13;
-        const total = subtotal + tax;
 
-        set({
-            subtotal,
-            tax,
-            savings,
-            total
-        });
-    }
+
+        set({ subtotal, savings, total });
+    },
+
+    updateAccessoryQuantity: async (userId, accessoryId, change) => {
+        const { cart } = get();
+        const cartItem = cart.find(item =>
+            item.type === "ACCESSORY" && item.accessory?.id === accessoryId
+        );
+
+
+        const newQuantity = cartItem.quantity + change;
+        if (newQuantity < 1) return;
+
+        try {
+
+            await axios.delete(`/api/v1/carts/${userId}/items/${cartItem.id}`);
+
+            const response = await axios.post(`/api/v1/carts/${userId}/items`, {
+                type: "ACCESSORY",
+                accessoryId,
+                quantity: newQuantity
+            });
+
+            const cartData = response.data;
+            const items = cartData?.items || [];
+
+
+            set({ cart: items });
+            set({ total: cartData.totalPrice });
+            get().calculateOtherTotals();
+
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to update quantity");
+        }
+    },
+
+    incrementAccessoryInCart: async (userId, accessoryId) => {
+        await get().updateAccessoryQuantity(userId, accessoryId, 1);
+    },
+
+    decrementAccessoryInCart: async (userId, accessoryId) => {
+        await get().updateAccessoryQuantity(userId, accessoryId, -1);
+    },
 }));

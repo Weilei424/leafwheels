@@ -14,8 +14,6 @@ export const useLoanCalculatorStore = create((set) => ({
     clearError: () => set({ error: null }),
 
     // Clear results
-    clearResults: () => set({ calculationResults: null, error: null }),
-
     /**
      * Calculate loan based on user inputs
      *

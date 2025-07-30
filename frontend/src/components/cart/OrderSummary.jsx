@@ -5,7 +5,8 @@ import {motion} from "framer-motion";
 
 const OrderSummary = () => {
     const navigate = useNavigate();
-    const { cart, subtotal, tax, shipping, savings, total } = useCartStore();
+    const { cart, subtotal, savings, total } = useCartStore();
+
 
     const handleCheckout = () => {
         if (cart.length === 0) return;
@@ -14,9 +15,10 @@ const OrderSummary = () => {
 
     // Calculate original subtotal (before discounts) for display
     const originalSubtotal = cart.reduce((sum, item) => {
-        const quantity = item.quantity || 1;
-        const unitPrice = item.unitPrice || 0;
-        return sum + (unitPrice * quantity);
+        const quantity = item.quantity || 0;
+        const product = item.type === "VEHICLE" ? item.vehicle : item.accessory;
+        const price = product.price
+        return sum + (price * quantity);
     }, 0);
 
     return (
@@ -41,16 +43,16 @@ const OrderSummary = () => {
                 )}
 
                 <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Shipping</span>
-                    <span className="text-green-600 font-medium">
-                        {"Free"}
-                    </span>
+                    <span className="text-gray-600">Subtotal</span>
+                    <span className="text-gray-900">${subtotal.toFixed(2)}</span>
                 </div>
 
                 <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Tax (13%)</span>
-                    <span className="text-gray-900">${tax.toFixed(2)}</span>
+                    <span className="text-gray-600">Shipping</span>
+                    <span className="text-green-600 font-medium">Free</span>
                 </div>
+
+
 
                 <div className="border-t pt-3">
                     <div className="flex justify-between">

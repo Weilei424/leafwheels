@@ -144,10 +144,18 @@ const StorePage = () => {
     fetchData();
   }, [statusFilter]);
 
-  const onAddToCart = (product) => {
+  const onAddToCartVehicle = (product) => {
     handleAddToCart({
       product,
-      type: product.category === "Vehicles" ? "VEHICLE" : "ACCESSORY",
+      type: "VEHICLE"
+    });
+  };
+
+  const  onAddToCartAccessory = (product, quantity = 1) => {
+    handleAddToCart({
+      product,
+      type: "ACCESSORY",
+      quantity
     });
   };
 
@@ -232,7 +240,7 @@ const StorePage = () => {
                   exit={{ opacity: 0, height: 0 }}
                   className="mb-8 overflow-hidden"
               >
-                <div className="bg-gray-50 rounded-lg p-4 flex flex-wrap items-center gap-2 text-sm">
+                <div className="rounded-lg p-4 flex flex-wrap items-center gap-2 text-sm">
                   {searchTerm && (
                       <FilterTag onRemove={() => setSearchTerm("")}>
                         "{searchTerm}"
@@ -314,12 +322,12 @@ const StorePage = () => {
                         {product.category === "Vehicles" ? (
                             <VehicleCard
                                 vehicle={product}
-                                onAddToCart={() => onAddToCart(product)}
+                                onAddToCart={() => onAddToCartVehicle(product)}
                             />
                         ) : (
                             <AccessoryCard
                                 accessory={product}
-                                onAddToCart={() => onAddToCart(product)}
+                                onAddToCart={onAddToCartAccessory}
                             />
                         )}
                       </motion.div>

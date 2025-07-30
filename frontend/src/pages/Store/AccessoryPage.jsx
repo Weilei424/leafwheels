@@ -34,6 +34,7 @@ const useAccessoryLogic = (id) => {
 const AccessoryPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [quantity, setQuantity] = useState(1);
 
     const {
         accessory,
@@ -44,14 +45,24 @@ const AccessoryPage = () => {
     } = useAccessoryLogic(id);
 
     // Check if accessory is available for purchase
-    const canAddToCart = accessory?.quantity > 0;
+    const canAddToCart = accessory?.quantity > 0 && quantity <= accessory?.quantity;
     const handleBackToStore = () => navigate("/store");
+
+    const handleQuantityChange = (e) => {
+        const value = Math.max(1, Math.min(Number(e.target.value), accessory?.quantity || 1));
+        setQuantity(value);
+    };
 
     const onAddToCartClick = async () => {
         setAddingToCart(true);
-        await handleAddToCart({ product: accessory, type: "ACCESSORY" });
+        await handleAddToCart({ product: accessory, type: "ACCESSORY", quantity });
         setAddingToCart(false);
     };
+
+    // Reset quantity when accessory changes
+    useEffect(() => {
+        setQuantity(1);
+    }, [accessory?.id]);
 
     if (loading || error || !accessory) {
         return (
@@ -150,11 +161,11 @@ const AccessoryPage = () => {
 
                     {/* Availability Status */}
                     <div className="flex items-center gap-3">
-            <span className={`font-medium ${
-                accessory.quantity > 0 ? "text-green-600" : "text-red-500"
-            }`}>
-              {accessory.quantity > 0 ? `${accessory.quantity} in stock` : "Out of Stock"}
-            </span>
+                        <span className={`font-medium ${
+                            accessory.quantity > 0 ? "text-green-600" : "text-red-500"
+                        }`}>
+                            {accessory.quantity > 0 ? `${accessory.quantity} in stock` : "Out of Stock"}
+                        </span>
                     </div>
 
                     {/* Price - use backend calculated values directly */}
@@ -162,12 +173,12 @@ const AccessoryPage = () => {
                         {accessory.onDeal ? (
                             <>
                                 <div className="flex items-baseline gap-3">
-                  <span className="text-3xl font-light text-gray-900">
-                    ${accessory.discountPrice?.toLocaleString()}
-                  </span>
+                                    <span className="text-3xl font-light text-gray-900">
+                                        ${accessory.discountPrice?.toLocaleString()}
+                                    </span>
                                     <span className="text-lg text-gray-400 line-through">
-                    ${accessory.price?.toLocaleString()}
-                  </span>
+                                        ${accessory.price?.toLocaleString()}
+                                    </span>
                                 </div>
                                 <motion.span
                                     initial={{ opacity: 0, scale: 0.8 }}
@@ -183,8 +194,8 @@ const AccessoryPage = () => {
                             </>
                         ) : (
                             <span className="text-3xl font-light text-gray-900">
-                ${accessory.price?.toLocaleString()}
-              </span>
+                                ${accessory.price?.toLocaleString()}
+                            </span>
                         )}
                     </div>
 
@@ -194,19 +205,59 @@ const AccessoryPage = () => {
                         </p>
                     )}
 
+                    {/* Quantity Selector */}
+                    {accessory.quantity > 0 && (
+                        <div className="space-y-3">
+                            <label className="block text-sm font-medium text-gray-700">
+                                Quantity
+                            </label>
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center border border-gray-300 rounded-lg">
+                                    <button
+                                        type="button"
+                                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                        disabled={quantity <= 1}
+                                        className="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:text-gray-300 disabled:cursor-not-allowed"
+                                    >
+                                        −
+                                    </button>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max={accessory.quantity}
+                                        value={quantity}
+                                        onChange={handleQuantityChange}
+                                        className="w-20 px-3 py-2 text-center border-0 focus:outline-none"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setQuantity(Math.min(accessory.quantity, quantity + 1))}
+                                        disabled={quantity >= accessory.quantity}
+                                        className="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:text-gray-300 disabled:cursor-not-allowed"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                                <span className="text-sm text-gray-500">
+                                    Max: {accessory.quantity}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
                     <motion.button
                         whileHover={canAddToCart && !addingToCart ? { scale: 1.02 } : {}}
                         whileTap={canAddToCart && !addingToCart ? { scale: 0.98 } : {}}
                         onClick={onAddToCartClick}
                         disabled={!canAddToCart || addingToCart}
                         className={`
-              w-full py-4 px-8 rounded-lg font-medium text-lg transition-all duration-200
-              ${
+                            w-full py-4 px-8 rounded-lg font-medium text-lg transition-all duration-200
+                            ${
                             canAddToCart && !addingToCart
                                 ? "bg-green-600 text-white hover:bg-green-700 shadow-sm hover:shadow-md"
                                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
                         }
-            `}
+                        `}
                     >
                         <AnimatePresence mode="wait">
                             {addingToCart ? (
@@ -216,7 +267,7 @@ const AccessoryPage = () => {
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
                                 >
-                                    Adding...
+                                    Adding {quantity} to cart...
                                 </motion.span>
                             ) : (
                                 <motion.span
@@ -227,7 +278,7 @@ const AccessoryPage = () => {
                                 >
                                     {accessory.quantity === 0
                                         ? "Out of Stock"
-                                        : "Add to Cart"}
+                                        : `Add ${quantity} to Cart`}
                                 </motion.span>
                             )}
                         </AnimatePresence>
