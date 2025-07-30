@@ -27,9 +27,9 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    private JwtService jwtService;
+    private final JwtService jwtService;
 
-    private UserDetailsService userDetailsService;
+    private final UserDetailsService userDetailsService;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
@@ -61,13 +61,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         try {
                             String username = jwtService.extractUsername(token);
                             
-                            if (username != null && jwtService.isTokenValid(token, null)) {
+                            if (username != null) {
                                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                                UsernamePasswordAuthenticationToken authentication = 
-                                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                                
-                                SecurityContextHolder.getContext().setAuthentication(authentication);
-                                accessor.setUser(authentication);
+                                if (jwtService.isTokenValid(token, userDetails)) {
+                                    UsernamePasswordAuthenticationToken authentication = 
+                                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                                    
+                                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                                    accessor.setUser(authentication);
+                                }
                             }
                         } catch (Exception e) {
                             System.err.println("WebSocket authentication failed: " + e.getMessage());
