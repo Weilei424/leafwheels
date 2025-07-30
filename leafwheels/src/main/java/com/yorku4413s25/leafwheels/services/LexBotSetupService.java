@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.lexmodelsv2.LexModelsV2Client;
 import software.amazon.awssdk.services.lexmodelsv2.model.*;
@@ -30,6 +32,15 @@ public class LexBotSetupService {
     @Value("${chatbot.auto-setup:true}")
     private boolean autoSetup;
 
+    @Value("${use-iam-roles:false}")
+    private boolean useIamRoles;
+
+    @Value("${AWS_ACCESS_KEY_ID:}")
+    private String accessKeyId;
+
+    @Value("${AWS_SECRET_ACCESS_KEY:}")
+    private String secretAccessKey;
+
     private LexModelsV2Client lexClient;
 
     @EventListener(ApplicationReadyEvent.class)
@@ -51,9 +62,25 @@ public class LexBotSetupService {
     }
 
     private void initializeLexClient() {
-        this.lexClient = LexModelsV2Client.builder()
-                .region(Region.of(awsRegion))
-                .build();
+        if (useIamRoles) {
+            log.info("Using IAM roles for AWS authentication");
+            this.lexClient = LexModelsV2Client.builder()
+                    .region(Region.of(awsRegion))
+                    .build();
+        } else if (accessKeyId != null && !accessKeyId.isEmpty() && 
+                   secretAccessKey != null && !secretAccessKey.isEmpty()) {
+            log.info("Using access keys for AWS authentication");
+            this.lexClient = LexModelsV2Client.builder()
+                    .region(Region.of(awsRegion))
+                    .credentialsProvider(StaticCredentialsProvider.create(
+                            AwsBasicCredentials.create(accessKeyId, secretAccessKey)))
+                    .build();
+        } else {
+            log.info("Using default credential provider chain");
+            this.lexClient = LexModelsV2Client.builder()
+                    .region(Region.of(awsRegion))
+                    .build();
+        }
     }
 
     private void createSlotTypes() {
