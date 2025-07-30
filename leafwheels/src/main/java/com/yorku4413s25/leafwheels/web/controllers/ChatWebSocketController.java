@@ -31,7 +31,7 @@ public class ChatWebSocketController {
                            Principal principal) {
         
         String username = principal != null ? principal.getName() : null;
-        String sessionId = headerAccessor.getSessionId();
+        String webSocketSessionId = headerAccessor.getSessionId();
 
         if (!rateLimitService.isAllowed(username, getClientIP(headerAccessor))) {
             ChatResponseDto errorResponse = new ChatResponseDto();
@@ -39,11 +39,19 @@ public class ChatWebSocketController {
             errorResponse.setConversationComplete(false);
             errorResponse.setTimestamp(Instant.now());
             
-            messagingTemplate.convertAndSendToUser(
-                sessionId, 
-                "/queue/chat", 
-                errorResponse
-            );
+            if (principal != null) {
+                messagingTemplate.convertAndSendToUser(
+                    principal.getName(),
+                    "/queue/chat", 
+                    errorResponse
+                );
+            } else {
+                messagingTemplate.convertAndSendToUser(
+                    webSocketSessionId, 
+                    "/queue/chat", 
+                    errorResponse
+                );
+            }
             return;
         }
         
@@ -60,11 +68,19 @@ public class ChatWebSocketController {
             responseDto.setConversationComplete(response.isConversationComplete());
             responseDto.setTimestamp(Instant.now());
 
-            messagingTemplate.convertAndSendToUser(
-                sessionId,
-                "/queue/chat",
-                responseDto
-            );
+            if (principal != null) {
+                messagingTemplate.convertAndSendToUser(
+                    principal.getName(),
+                    "/queue/chat",
+                    responseDto
+                );
+            } else {
+                messagingTemplate.convertAndSendToUser(
+                    webSocketSessionId,
+                    "/queue/chat",
+                    responseDto
+                );
+            }
             
         } catch (Exception e) {
             ChatResponseDto errorResponse = new ChatResponseDto();
@@ -72,11 +88,19 @@ public class ChatWebSocketController {
             errorResponse.setConversationComplete(false);
             errorResponse.setTimestamp(Instant.now());
             
-            messagingTemplate.convertAndSendToUser(
-                sessionId,
-                "/queue/chat",
-                errorResponse
-            );
+            if (principal != null) {
+                messagingTemplate.convertAndSendToUser(
+                    principal.getName(),
+                    "/queue/chat",
+                    errorResponse
+                );
+            } else {
+                messagingTemplate.convertAndSendToUser(
+                    webSocketSessionId,
+                    "/queue/chat",
+                    errorResponse
+                );
+            }
         }
     }
     
@@ -90,16 +114,26 @@ public class ChatWebSocketController {
         response.put("message", "Chat session started successfully");
         response.put("timestamp", Instant.now().toString());
         
-        messagingTemplate.convertAndSendToUser(
-            headerAccessor.getSessionId(),
-            "/queue/session",
-            response
-        );
+        if (principal != null) {
+            messagingTemplate.convertAndSendToUser(
+                principal.getName(),
+                "/queue/session",
+                response
+            );
+        } else {
+            // Fallback for unauthenticated users
+            messagingTemplate.convertAndSendToUser(
+                headerAccessor.getSessionId(),
+                "/queue/session",
+                response
+            );
+        }
     }
     
     @MessageMapping("/chat.endSession")
     public void endSession(@Payload Map<String, String> payload,
-                          SimpMessageHeaderAccessor headerAccessor) {
+                          SimpMessageHeaderAccessor headerAccessor,
+                          Principal principal) {
         
         String sessionId = payload.get("sessionId");
         if (sessionId != null) {
@@ -110,11 +144,20 @@ public class ChatWebSocketController {
         response.put("message", "Chat session ended successfully");
         response.put("timestamp", Instant.now().toString());
         
-        messagingTemplate.convertAndSendToUser(
-            headerAccessor.getSessionId(),
-            "/queue/session",
-            response
-        );
+        if (principal != null) {
+            messagingTemplate.convertAndSendToUser(
+                principal.getName(),
+                "/queue/session",
+                response
+            );
+        } else {
+            // Fallback for unauthenticated users
+            messagingTemplate.convertAndSendToUser(
+                headerAccessor.getSessionId(),
+                "/queue/session",
+                response
+            );
+        }
     }
     
     // WebSocket endpoint for typing indicators - available for frontend integration
