@@ -17,36 +17,49 @@ import java.util.stream.Collectors;
 @Service
 public class LexServiceImpl implements LexService {
     
-    @Value("${aws.lex.bot-id}")
+    @Value("${AWS_LEX_BOT_ID}")
     private String botId;
     
-    @Value("${aws.lex.bot-alias-id}")
+    @Value("${AWS_LEX_BOT_ALIAS_ID:TSTALIASID}")
     private String botAliasId;
     
-    @Value("${aws.lex.locale-id}")
+    @Value("${AWS_LEX_LOCALE_ID:en_US}")
     private String localeId;
     
-    @Value("${aws.region}")
+    @Value("${AWS_REGION:us-east-1}")
     private String region;
     
-    @Value("${aws.access-key-id}")
+    @Value("${AWS_ACCESS_KEY_ID:}")
     private String accessKeyId;
     
-    @Value("${aws.secret-access-key}")
+    @Value("${AWS_SECRET_ACCESS_KEY:}")
     private String secretAccessKey;
+    
+    @Value("${use-iam-roles:false}")
+    private boolean useIamRoles;
     
     private LexRuntimeV2Client lexClient;
     
     @PostConstruct
     public void init() {
-        if (accessKeyId != null && !accessKeyId.isEmpty() && 
-            secretAccessKey != null && !secretAccessKey.isEmpty()) {
-            
+        if (useIamRoles) {
+            System.out.println("LexServiceImpl: Using IAM roles for AWS authentication");
+            this.lexClient = LexRuntimeV2Client.builder()
+                    .region(Region.of(region))
+                    .build();
+        } else if (accessKeyId != null && !accessKeyId.isEmpty() && 
+                   secretAccessKey != null && !secretAccessKey.isEmpty()) {
+            System.out.println("LexServiceImpl: Using access keys for AWS authentication");
             AwsBasicCredentials awsCredentials = AwsBasicCredentials.create(accessKeyId, secretAccessKey);
             
             this.lexClient = LexRuntimeV2Client.builder()
                     .region(Region.of(region))
                     .credentialsProvider(StaticCredentialsProvider.create(awsCredentials))
+                    .build();
+        } else {
+            System.out.println("LexServiceImpl: Using default credential provider chain");
+            this.lexClient = LexRuntimeV2Client.builder()
+                    .region(Region.of(region))
                     .build();
         }
     }

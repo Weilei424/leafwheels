@@ -30,9 +30,7 @@ public class ChatService {
     private final ChatSessionRepository chatSessionRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
-    private final LexService lexService;
     private final ContentFilterService contentFilterService;
-    private final ChatIntentHandlerService intentHandlerService;
     private final AnalyticsService analyticsService;
     
     @Value("${chatbot.max-session-duration:3600000}")
@@ -62,44 +60,24 @@ public class ChatService {
         userMessage.setMessageContent(message);
         userMessage.setIsFromUser(true);
         userMessage.setMessageType(ChatMessage.MessageType.TEXT);
+        userMessage.setTimestamp(java.time.Instant.now());
         chatMessageRepository.save(userMessage);
         
         try {
-            Map<String, String> sessionAttributes = buildSessionAttributes(session);
-
-            LexService.LexResponse lexResponse = lexService.sendMessage(message, sessionId, username, sessionAttributes);
-
-            String enhancedResponse = lexResponse.getMessage();
-            if (lexResponse.getIntent() != null && !lexResponse.getIntent().equals("Fallback")) {
-                try {
-                    String intentResponse = intentHandlerService.handleIntent(
-                        lexResponse.getIntent(), 
-                        lexResponse.getSlots(), 
-                        username
-                    );
-
-                    if (intentResponse != null && intentResponse.length() > enhancedResponse.length()) {
-                        enhancedResponse = intentResponse;
-                    }
-                } catch (Exception e) {
-                    System.err.println("Error handling intent: " + e.getMessage());
-                }
-            }
+            String botResponse = generateSimpleResponse(message, username);
 
             ChatMessage botMessage = new ChatMessage();
             botMessage.setChatSession(session);
-            botMessage.setMessageContent(enhancedResponse);
+            botMessage.setMessageContent(botResponse);
             botMessage.setIsFromUser(false);
-            botMessage.setIntent(lexResponse.getIntent());
-            botMessage.setMessageType(ChatMessage.MessageType.INTENT_RESPONSE);
-            botMessage.setMetadata(buildMetadata(lexResponse));
+            botMessage.setIntent("general_chat");
+            botMessage.setMessageType(ChatMessage.MessageType.TEXT);
+            botMessage.setTimestamp(java.time.Instant.now());
             chatMessageRepository.save(botMessage);
 
-            updateSessionContext(session, lexResponse);
-
-            trackChatInteraction(username, lexResponse.getIntent(), message, enhancedResponse);
+            trackChatInteraction(username, "general_chat", message, botResponse);
             
-            return new ChatResponse(enhancedResponse, lexResponse.getIntent(), lexResponse.isComplete());
+            return new ChatResponse(botResponse, "general_chat", false);
             
         } catch (Exception e) {
             ChatMessage errorMessage = new ChatMessage();
@@ -107,6 +85,7 @@ public class ChatService {
             errorMessage.setMessageContent("I'm sorry, I encountered an error. Please try again.");
             errorMessage.setIsFromUser(false);
             errorMessage.setMessageType(ChatMessage.MessageType.ERROR);
+            errorMessage.setTimestamp(java.time.Instant.now());
             chatMessageRepository.save(errorMessage);
             
             return new ChatResponse("I'm sorry, I encountered an error. Please try again.", null, false);
@@ -127,7 +106,6 @@ public class ChatService {
             String username = session.getUser() != null ? session.getUser().getEmail() : null;
             session.setIsActive(false);
             chatSessionRepository.save(session);
-            lexService.endSession(sessionId);
             trackSessionEvent(username, "session_ended", sessionId);
         }
     }
@@ -176,36 +154,36 @@ public class ChatService {
         return chatSessionRepository.save(newSession);
     }
     
-    private Map<String, String> buildSessionAttributes(ChatSession session) {
-        Map<String, String> attributes = new HashMap<>();
+    private String generateSimpleResponse(String message, String username) {
+        String lowerMessage = message.toLowerCase().trim();
         
-        if (session.getUser() != null) {
-            attributes.put("userId", session.getUser().getId().toString());
-            attributes.put("userEmail", session.getUser().getEmail());
+        // Greeting responses
+        if (lowerMessage.contains("hello") || lowerMessage.contains("hi") || lowerMessage.contains("hey")) {
+            return "Hello! I'm the LeafWheels chatbot. How can I help you today?";
         }
         
-        if (session.getContext() != null) {
-            attributes.put("context", session.getContext());
+        // Help responses  
+        if (lowerMessage.contains("help") || lowerMessage.contains("what can you do")) {
+            return "I can help you with information about our electric vehicles, answer questions about our products, and assist with general inquiries. What would you like to know?";
         }
         
-        return attributes;
-    }
-    
-    private String buildMetadata(LexService.LexResponse lexResponse) {
-        Map<String, Object> metadata = new HashMap<>();
-        metadata.put("intent", lexResponse.getIntent());
-        metadata.put("slots", lexResponse.getSlots());
-        metadata.put("dialogAction", lexResponse.getDialogAction());
-        metadata.put("sessionAttributes", lexResponse.getSessionAttributes());
-
-        return metadata.toString();
-    }
-    
-    private void updateSessionContext(ChatSession session, LexService.LexResponse lexResponse) {
-        if (lexResponse.getSessionAttributes() != null && !lexResponse.getSessionAttributes().isEmpty()) {
-            session.setContext(lexResponse.getSessionAttributes().toString());
-            chatSessionRepository.save(session);
+        // Vehicle-related responses
+        if (lowerMessage.contains("vehicle") || lowerMessage.contains("car") || lowerMessage.contains("electric")) {
+            return "We offer a wide range of electric vehicles! You can browse our inventory on the main page. Each vehicle comes with detailed specifications and history information.";
         }
+        
+        // Price-related responses
+        if (lowerMessage.contains("price") || lowerMessage.contains("cost") || lowerMessage.contains("loan")) {
+            return "You can find pricing information for each vehicle on our store page. We also offer loan calculators to help you estimate monthly payments.";
+        }
+        
+        // Goodbye responses
+        if (lowerMessage.contains("bye") || lowerMessage.contains("goodbye") || lowerMessage.contains("thanks")) {
+            return "Thank you for using LeafWheels! Feel free to reach out if you have any more questions.";
+        }
+        
+        // Default response
+        return "I understand you're asking about: \"" + message + "\". While I'm a simple chatbot, I'm here to help with basic questions about LeafWheels. Could you please be more specific about what you'd like to know?";
     }
     
     private void trackChatInteraction(String username, String intent, String userMessage, String botResponse) {
