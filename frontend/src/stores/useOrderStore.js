@@ -1,6 +1,13 @@
 import { create } from "zustand";
 import { toast } from "react-toastify";
 import axios from "axios";
+import { useUserStore } from "./useUserStore";
+
+// Helper function to get auth headers for authenticated operations
+const getAuthHeaders = () => {
+    const { accessToken } = useUserStore.getState();
+    return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+};
 
 export const useOrderStore = create((set, get) => ({
     // State
@@ -16,13 +23,15 @@ export const useOrderStore = create((set, get) => ({
 
     /**
      * Create a new order with specific items
-     * Endpoint: POST /api/v1/orders/{userId}
+     * Endpoint: POST /api/v1/orders/{userId} - REQUIRES AUTH
      * Body: CreateOrderRequestDto
      */
     createOrder: async (userId, orderData) => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.post(`/api/v1/orders/${userId}`, orderData);
+            const response = await axios.post(`/api/v1/orders/${userId}`, orderData, {
+                headers: getAuthHeaders()
+            });
 
             set((prevState) => ({
                 orders: [response.data, ...prevState.orders],
@@ -44,12 +53,14 @@ export const useOrderStore = create((set, get) => ({
 
     /**
      * Get order by ID
-     * Endpoint: GET /api/v1/orders/{orderId}
+     * Endpoint: GET /api/v1/orders/{orderId} - REQUIRES AUTH
      */
     getOrderById: async (orderId) => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.get(`/api/v1/orders/${orderId}`);
+            const response = await axios.get(`/api/v1/orders/${orderId}`, {
+                headers: getAuthHeaders()
+            });
 
             set({
                 currentOrder: response.data,
@@ -69,12 +80,14 @@ export const useOrderStore = create((set, get) => ({
 
     /**
      * Get orders for a user
-     * Endpoint: GET /api/v1/orders/user/{userId}
+     * Endpoint: GET /api/v1/orders/user/{userId} - REQUIRES AUTH
      */
     getOrdersByUser: async (userId) => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.get(`/api/v1/orders/user/${userId}`);
+            const response = await axios.get(`/api/v1/orders/user/${userId}`, {
+                headers: getAuthHeaders()
+            });
 
             set({
                 userOrders: response.data,
@@ -93,41 +106,15 @@ export const useOrderStore = create((set, get) => ({
     },
 
     /**
-     * Create order from cart - ✅ THIS IS WHAT WE USE IN PAYMENT FLOW
-     * Endpoint: POST /api/v1/orders/from-cart/{userId}
-     */
-    createOrderFromCart: async (userId) => {
-        set({ loading: true, error: null });
-        try {
-            const response = await axios.post(`/api/v1/orders/from-cart/${userId}`);
-
-            set((prevState) => ({
-                orders: [response.data, ...prevState.orders],
-                currentOrder: response.data,
-                userOrders: [response.data, ...prevState.userOrders],
-                loading: false,
-            }));
-
-            toast.success("Order created successfully!");
-            return response.data;
-        } catch (error) {
-            const errorMessage = error.response?.data?.message ||
-                error.response?.data?.error ||
-                "Failed to create order from cart";
-            set({ error: errorMessage, loading: false });
-            toast.error(errorMessage);
-            throw error;
-        }
-    },
-
-    /**
      * Cancel an order
-     * Endpoint: POST /api/v1/orders/{orderId}/cancel
+     * Endpoint: POST /api/v1/orders/{orderId}/cancel - REQUIRES AUTH
      */
     cancelOrder: async (orderId) => {
         set({ loading: true, error: null });
         try {
-            await axios.post(`/api/v1/orders/${orderId}/cancel`);
+            await axios.post(`/api/v1/orders/${orderId}/cancel`, {}, {
+                headers: getAuthHeaders()
+            });
 
             set((prevState) => ({
                 orders: prevState.orders.map(order =>

@@ -42,7 +42,7 @@ const ReviewCard = ({ review, canDelete = false, onDelete }) => {
             </span>
             </div>
             <h4 className="font-medium text-gray-900">{review.title}</h4>
-            <p className="text-sm text-gray-600">by {user.firstName}</p>
+            <p className="text-sm text-gray-600">by {"Anonymous"}</p>
           </div>
 
           {canDelete && (

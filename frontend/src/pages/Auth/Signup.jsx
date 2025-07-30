@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {useUserStore} from "../../stores/useUserStore.js";
 import {motion} from "framer-motion";
 
 
 const SignUpPage = () => {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -15,10 +16,21 @@ const SignUpPage = () => {
 
     const { signup, loading } = useUserStore();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const { firstName, lastName, email, password, confirmPassword } = formData;
-        signup(firstName, lastName, email, password, confirmPassword);
+
+        try {
+            const result = await signup(firstName, lastName, email, password, confirmPassword);
+
+            // Redirect to homepage on successful signup
+            if (result.success) {
+                navigate('/', { replace: true });
+            }
+        } catch (error) {
+            console.error('Signup failed:', error);
+            // Error handling is already done in the store with toast notifications
+        }
     };
 
     const handleInputChange = (field, value) => {

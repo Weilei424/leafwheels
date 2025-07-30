@@ -1,169 +1,271 @@
+// stores/usePaymentStore.js
 import { create } from "zustand";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { useOrderStore } from "./useOrderStore.js";
+import { useCartStore } from "./useCartStore.js";
+import { useUserStore } from "./useUserStore.js";
 
+// =======================
+// TYPES & CONSTANTS
+// =======================
+
+const PAYMENT_ENDPOINTS = {
+    CREATE_SESSION: "/api/v1/payment/session",
+    PROCESS_PAYMENT: "/api/v1/payment/process",
+    GET_STATUS: (orderId) => `/api/v1/payment/${orderId}/status`,
+    GET_HISTORY: (userId) => `/api/v1/payment/user/${userId}`,
+    CANCEL_PAYMENT: (orderId) => `/api/v1/payment/${orderId}/cancel`,
+};
+
+const PAYMENT_STATUS = {
+    PENDING: "PENDING",
+    APPROVED: 'APPROVED',
+    DENIED: 'DENIED',
+    FAILED: 'FAILED',
+    REFUNDED: 'REFUNDED',
+};
+
+// =======================
+// HELPER FUNCTIONS
+// =======================
+
+// Helper function to get auth headers for payment operations
+const getAuthHeaders = () => {
+    const { accessToken } = useUserStore.getState();
+    return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+};
+
+const createErrorMessage = (error, fallback) => {
+    return error.response?.data?.message || fallback;
+};
+
+const handleApiError = (error, fallback, set, loadingKey) => {
+    const errorMessage = createErrorMessage(error, fallback);
+    set({ error: errorMessage, [loadingKey]: false });
+    toast.error(errorMessage);
+    return errorMessage;
+};
+
+const handleSuccessfulPayment = async (paymentResult, paymentData) => {
+    console.log("Payment result:", paymentResult);
+
+    if (paymentResult.status === PAYMENT_STATUS.APPROVED) {
+        try {
+            await useCartStore.getState().clearCart(paymentData.userId);
+            toast.success("Payment approved! Order confirmed.");
+        } catch (orderError) {
+            console.error("Failed to clear cart:", orderError);
+            toast.warning("Payment approved but cart clearing failed. Please contact support.");
+        }
+    } else if (paymentResult.status === PAYMENT_STATUS.DENIED) {
+        toast.error(paymentResult.failureReason || "Payment was declined");
+    }
+};
+
+// =======================
+// STORE DEFINITION
+// =======================
 
 export const usePaymentStore = create((set, get) => ({
-    // Payment state
+    // =======================
+    // STATE
+    // =======================
+
+    // Core payment state
     paymentSession: null,
     paymentResult: null,
     paymentHistory: [],
 
-    // Loading states - specific and clear
+    // Loading states - each operation has its own loading flag
     creatingSession: false,
     processingPayment: false,
     loadingHistory: false,
     canceling: false,
+
+    // Error state
     error: null,
 
-    // Clear functions
+    // =======================
+    // STATE MANAGEMENT ACTIONS
+    // =======================
+
     clearError: () => set({ error: null }),
+
     clearPaymentResult: () => set({ paymentResult: null }),
+
     resetPaymentFlow: () => set({
         paymentSession: null,
         paymentResult: null,
-        error: null
+        error: null,
     }),
 
+    // =======================
+    // PAYMENT SESSION MANAGEMENT
+    // =======================
+
     /**
-     * Create payment session
-     * Endpoint: POST /api/v1/payment/session
+     * Creates a new payment session for the user
+     * This is the first step in the payment flow
+     * REQUIRES AUTH
      */
     createPaymentSession: async (userId) => {
         set({ creatingSession: true, error: null });
+
         try {
-            const response = await axios.post(`/api/v1/payment/session?userId=${userId}`);
+            const response = await axios.post(
+                `${PAYMENT_ENDPOINTS.CREATE_SESSION}?userId=${userId}`,
+                {},
+                { headers: getAuthHeaders() }
+            );
+
+            const paymentSession = {
+                userId,
+                createdAt: new Date(),
+                sessionId: response.data?.sessionId,
+            };
 
             set({
-                paymentSession: {
-                    userId,
-                    createdAt: new Date(),
-                    sessionId: response.data?.sessionId
-                },
-                creatingSession: false
+                paymentSession,
+                creatingSession: false,
             });
 
             toast.success("Payment session created!");
             return response.data;
+
         } catch (error) {
-            const errorMessage = error.response?.data?.message || "Failed to create payment session";
-            set({ error: errorMessage, creatingSession: false });
-            toast.error(errorMessage);
+            handleApiError(error, "Failed to create payment session", set, 'creatingSession');
             throw error;
         }
     },
 
+    // =======================
+    // PAYMENT PROCESSING
+    // =======================
+
     /**
-     * Process payment
-     * Endpoint: POST /api/v1/payment/process
-     */
-    /**
-     * Process payment - UPDATED with order creation
+     * Processes the actual payment with user's payment data
+     * Handles both successful and failed payments
+     * REQUIRES AUTH
      */
     processPayment: async (paymentData) => {
         set({ processingPayment: true, error: null });
-        try {
 
-            const response = await axios.post("/api/v1/payment/process", paymentData);
+        try {
+            const response = await axios.post(PAYMENT_ENDPOINTS.PROCESS_PAYMENT, paymentData, {
+                headers: getAuthHeaders()
+            });
             const paymentResult = response.data;
 
             set({
                 paymentResult,
-                processingPayment: false
+                processingPayment: false,
             });
 
-
-            if (paymentResult.status === 'APPROVED') {
-                try {
-                    // Create order from cart
-                    await useOrderStore.getState().createOrderFromCart(paymentData.userId);
-                    toast.success("Payment approved! Order confirmed.");
-                } catch (orderError) {
-                    console.error("Failed to create order:", orderError);
-                    // Payment succeeded but order creation failed - needs manual handling
-                    toast.warning("Payment approved but order creation failed. Please contact support.");
-                }
-            } else if (paymentResult.status === 'DENIED') {
-                toast.error(paymentResult.failureReason || "Payment was declined");
-            }
+            // Handle post-payment actions (cart clearing, notifications)
+            await handleSuccessfulPayment(paymentResult, paymentData);
 
             return paymentResult;
+
         } catch (error) {
-            const errorMessage = error.response?.data?.message || "Payment processing failed";
-            set({ error: errorMessage, processingPayment: false });
-            toast.error(errorMessage);
+            handleApiError(error, "Payment processing failed", set, 'processingPayment');
             throw error;
         }
     },
 
+    // =======================
+    // PAYMENT INFORMATION RETRIEVAL
+    // =======================
+
     /**
-     * Get payment status for an order
-     * Endpoint: GET /api/v1/payment/{orderId}/status
+     * Gets the current status of a specific payment/order
+     * REQUIRES AUTH
      */
     getPaymentStatus: async (orderId) => {
         set({ loadingHistory: true, error: null });
+
         try {
-            const response = await axios.get(`/api/v1/payment/${orderId}/status`);
+            const response = await axios.get(PAYMENT_ENDPOINTS.GET_STATUS(orderId), {
+                headers: getAuthHeaders()
+            });
             set({ loadingHistory: false });
             return response.data;
+
         } catch (error) {
-            const errorMessage = error.response?.data?.message || "Failed to get payment status";
-            set({ error: errorMessage, loadingHistory: false });
-            toast.error(errorMessage);
+            handleApiError(error, "Failed to get payment status", set, 'loadingHistory');
             throw error;
         }
     },
 
     /**
-     * Get user payment history
-     * Endpoint: GET /api/v1/payment/user/{userId}
+     * Retrieves all payment history for a specific user
+     * REQUIRES AUTH
      */
     getPaymentHistory: async (userId) => {
         set({ loadingHistory: true, error: null });
+
         try {
-            const response = await axios.get(`/api/v1/payment/user/${userId}`);
+            const response = await axios.get(PAYMENT_ENDPOINTS.GET_HISTORY(userId), {
+                headers: getAuthHeaders()
+            });
 
             set({
                 paymentHistory: response.data,
-                loadingHistory: false
+                loadingHistory: false,
             });
 
             return response.data;
+
         } catch (error) {
-            const errorMessage = error.response?.data?.message || "Failed to get payment history";
-            set({ error: errorMessage, loadingHistory: false });
-            toast.error(errorMessage);
+            handleApiError(error, "Failed to get payment history", set, 'loadingHistory');
             throw error;
         }
     },
 
+    // =======================
+    // PAYMENT CANCELLATION
+    // =======================
+
     /**
-     * Cancel/refund payment
-     * Endpoint: POST /api/v1/payment/{orderId}/cancel
+     * Cancels and refunds a payment
+     * Automatically refreshes payment history if available
+     * REQUIRES AUTH
      */
     cancelPayment: async (orderId) => {
         set({ canceling: true, error: null });
+
         try {
-            await axios.post(`/api/v1/payment/${orderId}/cancel`);
+            await axios.post(PAYMENT_ENDPOINTS.CANCEL_PAYMENT(orderId), {}, {
+                headers: getAuthHeaders()
+            });
 
             set({ canceling: false });
             toast.success("Payment cancelled and refunded successfully");
 
-            // Refresh payment history if available
-            const { paymentHistory } = get();
-            if (paymentHistory.length > 0) {
-                const firstPayment = paymentHistory[0];
-                if (firstPayment.userId) {
-                    await get().getPaymentHistory(firstPayment.userId);
-                }
-            }
+            // Refresh payment history to show the cancellation
+            await get().refreshPaymentHistoryIfAvailable();
 
         } catch (error) {
-            const errorMessage = error.response?.data?.message || "Failed to cancel payment";
-            set({ error: errorMessage, canceling: false });
-            toast.error(errorMessage);
+            handleApiError(error, "Failed to cancel payment", set, 'canceling');
             throw error;
+        }
+    },
+
+    // =======================
+    // UTILITY ACTIONS
+    // =======================
+
+    /**
+     * Helper function to refresh payment history if we have user data
+     * Used after cancellations to show updated status
+     */
+    refreshPaymentHistoryIfAvailable: async () => {
+        const { paymentHistory, getPaymentHistory } = get();
+
+        if (paymentHistory.length > 0) {
+            const firstPayment = paymentHistory[0];
+            if (firstPayment.userId) {
+                await getPaymentHistory(firstPayment.userId);
+            }
         }
     },
 }));

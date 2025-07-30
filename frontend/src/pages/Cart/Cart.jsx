@@ -1,4 +1,4 @@
-import React, {useMemo, useCallback} from "react";
+import React, {useCallback} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUserStore } from "../../stores/useUserStore.js";
 import { useCartStore } from "../../stores/useCartStore.js";
@@ -6,6 +6,8 @@ import OrderSummary from "../../components/cart/OrderSummary.jsx";
 import CartItem from "../../components/cart/CartItem.jsx";
 import EmptyCartUI from "../../components/cart/EmptyCartUI.jsx";
 import CartLoanCalculator from "../../components/cart/CartLoanCalculator.jsx";
+import { useCartTransformation } from "../../hooks/useCartTransformation.js"; // adjust path if needed
+
 
 const CartPage = () => {
     const { user } = useUserStore();
@@ -25,42 +27,9 @@ const CartPage = () => {
         }
     }, [getCartItems, user]);
 
+    // utility function
+    const transformedCart = useCartTransformation(cart);
 
-    const transformedCart = useMemo(() => {
-        return cart.map((item) => {
-            const isVehicle = item.type === "VEHICLE";
-            const product = isVehicle ? item.vehicle : item.accessory;
-
-            if (!product) return null;
-
-            const {
-                id,
-                year,
-                make,
-                model,
-                name,
-                imageUrls,
-                imageUrl,
-                price,
-                discountPrice,
-                discountPercentage,
-                onDeal,
-            } = product;
-
-            return {
-                _id: item.id,
-                productId: id,
-                name: isVehicle ? `${year} ${make} ${model}` : name,
-                image: imageUrls?.[0] || imageUrl || null,
-                price,
-                discountPrice,
-                discountPercentage,
-                onDeal,
-                quantity: item.quantity,
-                type: item.type,
-            };
-        }).filter(Boolean);
-    }, [cart]);
 
 
     const handleUpdateQuantity = useCallback((accessoryId, change) => {
@@ -162,6 +131,7 @@ const CartPage = () => {
                             </AnimatePresence>
                         </div>
                     </div>
+
 
                     {/* Sidebar */}
                     <div className="mt-8 lg:mt-0 space-y-6">

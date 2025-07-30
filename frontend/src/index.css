@@ -10,6 +10,7 @@ html {
 }
 
 body {
+    caret-color: transparent; /* Hide the typing cursor */
     background-color: white;
     margin: 0;
     font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
