@@ -20,13 +20,13 @@ import java.util.List;
 @Slf4j
 public class LexBotSetupService {
 
-    @Value("${AWS_LEX_BOT_ID}")
+    @Value("${aws.lex.bot.id}")
     private String botId;
 
-    @Value("${AWS_LEX_LOCALE_ID:en_US}")
+    @Value("${aws.lex.locale.id:en_US}")
     private String localeId;
 
-    @Value("${AWS_REGION:us-east-1}")
+    @Value("${aws.region:us-east-1}")
     private String awsRegion;
 
     @Value("${chatbot.auto-setup:true}")
@@ -35,10 +35,10 @@ public class LexBotSetupService {
     @Value("${use-iam-roles:false}")
     private boolean useIamRoles;
 
-    @Value("${AWS_ACCESS_KEY_ID:}")
+    @Value("${aws.access.key.id:}")
     private String accessKeyId;
 
-    @Value("${AWS_SECRET_ACCESS_KEY:}")
+    @Value("${aws.secret.access.key:}")
     private String secretAccessKey;
 
     private LexModelsV2Client lexClient;

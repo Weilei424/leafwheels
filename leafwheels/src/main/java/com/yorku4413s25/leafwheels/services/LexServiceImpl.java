@@ -17,22 +17,22 @@ import java.util.stream.Collectors;
 @Service
 public class LexServiceImpl implements LexService {
     
-    @Value("${AWS_LEX_BOT_ID}")
+    @Value("${aws.lex.bot.id}")
     private String botId;
     
-    @Value("${AWS_LEX_BOT_ALIAS_ID:TSTALIASID}")
+    @Value("${aws.lex.bot.alias.id:TSTALIASID}")
     private String botAliasId;
     
-    @Value("${AWS_LEX_LOCALE_ID:en_US}")
+    @Value("${aws.lex.locale.id:en_US}")
     private String localeId;
     
-    @Value("${AWS_REGION:us-east-1}")
+    @Value("${aws.region:us-east-1}")
     private String region;
     
-    @Value("${AWS_ACCESS_KEY_ID:}")
+    @Value("${aws.access.key.id:}")
     private String accessKeyId;
     
-    @Value("${AWS_SECRET_ACCESS_KEY:}")
+    @Value("${aws.secret.access.key:}")
     private String secretAccessKey;
     
     @Value("${use-iam-roles:false}")
