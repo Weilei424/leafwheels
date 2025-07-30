@@ -95,10 +95,10 @@ public class LexBotSetupService {
                         .botId(botId)
                         .botVersion("DRAFT")
                         .localeId(localeId)
-                        .slotTypeId("VehicleMake")
+                        .slotTypeId("VehMake")  // Shortened to meet 10 char limit
                         .build();
                 lexClient.describeSlotType(describeRequest);
-                log.info("VehicleMake slot type already exists");
+                log.info("VehMake slot type already exists");
                 return;
             } catch (ResourceNotFoundException e) {
 
@@ -160,15 +160,18 @@ public class LexBotSetupService {
                     .botId(botId)
                     .botVersion("DRAFT")
                     .localeId(localeId)
-                    .slotTypeName("VehicleMake")
-                    .description("Vehicle make and model names")
+                    .slotTypeName("VehMake")  // Shortened to meet 10 char limit
+                    .description("Vehicle make names")
                     .slotTypeValues(vehicleMakeValues)
+                    .valueSelectionSetting(SlotValueSelectionSetting.builder()
+                            .resolutionStrategy(SlotValueResolutionStrategy.ORIGINAL_VALUE)
+                            .build())
                     .build();
 
             CreateSlotTypeResponse response = lexClient.createSlotType(request);
-            log.info("Created VehicleMake slot type: {}", response.slotTypeId());
+            log.info("Created VehMake slot type: {}", response.slotTypeId());
         } catch (Exception e) {
-            log.error("Failed to create VehicleMake slot type: {}", e.getMessage());
+            log.error("Failed to create VehMake slot type: {}", e.getMessage());
         }
     }
 
@@ -179,7 +182,7 @@ public class LexBotSetupService {
                         .botId(botId)
                         .botVersion("DRAFT")
                         .localeId(localeId)
-                        .slotTypeId("PriceRange")
+                        .slotTypeId("PriceRange")  // Already within 10 char limit
                         .build();
                 lexClient.describeSlotType(describeRequest);
                 log.info("PriceRange slot type already exists");
@@ -229,6 +232,9 @@ public class LexBotSetupService {
                     .slotTypeName("PriceRange")
                     .description("Price ranges for vehicle search")
                     .slotTypeValues(priceRangeValues)
+                    .valueSelectionSetting(SlotValueSelectionSetting.builder()
+                            .resolutionStrategy(SlotValueResolutionStrategy.ORIGINAL_VALUE)
+                            .build())
                     .build();
 
             CreateSlotTypeResponse response = lexClient.createSlotType(request);
@@ -244,21 +250,29 @@ public class LexBotSetupService {
         createAddToCartIntent();
         createGetHelpIntent();
     }
+    
+    private boolean intentExists(String intentName) {
+        try {
+            ListIntentsRequest request = ListIntentsRequest.builder()
+                    .botId(botId)
+                    .botVersion("DRAFT")
+                    .localeId(localeId)
+                    .build();
+
+            ListIntentsResponse response = lexClient.listIntents(request);
+            return response.intentSummaries().stream()
+                    .anyMatch(intent -> intentName.equals(intent.intentName()));
+        } catch (Exception e) {
+            log.error("Failed to check if intent exists: {}", e.getMessage());
+            return false;
+        }
+    }
 
     private void createSearchVehiclesIntent() {
         try {
-            try {
-                DescribeIntentRequest describeRequest = DescribeIntentRequest.builder()
-                        .botId(botId)
-                        .botVersion("DRAFT")
-                        .localeId(localeId)
-                        .intentId("SearchVehicles")
-                        .build();
-                lexClient.describeIntent(describeRequest);
-                log.info("SearchVehicles intent already exists");
+            if (intentExists("SearchVeh")) {
+                log.info("SearchVeh intent already exists");
                 return;
-            } catch (ResourceNotFoundException e) {
-
             }
 
             List<SampleUtterance> utterances = Arrays.asList(
@@ -276,7 +290,7 @@ public class LexBotSetupService {
                     .botId(botId)
                     .botVersion("DRAFT")
                     .localeId(localeId)
-                    .intentName("SearchVehicles")
+                    .intentName("SearchVeh")  // Shortened to meet 10 char limit
                     .description("Search for vehicles by make and price")
                     .sampleUtterances(utterances)
                     .fulfillmentCodeHook(FulfillmentCodeHookSettings.builder()
@@ -293,6 +307,11 @@ public class LexBotSetupService {
 
     private void createGetCartInfoIntent() {
         try {
+            if (intentExists("CartInfo")) {
+                log.info("CartInfo intent already exists");
+                return;
+            }
+            
             List<SampleUtterance> utterances = Arrays.asList(
                 SampleUtterance.builder().utterance("What's in my cart").build(),
                 SampleUtterance.builder().utterance("Show me my cart").build(),
@@ -305,7 +324,7 @@ public class LexBotSetupService {
                     .botId(botId)
                     .botVersion("DRAFT")
                     .localeId(localeId)
-                    .intentName("GetCartInfo")
+                    .intentName("CartInfo")  // Shortened to meet 10 char limit
                     .description("Get information about user's cart")
                     .sampleUtterances(utterances)
                     .fulfillmentCodeHook(FulfillmentCodeHookSettings.builder()
@@ -314,14 +333,19 @@ public class LexBotSetupService {
                     .build();
 
             CreateIntentResponse response = lexClient.createIntent(request);
-            log.info("Created GetCartInfo intent: {}", response.intentId());
+            log.info("Created CartInfo intent: {}", response.intentId());
         } catch (Exception e) {
-            log.error("Failed to create GetCartInfo intent: {}", e.getMessage());
+            log.error("Failed to create CartInfo intent: {}", e.getMessage());
         }
     }
 
     private void createAddToCartIntent() {
-        try {
+        try {  
+            if (intentExists("AddCart")) {
+                log.info("AddCart intent already exists");
+                return;
+            }
+            
             List<SampleUtterance> utterances = Arrays.asList(
                 SampleUtterance.builder().utterance("Add this to my cart").build(),
                 SampleUtterance.builder().utterance("I want to buy this vehicle").build(),
@@ -334,7 +358,7 @@ public class LexBotSetupService {
                     .botId(botId)
                     .botVersion("DRAFT")
                     .localeId(localeId)
-                    .intentName("AddToCart")
+                    .intentName("AddCart")  // Shortened to meet 10 char limit
                     .description("Add items to shopping cart")
                     .sampleUtterances(utterances)
                     .fulfillmentCodeHook(FulfillmentCodeHookSettings.builder()
@@ -343,14 +367,19 @@ public class LexBotSetupService {
                     .build();
 
             CreateIntentResponse response = lexClient.createIntent(request);
-            log.info("Created AddToCart intent: {}", response.intentId());
+            log.info("Created AddCart intent: {}", response.intentId());
         } catch (Exception e) {
-            log.error("Failed to create AddToCart intent: {}", e.getMessage());
+            log.error("Failed to create AddCart intent: {}", e.getMessage());
         }
     }
 
     private void createGetHelpIntent() {
         try {
+            if (intentExists("Help")) {
+                log.info("Help intent already exists");
+                return;
+            }
+            
             List<SampleUtterance> utterances = Arrays.asList(
                 SampleUtterance.builder().utterance("Help").build(),
                 SampleUtterance.builder().utterance("What can you do").build(),
@@ -363,7 +392,7 @@ public class LexBotSetupService {
                     .botId(botId)
                     .botVersion("DRAFT")
                     .localeId(localeId)
-                    .intentName("GetHelp")
+                    .intentName("Help")  // Shortened to meet 10 char limit
                     .description("Provide help and assistance")
                     .sampleUtterances(utterances)
                     .fulfillmentCodeHook(FulfillmentCodeHookSettings.builder()
@@ -372,9 +401,9 @@ public class LexBotSetupService {
                     .build();
 
             CreateIntentResponse response = lexClient.createIntent(request);
-            log.info("Created GetHelp intent: {}", response.intentId());
+            log.info("Created Help intent: {}", response.intentId());
         } catch (Exception e) {
-            log.error("Failed to create GetHelp intent: {}", e.getMessage());
+            log.error("Failed to create Help intent: {}", e.getMessage());
         }
     }
 
@@ -385,8 +414,8 @@ public class LexBotSetupService {
 
     private void createMakeSlot() {
         try {
-            String searchVehiclesIntentId = getIntentId("SearchVehicles");
-            String vehicleMakeSlotTypeId = getSlotTypeId("VehicleMake");
+            String searchVehiclesIntentId = getIntentId("SearchVeh");
+            String vehicleMakeSlotTypeId = getSlotTypeId("VehMake");
 
             if (searchVehiclesIntentId == null || vehicleMakeSlotTypeId == null) {
                 log.warn("Cannot create make slot - missing intent or slot type");
@@ -426,7 +455,7 @@ public class LexBotSetupService {
 
     private void createPriceSlot() {
         try {
-            String searchVehiclesIntentId = getIntentId("SearchVehicles");
+            String searchVehiclesIntentId = getIntentId("SearchVeh");
             String priceRangeSlotTypeId = getSlotTypeId("PriceRange");
 
             if (searchVehiclesIntentId == null || priceRangeSlotTypeId == null) {
