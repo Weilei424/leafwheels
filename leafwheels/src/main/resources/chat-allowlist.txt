@@ -1,0 +1,66 @@
+# Chat Content Whitelist
+# Add allowed terms related to your business, one per line
+# Lines starting with # are comments
+# If whitelist is empty, all content (except blacklisted) is allowed
+
+# Vehicle-related terms
+vehicle
+car
+bike
+motorcycle
+scooter
+electric
+battery
+range
+price
+model
+brand
+specifications
+features
+warranty
+insurance
+financing
+loan
+lease
+purchase
+buy
+sell
+rent
+test drive
+delivery
+pickup
+
+# Customer service terms
+help
+support
+question
+information
+details
+availability
+stock
+order
+payment
+shipping
+return
+refund
+exchange
+complaint
+feedback
+review
+rating
+
+# General business terms
+leafwheels
+store
+shop
+catalog
+inventory
+product
+service
+customer
+account
+profile
+history
+booking
+reservation
+appointment

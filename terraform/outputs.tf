@@ -72,3 +72,25 @@ output "ecs_task_role_arn" {
   description = "ARN of the ECS task role"
   value       = module.iam.ecs_task_role_arn
 }
+
+# Lex Chatbot Outputs
+output "lex_bot_id" {
+  description = "ID of the Lex bot"
+  value       = module.lex.bot_id
+}
+
+output "lex_bot_name" {
+  description = "Name of the Lex bot"
+  value       = module.lex.bot_name
+}
+
+output "lex_test_alias_id" {
+  description = "ID of the Lex test alias"
+  value       = module.lex.test_alias_id
+}
+
+output "lex_bot_configuration" {
+  description = "Lex bot configuration for Spring Boot application"
+  value       = module.lex.bot_configuration
+  sensitive   = false
+}

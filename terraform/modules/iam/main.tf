@@ -167,13 +167,35 @@ resource "aws_iam_policy" "lex_access" {
           "lex:GetBotAlias",
           "lex:GetBotVersions",
           "lex:GetIntent",
-          "lex:GetSlotType"
+          "lex:GetSlotType",
+          "lex:RecognizeText",
+          "lex:RecognizeUtterance"
         ]
-        Resource = [
-          "arn:aws:lex:*:*:bot:${var.name_prefix}-chatbot:*",
-          "arn:aws:lex:*:*:intent:*",
-          "arn:aws:lex:*:*:slottype:*"
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "lexv2-models:CreateBot",
+          "lexv2-models:CreateBotLocale",
+          "lexv2-models:CreateIntent",
+          "lexv2-models:CreateSlot",
+          "lexv2-models:CreateSlotType",
+          "lexv2-models:DescribeBot",
+          "lexv2-models:DescribeBotLocale",
+          "lexv2-models:DescribeIntent",
+          "lexv2-models:DescribeSlot",
+          "lexv2-models:DescribeSlotType",
+          "lexv2-models:ListIntents",
+          "lexv2-models:ListSlotTypes",
+          "lexv2-models:BuildBotLocale",
+          "lexv2-models:UpdateBot",
+          "lexv2-models:UpdateBotLocale",
+          "lexv2-models:UpdateIntent",
+          "lexv2-models:UpdateSlot",
+          "lexv2-models:UpdateSlotType"
         ]
+        Resource = "*"
       }
     ]
   })
