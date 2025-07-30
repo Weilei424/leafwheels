@@ -273,7 +273,11 @@ resource "aws_ecs_service" "backend" {
     container_port   = 8080
   }
 
-  depends_on = [var.backend_target_group_arn]
+  depends_on = [
+    var.backend_target_group_arn,
+    aws_ecs_service.postgres,
+    aws_ecs_service.redis
+  ]
 
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-backend-service"
@@ -360,6 +364,14 @@ resource "aws_ecs_task_definition" "postgres" {
       }
     ]
 
+    healthCheck = {
+      command     = ["CMD-SHELL", "pg_isready -U ${var.database_username} -d ${var.database_name}"]
+      interval    = 30
+      timeout     = 5
+      retries     = 3
+      startPeriod = 60
+    }
+
     mountPoints = [{
       sourceVolume  = "postgres-data"
       containerPath = "/var/lib/postgresql/data"
@@ -413,6 +425,14 @@ resource "aws_ecs_task_definition" "redis" {
     }]
 
     command = ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+
+    healthCheck = {
+      command     = ["CMD-SHELL", "redis-cli ping"]
+      interval    = 30
+      timeout     = 5
+      retries     = 3
+      startPeriod = 30
+    }
 
     mountPoints = [{
       sourceVolume  = "redis-data"
