@@ -46,6 +46,9 @@ services:
       AWS_LEX_BOT_ALIAS_ID: ${AWS_LEX_BOT_ALIAS_ID:-TSTALIASID}
       AWS_LEX_LOCALE_ID: ${AWS_LEX_LOCALE_ID:-en_US}
       AWS_REGION: ${AWS_REGION:-us-east-1}
+      USE_IAM_ROLES: ${USE_IAM_ROLES:-false}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
     depends_on:
       - postgres
       - redis
