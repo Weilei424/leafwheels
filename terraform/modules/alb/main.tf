@@ -165,12 +165,12 @@ resource "aws_lb_listener_rule" "grafana" {
 
   condition {
     path_pattern {
-      values = ["/grafana*"]
+      values = ["/grafana", "/grafana/*"]
     }
   }
 }
 
-# ALB Listener Rule for Prometheus
+# ALB Listener Rule for Prometheus  
 resource "aws_lb_listener_rule" "prometheus" {
   listener_arn = aws_lb_listener.http.arn
   priority     = 400
@@ -182,7 +182,7 @@ resource "aws_lb_listener_rule" "prometheus" {
 
   condition {
     path_pattern {
-      values = ["/prometheus*"]
+      values = ["/prometheus", "/prometheus/*"]
     }
   }
 }

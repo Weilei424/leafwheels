@@ -664,15 +664,7 @@ resource "aws_ecs_task_definition" "prometheus" {
   execution_role_arn       = var.ecs_task_execution_role_arn
   task_role_arn            = var.ecs_task_role_arn
 
-  volume {
-    name = "prometheus-data"
-
-    efs_volume_configuration {
-      file_system_id     = var.efs_file_system_id
-      root_directory     = "/"
-      transit_encryption = "ENABLED"
-    }
-  }
+  # Remove EFS volume for now - use container local storage
 
   container_definitions = jsonencode([{
     name      = "prometheus"
@@ -685,7 +677,17 @@ resource "aws_ecs_task_definition" "prometheus" {
       protocol      = "tcp"
     }]
 
-    environment = []
+    environment = [
+      {
+        name  = "PROMETHEUS_CONFIG_CONTENT"
+        value = base64encode(file("${path.module}/prometheus.yml"))
+      }
+    ]
+
+    entryPoint = ["sh", "-c"]
+    command = [
+      "echo $PROMETHEUS_CONFIG_CONTENT | base64 -d > /tmp/prometheus.yml && prometheus --config.file=/tmp/prometheus.yml --storage.tsdb.path=/prometheus --web.console.libraries=/etc/prometheus/console_libraries --web.console.templates=/etc/prometheus/consoles --storage.tsdb.retention.time=200h --web.enable-lifecycle"
+    ]
 
     healthCheck = {
       command     = ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1"]
@@ -695,16 +697,8 @@ resource "aws_ecs_task_definition" "prometheus" {
       startPeriod = 30
     }
 
-    mountPoints = [{
-      sourceVolume  = "prometheus-data"
-      containerPath = "/efs-data"
-      readOnly      = false
-    }]
-
-    entryPoint = ["sh", "-c"]
-    command = [
-      "mkdir -p /efs-data/prometheus && prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/efs-data/prometheus --web.console.libraries=/etc/prometheus/console_libraries --web.console.templates=/etc/prometheus/consoles --storage.tsdb.retention.time=200h --web.enable-lifecycle"
-    ]
+    # Use default prometheus data directory
+    mountPoints = []
 
     logConfiguration = {
       logDriver = "awslogs"
@@ -731,15 +725,7 @@ resource "aws_ecs_task_definition" "grafana" {
   execution_role_arn       = var.ecs_task_execution_role_arn
   task_role_arn            = var.ecs_task_role_arn
 
-  volume {
-    name = "grafana-data"
-
-    efs_volume_configuration {
-      file_system_id     = var.efs_file_system_id
-      root_directory     = "/"
-      transit_encryption = "ENABLED"
-    }
-  }
+  # Remove EFS volume for now - use container local storage
 
   container_definitions = jsonencode([{
     name      = "grafana"
@@ -766,8 +752,12 @@ resource "aws_ecs_task_definition" "grafana" {
         value = "false"
       },
       {
-        name  = "GF_INSTALL_PLUGINS"
-        value = ""
+        name  = "GF_SERVER_ROOT_URL"
+        value = "%(protocol)s://%(domain)s:%(http_port)s/grafana/"
+      },
+      {
+        name  = "GF_SERVER_SERVE_FROM_SUB_PATH"
+        value = "true"
       }
     ]
 
@@ -779,16 +769,8 @@ resource "aws_ecs_task_definition" "grafana" {
       startPeriod = 60
     }
 
-    mountPoints = [{
-      sourceVolume  = "grafana-data"
-      containerPath = "/efs-data"
-      readOnly      = false
-    }]
-
-    entryPoint = ["sh", "-c"]
-    command = [
-      "mkdir -p /efs-data/grafana && chown -R grafana:grafana /efs-data/grafana && ln -sf /efs-data/grafana /var/lib/grafana && exec /run.sh"
-    ]
+    # Use default grafana data directory
+    mountPoints = []
 
     logConfiguration = {
       logDriver = "awslogs"
