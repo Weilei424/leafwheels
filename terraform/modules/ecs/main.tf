@@ -686,11 +686,11 @@ resource "aws_ecs_task_definition" "prometheus" {
 
     entryPoint = ["sh", "-c"]
     command = [
-      "echo $PROMETHEUS_CONFIG_CONTENT | base64 -d > /tmp/prometheus.yml && prometheus --config.file=/tmp/prometheus.yml --storage.tsdb.path=/prometheus --web.console.libraries=/etc/prometheus/console_libraries --web.console.templates=/etc/prometheus/consoles --storage.tsdb.retention.time=200h --web.enable-lifecycle"
+      "echo $PROMETHEUS_CONFIG_CONTENT | base64 -d > /tmp/prometheus.yml && prometheus --config.file=/tmp/prometheus.yml --storage.tsdb.path=/prometheus --web.console.libraries=/etc/prometheus/console_libraries --web.console.templates=/etc/prometheus/consoles --storage.tsdb.retention.time=200h --web.enable-lifecycle --web.external-url=/prometheus"
     ]
 
     healthCheck = {
-      command     = ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1"]
+      command     = ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9090/prometheus/-/healthy || exit 1"]
       interval    = 30
       timeout     = 5
       retries     = 3
