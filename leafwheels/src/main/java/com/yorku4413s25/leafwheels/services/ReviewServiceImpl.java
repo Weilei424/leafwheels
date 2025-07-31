@@ -2,8 +2,10 @@ package com.yorku4413s25.leafwheels.services;
 
 import com.yorku4413s25.leafwheels.constants.Make;
 import com.yorku4413s25.leafwheels.domain.Review;
+import com.yorku4413s25.leafwheels.domain.User;
 import com.yorku4413s25.leafwheels.exception.EntityNotFoundException;
 import com.yorku4413s25.leafwheels.repositories.ReviewRepository;
+import com.yorku4413s25.leafwheels.repositories.UserRepository;
 import com.yorku4413s25.leafwheels.web.mappers.ReviewMapper;
 import com.yorku4413s25.leafwheels.web.models.ReviewDto;
 import com.yorku4413s25.leafwheels.web.models.ReviewSummaryDto;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final UserRepository userRepository;
     private final ReviewMapper reviewMapper;
 
     @Override
@@ -40,7 +43,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional(readOnly = true)
     public List<ReviewDto> getAllReviews() {
         return reviewRepository.findAll().stream()
-                .map(reviewMapper::reviewToReviewDto)
+                .map(this::mapReviewWithUser)
                 .collect(Collectors.toList());
     }
 
@@ -48,7 +51,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional(readOnly = true)
     public List<ReviewDto> getReviewsByUserId(UUID userId) {
         return reviewRepository.findByUserId(userId).stream()
-                .map(reviewMapper::reviewToReviewDto)
+                .map(this::mapReviewWithUser)
                 .collect(Collectors.toList());
     }
 
@@ -56,7 +59,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional(readOnly = true)
     public List<ReviewDto> getReviewsByMakeAndModel(Make make, String model) {
         return reviewRepository.findByMakeAndModelIgnoreCase(make, model).stream()
-                .map(reviewMapper::reviewToReviewDto)
+                .map(this::mapReviewWithUser)
                 .collect(Collectors.toList());
     }
 
@@ -123,8 +126,17 @@ public class ReviewServiceImpl implements ReviewService {
     
     private List<ReviewDto> mapToReviewDtos(List<Review> reviews) {
         return reviews.stream()
-                .map(reviewMapper::reviewToReviewDto)
+                .map(this::mapReviewWithUser)
                 .sorted((r1, r2) -> r2.getCreatedAt().compareTo(r1.getCreatedAt())) // Sort by newest first
                 .collect(Collectors.toList());
+    }
+    
+    private ReviewDto mapReviewWithUser(Review review) {
+        User user = userRepository.findById(review.getUserId())
+                .orElse(User.builder()
+                        .firstName("Unknown")
+                        .lastName("User")
+                        .build());
+        return reviewMapper.reviewWithUserToReviewDto(review, user);
     }
 }
