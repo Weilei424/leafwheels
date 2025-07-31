@@ -24,9 +24,9 @@ import OrderDetailsPage from "./pages/Order/OrderDetailsPage.jsx";
 
 // Layouts
 const Layout = ({ children }) => (
-    <div className="min-h-screen flex flex-col">
+    <div>
         <Navbar />
-        <main className="flex-1 pt-10">{children}</main>
+        <main className="min-h-screen relative pt-5">{children}</main>
         <Footer />
     </div>
 );

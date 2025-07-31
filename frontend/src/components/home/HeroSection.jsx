@@ -114,15 +114,11 @@ import { motion } from "framer-motion";
             transition={{ duration: 0.6, delay: 0.3 }}
             className="relative"
           >
-            <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="bg-white rounded-2xl shadow-xl p-3">
               <img
-                // src="/api/placeholder/600/400"
+                 src="/car-images/bmw-car.jpg"
                 alt="Electric Vehicle"
                 className="w-full h-auto rounded-xl object-cover"
-                onError={(e) => {
-                  e.target.src =
-                     "https://images.unsplash.com/photo-1593941707882-a5bac6861d75?w=600&h=400&fit=crop&crop=center";
-                }}
               />
             </div>
 

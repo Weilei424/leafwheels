@@ -56,10 +56,10 @@ const PageButton = ({ children, onClick, disabled, active, className = "" }) => 
       min-w-[40px] h-10 px-3 flex items-center justify-center rounded-lg
       transition-all duration-200 font-medium
       ${active
-            ? 'bg-green-700 text-white shadow-lg'
+            ? 'bg-black text-white shadow-lg'
             : disabled
-                ? 'text-green-300 cursor-not-allowed'
-                : 'text-green-600 hover:bg-green-100 hover:text-green-700'
+                ? 'text-black cursor-not-allowed'
+                : 'text-black hover:bg-black hover:text-white'
         }
       ${className}
     `}

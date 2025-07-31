@@ -62,7 +62,6 @@ export const useReviewStore = create((set, get) => ({
         set({ loading: true, error: null });
         try {
             const response = await axios.get("/api/v1/reviews");
-
             set({
                 reviews: response.data,
                 loading: false,

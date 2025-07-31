@@ -1,5 +1,5 @@
 import React, {useCallback} from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useUserStore } from "../../stores/useUserStore.js";
 import { useCartStore } from "../../stores/useCartStore.js";
 import OrderSummary from "../../components/cart/OrderSummary.jsx";
@@ -29,8 +29,6 @@ const CartPage = () => {
 
     // utility function
     const transformedCart = useCartTransformation(cart);
-
-
 
     const handleUpdateQuantity = useCallback((accessoryId, change) => {
         if (change > 0) {
@@ -119,16 +117,14 @@ const CartPage = () => {
                     {/* Cart Items */}
                     <div className="lg:col-span-2">
                         <div className="space-y-4">
-                            <AnimatePresence mode="popLayout">
                                 {transformedCart.map((item) => (
                                     <CartItem
-                                        key={item._id} // ✅ Use item ID as key, not quantity-based key
+                                        key={item._id}
                                         item={item}
                                         onRemove={handleRemove}
                                         onUpdateQuantity={handleUpdateQuantity}
                                     />
                                 ))}
-                            </AnimatePresence>
                         </div>
                     </div>
 

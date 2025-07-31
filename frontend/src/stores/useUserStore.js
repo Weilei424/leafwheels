@@ -1,6 +1,6 @@
 // ======================================================
-//  Updated User Store with AUTH for Protected Operations
-//  Re-enabled auth tokens for protected endpoints
+//  FIXED User Store - Original JWT Token Approach
+//  Fixed token refresh to handle 403 errors properly
 // ======================================================
 
 import { create } from "zustand";
@@ -19,7 +19,6 @@ export const useUserStore = create(
             checkingAuth: false,     // Minimal auth check
 
             // ================= Auth Check Function =================
-            // Minimal check - just set state without redirects
             checkAuth: async () => {
                 const { accessToken, refreshToken } = get();
 
@@ -120,7 +119,7 @@ export const useUserStore = create(
                 toast.success("Logged out successfully!");
             },
 
-            // ================= Refresh Token Function =================
+            // ================= FIXED Refresh Token Function =================
             refreshTokens: async () => {
                 const { refreshToken } = get();
 
@@ -135,13 +134,14 @@ export const useUserStore = create(
 
                     const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
 
-                    // Update tokens
+                    // Update tokens in store
                     set({
                         accessToken: newAccessToken,
                         refreshToken: newRefreshToken
                     });
 
-                    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+                    // Return the new access token for immediate use
+                    return newAccessToken;
 
                 } catch (error) {
                     console.log("Token refresh failed:", error);
@@ -222,8 +222,8 @@ export const useUserStore = create(
     )
 );
 
-// ================= Minimal Axios Interceptor =================
-// Only handle token refresh, don't redirect to login
+// ================= FIXED Axios Interceptor =================
+// Handle BOTH 401 AND 403 errors, prevent multiple refresh attempts
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -244,7 +244,8 @@ axios.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Handle BOTH 401 AND 403 for expired tokens
+        if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
             if (isRefreshing) {
                 // If already refreshing, queue this request
                 return new Promise((resolve, reject) => {
@@ -261,18 +262,21 @@ axios.interceptors.response.use(
             isRefreshing = true;
 
             try {
-                const { accessToken } = await useUserStore.getState().refreshTokens();
-                processQueue(null, accessToken);
+                const newAccessToken = await useUserStore.getState().refreshTokens();
+
+                // Process all queued requests with new token
+                processQueue(null, newAccessToken);
 
                 // Retry original request with new token
-                originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
+                originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+
                 return axios(originalRequest);
 
             } catch (refreshError) {
                 processQueue(refreshError, null);
                 useUserStore.getState().clearAuth();
 
-                // Don't redirect - just let the operation fail gracefully
+                // Let the operation fail gracefully
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;
@@ -284,7 +288,6 @@ axios.interceptors.response.use(
 );
 
 // ================= Initialize Auth on App Start =================
-// Check authentication status when the store is created
 if (typeof window !== 'undefined') {
     useUserStore.getState().checkAuth();
 }

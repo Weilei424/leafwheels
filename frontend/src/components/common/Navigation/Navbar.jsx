@@ -12,39 +12,35 @@ const Navbar = () => {
     const { cart } = useCartStore();
     const { user, logout } = useUserStore();
 
-    // Handle scroll effect
     useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 20);
-        };
+        const handleScroll = () => setIsScrolled(window.scrollY > 20);
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    // Close mobile menu when route changes
     useEffect(() => {
         setIsMenuOpen(false);
     }, [location]);
 
     const cartItemCount = cart.length;
 
-    // Handle logout with redirect
     const handleLogout = async () => {
         try {
             await logout();
-            // Redirect to homepage after successful logout
-            navigate('/', { replace: true });
+            navigate("/login", { replace: true });
         } catch (error) {
-            console.error('Logout failed:', error);
-            // Even if logout fails, still redirect for UX
-            navigate('/', { replace: true });
+            console.error("Logout failed:", error);
+            navigate("/", { replace: true });
         }
     };
 
     const navLinks = [
         { name: "Home", path: "/" },
         { name: "Store", path: "/store" },
-
+        { name: "Profile", path: "/profile" },
+        { name: "Orders", path: "/order-history" },
+        { name: "Payments", path: "/payment-history" },
+        { name: "My Reviews", path: "/my-reviews" },
     ];
 
     return (
@@ -59,44 +55,32 @@ const Navbar = () => {
         >
             <div className="max-w-7xl mx-auto px-4">
                 <div className="flex justify-between items-center h-20">
-                    {/* Logo */}
-                    <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                    >
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                         <Link to="/" className="flex items-center gap-3">
-                            <img
-                                src="/logo.png"
-                                alt="LeafWheels Logo"
-                                className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 object-contain"
-                            />
+                            <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
                             <h1 className="text-2xl font-bold text-gray-900">LeafWheels</h1>
                         </Link>
                     </motion.div>
 
-                    {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center space-x-8">
-                        {navLinks.map((link) => (
+                        {navLinks.slice(0, 2).map(link => (
                             <NavLink key={link.path} to={link.path} isActive={location.pathname === link.path}>
                                 {link.name}
                             </NavLink>
                         ))}
                     </div>
 
-                    {/* Desktop Actions */}
                     <div className="hidden md:flex items-center space-x-4">
                         <CartButton count={cartItemCount} />
                         <UserMenu user={user} onLogout={handleLogout} />
                     </div>
 
-                    {/* Mobile Menu Button */}
                     <div className="md:hidden flex items-center space-x-4">
                         <CartButton count={cartItemCount} />
                         <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
-                            aria-label="Toggle menu"
+                            className="p-2 text-gray-600 hover:text-gray-900"
                         >
                             <MenuIcon isOpen={isMenuOpen} />
                         </motion.button>
@@ -114,71 +98,42 @@ const Navbar = () => {
                             className="md:hidden border-t border-gray-100 bg-white/95 backdrop-blur-md"
                         >
                             <div className="py-4 space-y-1">
-                                {navLinks.map((link, index) => (
+                                {[...navLinks].map((link, index) => (
                                     <motion.div
                                         key={link.path}
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: index * 0.1 }}
+                                        transition={{ delay: index * 0.05 }}
                                     >
                                         <Link
                                             to={link.path}
-                                            className={`block px-4 py-3 text-base text-gray-700 hover:text-green-600 hover:bg-green-50 transition-all duration-200 rounded-lg mx-2 ${
+                                            onClick={() => setIsMenuOpen(false)}
+                                            className={`block px-4 py-3 text-base text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg mx-2 ${
                                                 location.pathname === link.path ? "text-green-600 bg-green-50" : ""
                                             }`}
-                                            onClick={() => setIsMenuOpen(false)}
                                         >
                                             {link.name}
                                         </Link>
                                     </motion.div>
                                 ))}
 
-                                {/* Mobile User Actions */}
-                                <motion.div
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: navLinks.length * 0.1 }}
-                                    className="pt-4 border-t border-gray-100 mx-4"
-                                >
-                                    {user ? (
-                                        <div className="space-y-2">
-                                            <p className="text-sm text-gray-500 px-4">Signed in as {user.firstName}</p>
-                                            <Link
-                                                to="/profile"
-                                                className="block px-4 py-2 text-gray-700 hover:text-green-600 transition-colors"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Profile
-                                            </Link>
-                                            <button
-                                                onClick={() => {
-                                                    handleLogout();
-                                                    setIsMenuOpen(false);
-                                                }}
-                                                className="block w-full text-left px-4 py-2 text-gray-700 hover:text-red-600 transition-colors"
-                                            >
-                                                Sign Out
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-2">
-                                            <Link
-                                                to="/login"
-                                                className="block px-4 py-2 text-gray-700 hover:text-green-600 transition-colors"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Sign In
-                                            </Link>
-                                            <Link
-                                                to="/signup"
-                                                className="block px-4 py-2 text-center bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors mx-4"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Sign Up
-                                            </Link>
-                                        </div>
-                                    )}
-                                </motion.div>
+                                {user && (
+                                    <motion.div
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: navLinks.length * 0.05 }}
+                                    >
+                                        <button
+                                            onClick={() => {
+                                                handleLogout();
+                                                setIsMenuOpen(false);
+                                            }}
+                                            className="block w-full text-left px-4 py-3 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg mx-2"
+                                        >
+                                            Sign Out
+                                        </button>
+                                    </motion.div>
+                                )}
                             </div>
                         </motion.div>
                     )}

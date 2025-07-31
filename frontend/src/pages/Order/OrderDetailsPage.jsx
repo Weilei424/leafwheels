@@ -100,7 +100,7 @@ const OrderDetailsPage = () => {
                 >
                     <div className="flex items-center space-x-2">
                         <button
-                            onClick={() => navigate("/profile/orders")}
+                            onClick={() => navigate("/order-history")}
                             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                         >
                             <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -117,18 +117,18 @@ const OrderDetailsPage = () => {
                     </span>
                 </motion.div>
 
-                <div className="grid lg:grid-cols-3 gap-8">
-                    {/* Order Items */}
+                <div className="grid lg:grid-cols-3 gap-8 items-start">
+                {/* Order Items */}
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="lg:col-span-2 h-45 bg-white rounded-xl border border-gray-100 p-6 shadow-sm"
+                        className="lg:col-span-2  bg-white rounded-xl border border-gray-100 p-5 shadow-sm"
                     >
-                        <h2 className="text-lg font-medium text-gray-900 mb-4">Order Items</h2>
+                        <h2 className="text-lg font-medium text-gray-900">Order Items</h2>
 
                         {currentOrder.items && currentOrder.items.length > 0 ? (
-                            <div className="space-y-4">
-                                {currentOrder.items.map((item, index) => {
+                            <div className="flex flex-col gap-2">
+                            {currentOrder.items.map((item, index) => {
                                     // Handle nested structure (vehicle or accessory)
                                     const isVehicle = item.type === "VEHICLE";
                                     const product = isVehicle ? item.vehicle : item.accessory;
@@ -136,12 +136,9 @@ const OrderDetailsPage = () => {
                                         ? `${product?.year} ${product?.make} ${product?.model}`
                                         : product?.name || 'Product';
 
-                                    // Check if item has discount
-                                    const isDiscounted = product?.onDeal &&
-                                        product?.discountPercentage > 0 &&
-                                        product?.discountPrice < item.unitPrice;
+                                const isDiscounted = product?.discountPrice < item.unitPrice;
 
-                                    return (
+                                return (
                                         <motion.div
                                             key={item.id}
                                             initial={{ opacity: 0, y: 10 }}
@@ -166,7 +163,7 @@ const OrderDetailsPage = () => {
                                                 )}
                                                 {isDiscounted && (
                                                     <p className="text-xs text-green-600 font-medium mt-1">
-                                                        {product.discountPercentage}% OFF
+                                                        {product.discountPercentage * 100}% OFF
                                                     </p>
                                                 )}
                                             </div>
@@ -179,7 +176,9 @@ const OrderDetailsPage = () => {
                                                         <p className="text-sm text-gray-500 line-through">
                                                             ${item.unitPrice?.toLocaleString()}
                                                         </p>
-                                                        <p className="text-xs text-gray-600">each</p>
+                                                        <p className="text-xs text-green-600 font-medium">
+                                                            {product.discountPercentage}% OFF
+                                                        </p>
                                                     </>
                                                 ) : (
                                                     <>
