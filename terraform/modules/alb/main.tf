@@ -142,7 +142,7 @@ resource "aws_lb_target_group" "prometheus" {
     unhealthy_threshold = 3
     timeout             = 10
     interval            = 45
-    path                = "/-/healthy"
+    path                = "/prometheus/-/healthy"
     matcher             = "200"
     port                = "traffic-port"
     protocol            = "HTTP"
