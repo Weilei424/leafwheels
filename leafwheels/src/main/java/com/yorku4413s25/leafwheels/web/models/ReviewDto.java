@@ -32,5 +32,9 @@ public class ReviewDto {
     private int rating;
     
     private Instant createdAt;
+    
+    private String userFirstName;
+    
+    private String userLastName;
 
 }

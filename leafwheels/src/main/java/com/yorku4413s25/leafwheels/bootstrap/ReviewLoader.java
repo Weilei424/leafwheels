@@ -1,9 +1,12 @@
 package com.yorku4413s25.leafwheels.bootstrap;
 
 import com.yorku4413s25.leafwheels.constants.Make;
+import com.yorku4413s25.leafwheels.constants.Role;
 import com.yorku4413s25.leafwheels.domain.Review;
+import com.yorku4413s25.leafwheels.domain.User;
 import com.yorku4413s25.leafwheels.domain.Vehicle;
 import com.yorku4413s25.leafwheels.repositories.ReviewRepository;
+import com.yorku4413s25.leafwheels.repositories.UserRepository;
 import com.yorku4413s25.leafwheels.repositories.VehicleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -19,6 +22,7 @@ import java.util.stream.Collectors;
 public class ReviewLoader implements CommandLineRunner {
 
     private final ReviewRepository reviewRepository;
+    private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
     
     private final Random random = new Random();
@@ -30,8 +34,9 @@ public class ReviewLoader implements CommandLineRunner {
                 List<Vehicle> vehicles = vehicleRepository.findAll();
                 List<Review> reviews = new ArrayList<>();
                 
-                // Generate fake user IDs for reviews (increased to support more reviews)
-                List<UUID> userIds = generateFakeUserIds(200);
+                // Create fake users for reviews 
+                List<User> fakeUsers = createFakeUsers(200);
+                userRepository.saveAll(fakeUsers);
                 
                 // Group vehicles by make/model to create reviews for make/model combinations
                 Map<String, List<Vehicle>> vehiclesByMakeModel = vehicles.stream()
@@ -44,14 +49,14 @@ public class ReviewLoader implements CommandLineRunner {
                     
                     // 90% chance this make/model has reviews
                     if (random.nextDouble() < 0.9) {
-                        int numReviews = Math.min(random.nextInt(16) + 5, userIds.size()); // Generate 5-20 reviews per make/model
+                        int numReviews = Math.min(random.nextInt(16) + 5, fakeUsers.size()); // Generate 5-20 reviews per make/model
                         
-                        // Shuffle user IDs to ensure unique users for this make/model
-                        List<UUID> shuffledUserIds = new ArrayList<>(userIds);
-                        Collections.shuffle(shuffledUserIds, random);
+                        // Shuffle users to ensure unique users for this make/model
+                        List<User> shuffledUsers = new ArrayList<>(fakeUsers);
+                        Collections.shuffle(shuffledUsers, random);
                         
                         for (int i = 0; i < numReviews; i++) {
-                            Review review = createRealisticReview(make, model, shuffledUserIds.get(i));
+                            Review review = createRealisticReview(make, model, shuffledUsers.get(i).getId());
                             reviews.add(review);
                         }
                     }
@@ -59,7 +64,7 @@ public class ReviewLoader implements CommandLineRunner {
                 
                 reviewRepository.saveAll(reviews);
                 
-                System.out.println("SUCCESS: Seeded " + reviews.size() + " review records for " + 
+                System.out.println("SUCCESS: Seeded " + fakeUsers.size() + " fake users and " + reviews.size() + " review records for " + 
                                  vehiclesByMakeModel.size() + " make/model combinations.");
             } else {
                 System.out.println("Reviews already present — skipping seeding.");
@@ -69,12 +74,48 @@ public class ReviewLoader implements CommandLineRunner {
         }
     }
     
-    private List<UUID> generateFakeUserIds(int count) {
-        List<UUID> userIds = new ArrayList<>();
+    private List<User> createFakeUsers(int count) {
+        List<User> users = new ArrayList<>();
+        List<String> firstNames = Arrays.asList(
+            "John", "Jane", "Michael", "Sarah", "David", "Emily", "Robert", "Jessica", 
+            "William", "Ashley", "James", "Amanda", "Charles", "Jennifer", "Joseph", "Lisa",
+            "Christopher", "Helen", "Daniel", "Mary", "Matthew", "Patricia", "Anthony", "Linda",
+            "Mark", "Elizabeth", "Donald", "Barbara", "Steven", "Susan", "Paul", "Karen",
+            "Andrew", "Nancy", "Joshua", "Betty", "Kenneth", "Dorothy", "Kevin", "Sandra",
+            "Brian", "Donna", "George", "Carol", "Edward", "Ruth", "Ronald", "Sharon",
+            "Timothy", "Michelle", "Jason", "Laura", "Jeffrey", "Sarah", "Ryan", "Kimberly"
+        );
+        
+        List<String> lastNames = Arrays.asList(
+            "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
+            "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas",
+            "Taylor", "Moore", "Jackson", "Martin", "Lee", "Perez", "Thompson", "White",
+            "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson", "Walker", "Young",
+            "Allen", "King", "Wright", "Scott", "Torres", "Nguyen", "Hill", "Flores",
+            "Green", "Adams", "Nelson", "Baker", "Hall", "Rivera", "Campbell", "Mitchell",
+            "Carter", "Roberts", "Gomez", "Phillips", "Evans", "Turner", "Diaz", "Parker"
+        );
+        
         for (int i = 0; i < count; i++) {
-            userIds.add(UUID.randomUUID());
+            String firstName = firstNames.get(random.nextInt(firstNames.size()));
+            String lastName = lastNames.get(random.nextInt(lastNames.size()));
+            
+            User user = User.builder()
+                    .role(Role.USER)
+                    .firstName(firstName)
+                    .lastName(lastName)
+                    .email(firstName.toLowerCase() + "." + lastName.toLowerCase() + i + "@example.com")
+                    .password("$2a$10$dummyHashedPassword") // Dummy hashed password
+                    .accountEnabled(true)
+                    .accountLocked(false)
+                    .accountExpired(false)
+                    .emailVerified(true)
+                    .failedLoginAttempts(0)
+                    .build();
+            
+            users.add(user);
         }
-        return userIds;
+        return users;
     }
     
     private int generateNumReviews() {

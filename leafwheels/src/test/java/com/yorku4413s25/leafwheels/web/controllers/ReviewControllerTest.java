@@ -74,7 +74,9 @@ class ReviewControllerTest {
                 .andExpect(jsonPath("$.make").value("TESLA"))
                 .andExpect(jsonPath("$.model").value("Model 3"))
                 .andExpect(jsonPath("$.rating").value(5))
-                .andExpect(jsonPath("$.comment").value("Excellent electric vehicle!"));
+                .andExpect(jsonPath("$.comment").value("Excellent electric vehicle!"))
+                .andExpect(jsonPath("$.userFirstName").value("John"))
+                .andExpect(jsonPath("$.userLastName").value("Doe"));
 
         verify(reviewService).createReview(any(ReviewDto.class));
     }
@@ -92,7 +94,11 @@ class ReviewControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].rating").value(5))
-                .andExpect(jsonPath("$[1].rating").value(3));
+                .andExpect(jsonPath("$[0].userFirstName").value("John"))
+                .andExpect(jsonPath("$[0].userLastName").value("Doe"))
+                .andExpect(jsonPath("$[1].rating").value(3))
+                .andExpect(jsonPath("$[1].userFirstName").value("Jane"))
+                .andExpect(jsonPath("$[1].userLastName").value("Smith"));
 
         verify(reviewService).getAllReviews();
     }
@@ -389,6 +395,8 @@ class ReviewControllerTest {
                 .rating(5)
                 .comment("Excellent electric vehicle!")
                 .createdAt(Instant.now())
+                .userFirstName("John")
+                .userLastName("Doe")
                 .build();
     }
 
@@ -401,6 +409,8 @@ class ReviewControllerTest {
                 .rating(3)
                 .comment("Average performance, could be better.")
                 .createdAt(Instant.now())
+                .userFirstName("Jane")
+                .userLastName("Smith")
                 .build();
     }
 
