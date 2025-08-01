@@ -1,7 +1,3 @@
-// ======================================================
-//  FIXED User Store - Original JWT Token Approach
-//  Fixed token refresh to handle 403 errors properly
-// ======================================================
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
@@ -222,8 +218,7 @@ export const useUserStore = create(
     )
 );
 
-// ================= FIXED Axios Interceptor =================
-// Handle BOTH 401 AND 403 errors, prevent multiple refresh attempts
+
 let isRefreshing = false;
 let failedQueue = [];
 
