@@ -73,6 +73,16 @@ variable "frontend_target_group_arn" {
   type        = string
 }
 
+variable "grafana_target_group_arn" {
+  description = "ARN of the ALB target group for Grafana"
+  type        = string
+}
+
+variable "prometheus_target_group_arn" {
+  description = "ARN of the ALB target group for Prometheus"
+  type        = string
+}
+
 variable "backend_image" {
   description = "Docker image for backend service"
   type        = string
