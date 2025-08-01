@@ -32,6 +32,8 @@ public class ChatService {
     private final UserRepository userRepository;
     private final ContentFilterService contentFilterService;
     private final AnalyticsService analyticsService;
+    private final LexService lexService;
+    private final ChatIntentHandlerService intentHandlerService;
     
     @Value("${chatbot.max-session-duration:3600000}")
     private long maxSessionDuration;
@@ -64,20 +66,52 @@ public class ChatService {
         chatMessageRepository.save(userMessage);
         
         try {
-            String botResponse = generateSimpleResponse(message, username);
+            String botResponse;
+            String detectedIntent = "general_chat";
+            
+            // Try Lex first if available
+            if (lexService.isServiceAvailable()) {
+                try {
+                    LexService.LexResponse lexResponse = lexService.sendMessage(message, sessionId, username);
+                    if (lexResponse != null && lexResponse.getMessage() != null && !lexResponse.getMessage().trim().isEmpty()) {
+                        // Lex provided a response
+                        botResponse = lexResponse.getMessage();
+                        detectedIntent = lexResponse.getIntent() != null ? lexResponse.getIntent() : "lex_response";
+                        
+                        // If Lex detected a specific intent, use the intent handler for better responses
+                        if (lexResponse.getIntent() != null && lexResponse.getSlots() != null) {
+                            String intentResponse = intentHandlerService.handleIntent(lexResponse.getIntent(), lexResponse.getSlots(), username);
+                            if (intentResponse != null && !intentResponse.trim().isEmpty()) {
+                                botResponse = intentResponse;
+                                detectedIntent = lexResponse.getIntent();
+                            }
+                        }
+                    } else {
+                        // Lex didn't provide a useful response, fall back to simple response
+                        botResponse = generateSimpleResponse(message, username);
+                    }
+                } catch (Exception lexException) {
+                    System.err.println("Lex service error: " + lexException.getMessage());
+                    // Fall back to simple response if Lex fails
+                    botResponse = generateSimpleResponse(message, username);
+                }
+            } else {
+                // Lex not available, use simple response
+                botResponse = generateSimpleResponse(message, username);
+            }
 
             ChatMessage botMessage = new ChatMessage();
             botMessage.setChatSession(session);
             botMessage.setMessageContent(botResponse);
             botMessage.setIsFromUser(false);
-            botMessage.setIntent("general_chat");
+            botMessage.setIntent(detectedIntent);
             botMessage.setMessageType(ChatMessage.MessageType.TEXT);
             botMessage.setTimestamp(java.time.Instant.now());
             chatMessageRepository.save(botMessage);
 
-            trackChatInteraction(username, "general_chat", message, botResponse);
+            trackChatInteraction(username, detectedIntent, message, botResponse);
             
-            return new ChatResponse(botResponse, "general_chat", false);
+            return new ChatResponse(botResponse, detectedIntent, false);
             
         } catch (Exception e) {
             ChatMessage errorMessage = new ChatMessage();
@@ -182,8 +216,8 @@ public class ChatService {
             return "Thank you for using LeafWheels! Feel free to reach out if you have any more questions.";
         }
         
-        // Default response
-        return "I understand you're asking about: \"" + message + "\". While I'm a simple chatbot, I'm here to help with basic questions about LeafWheels. Could you please be more specific about what you'd like to know?";
+        // Default response - more general and helpful
+        return "I understand you're asking about: \"" + message + "\". I'm here to help with questions about electric vehicles, our LeafWheels inventory, pricing, and general automotive topics. Is there something specific you'd like to know more about?";
     }
     
     private void trackChatInteraction(String username, String intent, String userMessage, String botResponse) {
