@@ -22,9 +22,9 @@ resource "aws_lb_target_group" "backend" {
   health_check {
     enabled             = true
     healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 5
-    interval            = 30
+    unhealthy_threshold = 3
+    timeout             = 10
+    interval            = 45
     path                = "/actuator/health"
     matcher             = "200"
     port                = "traffic-port"
@@ -99,6 +99,90 @@ resource "aws_lb_listener_rule" "actuator" {
   condition {
     path_pattern {
       values = ["/actuator/*"]
+    }
+  }
+}
+
+# Target Group for Grafana
+resource "aws_lb_target_group" "grafana" {
+  name        = "${var.name_prefix}-grafana-tg"
+  port        = 3000
+  protocol    = "HTTP"
+  vpc_id      = var.vpc_id
+  target_type = "ip"
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 10
+    interval            = 45
+    path                = "/api/health"
+    matcher             = "200"
+    port                = "traffic-port"
+    protocol            = "HTTP"
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-grafana-tg"
+  })
+}
+
+# Target Group for Prometheus
+resource "aws_lb_target_group" "prometheus" {
+  name        = "${var.name_prefix}-prometheus-tg"
+  port        = 9090
+  protocol    = "HTTP"
+  vpc_id      = var.vpc_id
+  target_type = "ip"
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 10
+    interval            = 45
+    path                = "/prometheus/-/healthy"
+    matcher             = "200"
+    port                = "traffic-port"
+    protocol            = "HTTP"
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-prometheus-tg"
+  })
+}
+
+# ALB Listener Rule for Grafana
+resource "aws_lb_listener_rule" "grafana" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 300
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.grafana.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/grafana", "/grafana/*"]
+    }
+  }
+}
+
+# ALB Listener Rule for Prometheus  
+resource "aws_lb_listener_rule" "prometheus" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 400
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.prometheus.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/prometheus", "/prometheus/*"]
     }
   }
 }

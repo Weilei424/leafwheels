@@ -97,6 +97,7 @@ services:
       - "3001:3000"
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     configs:
       - source: grafana_datasource
         target: /etc/grafana/provisioning/datasources/prometheus.yml
