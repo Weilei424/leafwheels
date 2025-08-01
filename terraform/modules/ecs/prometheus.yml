@@ -8,12 +8,25 @@ rule_files:
 
 scrape_configs:
   - job_name: 'prometheus'
+    metrics_path: '/prometheus/metrics'
     static_configs:
       - targets: ['localhost:9090']
 
   - job_name: 'leafwheels-backend'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['backend.leafwheels.local:8080']
+      - targets: ['leafwheels-alb-1205016128.us-east-1.elb.amazonaws.com:80']
+    params:
+      __scheme__: ['http']
     scrape_interval: 5s
     scrape_timeout: 5s
+
+  # PostgreSQL metrics via postgres_exporter (if needed)
+  # - job_name: 'postgres'
+  #   static_configs:
+  #     - targets: ['postgres.leafwheels.local:9187']
+
+  # Redis metrics via redis_exporter (if needed)  
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets: ['redis.leafwheels.local:9121']
