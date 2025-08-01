@@ -53,11 +53,16 @@ const ReviewForm = ({ make, model, onSuccess }) => {
 
   return (
       <motion.form
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{opacity: 0, y: 20}}
+          animate={{opacity: 1, y: 0}}
           onSubmit={handleSubmit}
           className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 space-y-6"
       >
+        <button type="button" className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                onClick={() => window.history.back()}>
+          Go Back
+        </button>
+
         <h3 className="text-lg font-medium text-gray-900">Write a Review</h3>
 
         <div>
@@ -66,7 +71,7 @@ const ReviewForm = ({ make, model, onSuccess }) => {
           </label>
           <StarRating
               rating={formData.rating}
-              onRatingChange={(rating) => setFormData(prev => ({ ...prev, rating }))}
+              onRatingChange={(rating) => setFormData(prev => ({...prev, rating}))}
           />
         </div>
 
@@ -78,7 +83,7 @@ const ReviewForm = ({ make, model, onSuccess }) => {
               type="text"
               required
               value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              onChange={(e) => setFormData(prev => ({...prev, title: e.target.value}))}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
               placeholder="Summarize your experience"
           />
@@ -92,7 +97,7 @@ const ReviewForm = ({ make, model, onSuccess }) => {
               required
               rows={4}
               value={formData.comment}
-              onChange={(e) => setFormData(prev => ({ ...prev, comment: e.target.value }))}
+              onChange={(e) => setFormData(prev => ({...prev, comment: e.target.value}))}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
               placeholder="Share your experience with this vehicle"
           />
@@ -103,7 +108,7 @@ const ReviewForm = ({ make, model, onSuccess }) => {
             <input
                 type="checkbox"
                 checked={formData.recommend}
-                onChange={(e) => setFormData(prev => ({ ...prev, recommend: e.target.checked }))}
+                onChange={(e) => setFormData(prev => ({...prev, recommend: e.target.checked}))}
                 className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
             />
             <span className="text-sm text-gray-700">I would recommend this vehicle</span>
@@ -111,8 +116,8 @@ const ReviewForm = ({ make, model, onSuccess }) => {
         </div>
 
         <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{scale: 1.02}}
+            whileTap={{scale: 0.98}}
             type="submit"
             disabled={loading || formData.rating === 0}
             className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"

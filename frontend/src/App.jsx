@@ -16,17 +16,20 @@ import VehiclePage from "./pages/Store/VehiclePage.jsx";
 import AccessoryPage from "./pages/Store/AccessoryPage.jsx";
 import CartPage from "./pages/Cart/Cart.jsx";
 import UserPage from "./pages/User/User.jsx";
-import { AllReviewsPage, UserReviewsPage, VehicleReviewsPage } from "./pages/Reviews/Reviews.jsx";
 import PaymentHistoryPage from "./pages/Payment/PaymentHistoryPage.jsx";
 import CheckoutPage from "./pages/Payment/PaymentCheckout.jsx";
 import OrderHistory from "./pages/Order/OrderHistoryPage.jsx";
 import OrderDetailsPage from "./pages/Order/OrderDetailsPage.jsx";
+import AllReviewsPage from "./pages/Reviews/AllReviewsPage.jsx";
+import VehicleReviewsPage from "./pages/Reviews/VehicleReviewsPage.jsx";
+import UserReviewsPage from "./pages/Reviews/UserReviewsPage.jsx";
+
 
 // Layouts
 const Layout = ({ children }) => (
-    <div className="min-h-screen flex flex-col">
+    <div>
         <Navbar />
-        <main className="flex-1 pt-10">{children}</main>
+        <main className="min-h-screen relative pt-5">{children}</main>
         <Footer />
     </div>
 );

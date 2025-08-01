@@ -8,12 +8,15 @@ const CartItem = ({ item = {}, onRemove, onUpdateQuantity, isCheckout = false })
     const totalPrice = unitPrice * item.quantity;
 
     return (
-        <motion.div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+        <motion.div
+            className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"
+        >
             <div className="flex items-center gap-6">
                 {/* Image */}
                 <div className="flex-shrink-0">
                     <img
                         className="w-20 h-20 rounded-lg object-cover"
+                        // src={item.imageUrl || '/images/placeholder.jpg'}
                         alt={item.name}
                         onError={(e) => {
                             e.target.src = '/images/placeholder.jpg';
@@ -34,22 +37,32 @@ const CartItem = ({ item = {}, onRemove, onUpdateQuantity, isCheckout = false })
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm text-gray-500">Qty:</span>
                                     <div className="flex items-center border border-gray-300 rounded-lg">
-                                        <button
+                                        <motion.button
+                                            whileHover={{ scale: 1.1 }}
+                                            whileTap={{ scale: 0.9 }}
                                             onClick={() => onUpdateQuantity?.(item.productId, -1)}
                                             disabled={item.quantity <= 1}
-                                            className="px-2 py-1 text-gray-600 hover:text-gray-800 disabled:text-gray-300 disabled:cursor-not-allowed"
+                                            className="px-2 py-1 text-gray-600 hover:text-gray-800 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
                                         >
                                             −
-                                        </button>
-                                        <span className="px-3 py-1 text-sm font-medium min-w-[3rem] text-center">
+                                        </motion.button>
+                                        <motion.span
+                                            key={item.quantity} // Key on quantity for smooth updates
+                                            initial={{ scale: 1.2 }}
+                                            animate={{ scale: 1 }}
+                                            transition={{ duration: 0.1 }}
+                                            className="px-3 py-1 text-sm font-medium min-w-[3rem] text-center"
+                                        >
                                             {item.quantity}
-                                        </span>
-                                        <button
+                                        </motion.span>
+                                        <motion.button
+                                            whileHover={{ scale: 1.1 }}
+                                            whileTap={{ scale: 0.9 }}
                                             onClick={() => onUpdateQuantity?.(item.productId, +1)}
-                                            className="px-2 py-1 text-gray-600 hover:text-gray-800"
+                                            className="px-2 py-1 text-gray-600 hover:text-gray-800 transition-colors"
                                         >
                                             +
-                                        </button>
+                                        </motion.button>
                                     </div>
                                 </div>
                             )
@@ -57,9 +70,10 @@ const CartItem = ({ item = {}, onRemove, onUpdateQuantity, isCheckout = false })
                             <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
                         )}
 
-                        {/* Item Type Badge */}
                         <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                            isAccessory ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+                            isAccessory
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-green-100 text-green-700'
                         }`}>
                             {isAccessory ? 'Accessory' : 'Vehicle'}
                         </span>
@@ -90,9 +104,15 @@ const CartItem = ({ item = {}, onRemove, onUpdateQuantity, isCheckout = false })
                     {/* Total Price */}
                     {isDiscounted ? (
                         <div>
-                            <p className="text-lg font-semibold text-gray-900">
+                            <motion.p
+                                key={totalPrice} // Animate price changes
+                                initial={{ scale: 1.1 }}
+                                animate={{ scale: 1 }}
+                                transition={{ duration: 0.2 }}
+                                className="text-lg font-semibold text-gray-900"
+                            >
                                 ${totalPrice?.toLocaleString()}
-                            </p>
+                            </motion.p>
                             {item.quantity === 1 && (
                                 <p className="text-sm text-gray-400 line-through">
                                     ${item.price?.toLocaleString()}
@@ -103,9 +123,15 @@ const CartItem = ({ item = {}, onRemove, onUpdateQuantity, isCheckout = false })
                             </p>
                         </div>
                     ) : (
-                        <p className="text-lg font-semibold text-gray-900">
+                        <motion.p
+                            key={totalPrice} // Animate price changes
+                            initial={{ scale: 1.1 }}
+                            animate={{ scale: 1 }}
+                            transition={{ duration: 0.2 }}
+                            className="text-lg font-semibold text-gray-900"
+                        >
                             ${totalPrice?.toLocaleString()}
-                        </p>
+                        </motion.p>
                     )}
                 </div>
             </div>
@@ -113,4 +139,4 @@ const CartItem = ({ item = {}, onRemove, onUpdateQuantity, isCheckout = false })
     );
 };
 
-export default CartItem;
+export default React.memo(CartItem);

@@ -1,29 +1,45 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-function usePagination(items, pageLimit) {
-    const [pageNumber, setPageNumber] = useState(0);
+function usePagination(itemsToPagethrough, itemsPerPage) {
+    const [currentPageNumber, setCurrentPageNumber] = useState(0);
 
-    const pageCount = Math.ceil(items.length / pageLimit);
+    const totalPageCount = Math.ceil(itemsToPagethrough.length / itemsPerPage);
 
-    const changePage = (pN) => {
-        setPageNumber(Math.max(0, Math.min(pN, pageCount - 1)));
-    };
+    // Reset to first page when items change (Example  different category selected)
+    useEffect(() => {
+        setCurrentPageNumber(0);
+    }, [itemsToPagethrough.length]);
 
-    const pageData = () => {
-        const start = pageNumber * pageLimit;
-        return items.slice(start, start + pageLimit);
-    };
+    function navigateToPage(targetPageNumber) {
+        const validPageNumber = Math.max(0, Math.min(targetPageNumber, totalPageCount - 1));
+        setCurrentPageNumber(validPageNumber);
+    }
 
-    const nextPage = () => changePage(pageNumber + 1);
-    const previousPage = () => changePage(pageNumber - 1);
+    function getCurrentPageItems() {
+        const startIndex = currentPageNumber * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return itemsToPagethrough.slice(startIndex, endIndex);
+    }
+
+    function goToNextPage() {
+        if (currentPageNumber < totalPageCount - 1) {
+            navigateToPage(currentPageNumber + 1);
+        }
+    }
+
+    function goToPreviousPage() {
+        if (currentPageNumber > 0) {
+            navigateToPage(currentPageNumber - 1);
+        }
+    }
 
     return {
-        pageNumber,
-        pageCount,
-        changePage,
-        pageData,
-        nextPage,
-        previousPage,
+        currentPageNumber,
+        totalPageCount,
+        navigateToPage,
+        getCurrentPageItems,
+        goToNextPage,
+        goToPreviousPage,
     };
 }
 

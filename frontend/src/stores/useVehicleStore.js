@@ -9,6 +9,25 @@ const getAuthHeaders = () => {
     return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
 };
 
+// Helper function to build filter query parameters
+const buildFilterQueryString = (filters) => {
+    const params = new URLSearchParams();
+
+    // Add all filter parameters, only if they have values
+    Object.entries(filters).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== '' && value !== 'all') {
+            // Handle array parameters (like statuses)
+            if (Array.isArray(value)) {
+                value.forEach(item => params.append(key, item));
+            } else {
+                params.append(key, value);
+            }
+        }
+    });
+
+    return params.toString();
+};
+
 export const useVehicleStore = create((set, get) => ({
     // State
     vehicles: [],
@@ -191,21 +210,22 @@ export const useVehicleStore = create((set, get) => ({
         }
     },
 
-    // PUBLIC - No auth required
+    // PUBLIC - Enhanced backend filtering - No auth required
     filterVehicles: async (filters = {}) => {
         set({ loading: true, error: null });
         try {
-            const params = new URLSearchParams();
+            // Build query string from filters
+            const queryString = buildFilterQueryString(filters);
+            const url = queryString ? `/api/v1/vehicle/filter?${queryString}` : '/api/v1/vehicle/filter';
 
-            // Add all filter parameters
-            Object.entries(filters).forEach(([key, value]) => {
-                if (value !== null && value !== undefined && value !== '') {
-                    params.append(key, value);
-                }
-            });
+            console.log('Filtering vehicles with URL:', url); // Debug log
 
-            const response = await axios.get(`/api/v1/vehicle/filter?${params.toString()}`);
-            set({ vehicles: response.data.content || response.data, loading: false });
+            const response = await axios.get(url);
+
+            // Handle both paginated and non-paginated responses
+            const vehicleData = response.data.content || response.data;
+
+            set({ vehicles: vehicleData, loading: false });
             return response.data;
         } catch (error) {
             const errorMessage = error.response?.data?.message || "Failed to filter vehicles";
@@ -214,6 +234,7 @@ export const useVehicleStore = create((set, get) => ({
             throw error;
         }
     },
+
 
     // ================= VEHICLE HISTORY =================
 
