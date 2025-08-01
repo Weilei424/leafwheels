@@ -1,6 +1,13 @@
 import { create } from "zustand";
 import { toast } from "react-toastify";
 import axios from "axios";
+import { useUserStore } from "./useUserStore";
+
+// Helper function to get auth headers for authenticated operations
+const getAuthHeaders = () => {
+    const { accessToken } = useUserStore.getState();
+    return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+};
 
 export const useReviewStore = create((set, get) => ({
     // State
@@ -20,13 +27,15 @@ export const useReviewStore = create((set, get) => ({
 
     /**
      * Create a new review
-     * Endpoint: POST /api/v1/reviews
+     * Endpoint: POST /api/v1/reviews - REQUIRES AUTH
      * Body: ReviewDto
      */
     createReview: async (reviewData) => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.post("/api/v1/reviews", reviewData);
+            const response = await axios.post("/api/v1/reviews", reviewData, {
+                headers: getAuthHeaders()
+            });
 
             set((prevState) => ({
                 reviews: [response.data, ...prevState.reviews],
@@ -47,7 +56,7 @@ export const useReviewStore = create((set, get) => ({
 
     /**
      * Get all reviews
-     * Endpoint: GET /api/v1/reviews
+     * Endpoint: GET /api/v1/reviews - PUBLIC
      */
     getAllReviews: async () => {
         set({ loading: true, error: null });
@@ -72,7 +81,7 @@ export const useReviewStore = create((set, get) => ({
 
     /**
      * Get reviews by user ID
-     * Endpoint: GET /api/v1/reviews/user/{userId}
+     * Endpoint: GET /api/v1/reviews/user/{userId} - PUBLIC
      */
     getReviewsByUser: async (userId) => {
         set({ loading: true, error: null });
@@ -97,7 +106,7 @@ export const useReviewStore = create((set, get) => ({
 
     /**
      * Get reviews by make and model
-     * Endpoint: GET /api/v1/reviews/make/{make}/model/{model}
+     * Endpoint: GET /api/v1/reviews/make/{make}/model/{model} - PUBLIC
      */
     getReviewsByMakeAndModel: async (make, model) => {
         set({ loading: true, error: null });
@@ -122,7 +131,7 @@ export const useReviewStore = create((set, get) => ({
 
     /**
      * Get review summary for make and model
-     * Endpoint: GET /api/v1/reviews/make/{make}/model/{model}/summary
+     * Endpoint: GET /api/v1/reviews/make/{make}/model/{model}/summary - PUBLIC
      */
     getReviewSummary: async (make, model) => {
         set({ loading: true, error: null });
@@ -147,12 +156,14 @@ export const useReviewStore = create((set, get) => ({
 
     /**
      * Delete a review
-     * Endpoint: DELETE /api/v1/reviews/{reviewId}
+     * Endpoint: DELETE /api/v1/reviews/{reviewId} - REQUIRES AUTH
      */
     deleteReview: async (reviewId) => {
         set({ loading: true, error: null });
         try {
-            await axios.delete(`/api/v1/reviews/${reviewId}`);
+            await axios.delete(`/api/v1/reviews/${reviewId}`, {
+                headers: getAuthHeaders()
+            });
 
             set((prevState) => ({
                 reviews: prevState.reviews.filter(review => review.reviewId !== reviewId),

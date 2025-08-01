@@ -1,6 +1,13 @@
 import { create } from "zustand";
 import { toast } from "react-toastify";
 import axios from "axios";
+import { useUserStore } from "./useUserStore";
+
+// Helper function to get auth headers for authenticated operations
+const getAuthHeaders = () => {
+    const { accessToken } = useUserStore.getState();
+    return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+};
 
 export const useAccessoryStore = create((set, get) => ({
     // State
@@ -15,6 +22,7 @@ export const useAccessoryStore = create((set, get) => ({
 
     // ================= ACCESSORY CRUD =================
 
+    // PUBLIC - No auth required
     getAllAccessories: async () => {
         set({ loading: true, error: null });
         try {
@@ -29,6 +37,7 @@ export const useAccessoryStore = create((set, get) => ({
         }
     },
 
+    // PUBLIC - No auth required
     getAccessoryById: async (accessoryId) => {
         set({ loading: true, error: null });
         try {
@@ -43,10 +52,13 @@ export const useAccessoryStore = create((set, get) => ({
         }
     },
 
+    // REQUIRES AUTH - POST operation
     createAccessory: async (accessoryData) => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.post("/api/v1/accessories", accessoryData);
+            const response = await axios.post("/api/v1/accessories", accessoryData, {
+                headers: getAuthHeaders()
+            });
             set((prevState) => ({
                 accessories: [...prevState.accessories, response.data],
                 loading: false,
@@ -61,10 +73,13 @@ export const useAccessoryStore = create((set, get) => ({
         }
     },
 
+    // REQUIRES AUTH - PUT operation
     updateAccessory: async (accessoryId, accessoryData) => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.put(`/api/v1/accessories/${accessoryId}`, accessoryData);
+            const response = await axios.put(`/api/v1/accessories/${accessoryId}`, accessoryData, {
+                headers: getAuthHeaders()
+            });
             set((prevState) => ({
                 accessories: prevState.accessories.map((accessory) =>
                     accessory.id === accessoryId ? response.data : accessory
@@ -82,10 +97,13 @@ export const useAccessoryStore = create((set, get) => ({
         }
     },
 
+    // REQUIRES AUTH - DELETE operation
     deleteAccessory: async (accessoryId) => {
         set({ loading: true, error: null });
         try {
-            await axios.delete(`/api/v1/accessories/${accessoryId}`);
+            await axios.delete(`/api/v1/accessories/${accessoryId}`, {
+                headers: getAuthHeaders()
+            });
             set((prevState) => ({
                 accessories: prevState.accessories.filter((accessory) => accessory.id !== accessoryId),
                 currentAccessory: prevState.currentAccessory?.id === accessoryId ? null : prevState.currentAccessory,
@@ -100,10 +118,13 @@ export const useAccessoryStore = create((set, get) => ({
         }
     },
 
+    // REQUIRES AUTH - POST operation
     addImageUrls: async (accessoryId, imageUrls) => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.post(`/api/v1/accessories/${accessoryId}/images`, imageUrls);
+            const response = await axios.post(`/api/v1/accessories/${accessoryId}/images`, imageUrls, {
+                headers: getAuthHeaders()
+            });
             set((prevState) => ({
                 accessories: prevState.accessories.map((accessory) =>
                     accessory.id === accessoryId ? response.data : accessory

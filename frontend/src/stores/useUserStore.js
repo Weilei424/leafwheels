@@ -1,26 +1,12 @@
 // ======================================================
-//  Updated User Store with JWT Authentication
-//
-// Purpose:
-// - Manage user authentication state using Zustand
-// - Handle JWT tokens (access & refresh)
-// - Automatic token refresh via Axios interceptor
-// - Works with your completed backend AuthController
-//
-// Flow:
-// 1. Signup/Signin → Store JWT tokens → Set user data
-// 2. API calls include JWT header automatically
-// 3. Token expires → Auto-refresh → Retry original request
-// 4. Logout → Clear tokens and user data
+//  Updated User Store with AUTH for Protected Operations
+//  Re-enabled auth tokens for protected endpoints
 // ======================================================
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import axios from "axios";
 import { toast } from "react-toastify";
-
-// Configure axios defaults
-axios.defaults.withCredentials = true;
 
 export const useUserStore = create(
     persist(
@@ -30,24 +16,19 @@ export const useUserStore = create(
             accessToken: null,       // JWT access token
             refreshToken: null,      // JWT refresh token
             loading: false,          // Loading state for auth operations
-            checkingAuth: true,      // Initial auth check on app load
+            checkingAuth: false,     // Minimal auth check
 
             // ================= Auth Check Function =================
-            // Check if user is authenticated on app startup
+            // Minimal check - just set state without redirects
             checkAuth: async () => {
                 const { accessToken, refreshToken } = get();
 
-                if (!accessToken || !refreshToken) {
-                    set({ checkingAuth: false, user: null });
-                    return;
-                }
-
-                try {
-                    // Set token in axios headers
-                    axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+                if (accessToken && refreshToken) {
+                    // User has tokens, consider them logged in
                     set({ checkingAuth: false });
-                } catch (error) {
-                    get().clearAuth();
+                } else {
+                    // No tokens, user not logged in
+                    set({ checkingAuth: false, user: null });
                 }
             },
 
@@ -74,15 +55,12 @@ export const useUserStore = create(
                         loading: false
                     });
 
-                    // Set authorization header for future requests
-                    axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-
                     toast.success("Account created successfully!");
                     return { success: true, user };
 
                 } catch (error) {
                     set({ loading: false });
-                    const errorMessage = "Signup failed.";
+                    const errorMessage = error.response?.data?.message || "Signup failed.";
                     toast.error(errorMessage);
                     return { success: false, error: errorMessage };
                 }
@@ -100,7 +78,6 @@ export const useUserStore = create(
 
                     const { user, accessToken, refreshToken } = response.data;
 
-
                     // Store tokens and user data
                     set({
                         user,
@@ -108,9 +85,6 @@ export const useUserStore = create(
                         refreshToken,
                         loading: false
                     });
-
-                    // Set authorization header for future requests
-                    axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
                     toast.success(`Welcome back, ${user.firstName}!`);
                     return { success: true, user };
@@ -137,6 +111,7 @@ export const useUserStore = create(
                         });
                     }
                 } catch (error) {
+                    console.log("Logout error:", error);
                     // Continue with logout even if backend call fails
                 }
 
@@ -154,7 +129,6 @@ export const useUserStore = create(
                 }
 
                 try {
-
                     const response = await axios.post("/api/v1/auth/refresh", {
                         refreshToken,
                     });
@@ -167,12 +141,10 @@ export const useUserStore = create(
                         refreshToken: newRefreshToken
                     });
 
-                    // Update authorization header
-                    axios.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
-
                     return { accessToken: newAccessToken, refreshToken: newRefreshToken };
 
                 } catch (error) {
+                    console.log("Token refresh failed:", error);
                     get().clearAuth();
                     throw error;
                 }
@@ -225,7 +197,6 @@ export const useUserStore = create(
                     refreshToken: null,
                     checkingAuth: false
                 });
-                delete axios.defaults.headers.common['Authorization'];
             },
 
             // Get current auth status
@@ -236,9 +207,8 @@ export const useUserStore = create(
 
             // Get user role
             getUserRole: () => {
-                if (!get().user) return null;
                 const { user } = get();
-                return user.role
+                return user?.role || null;
             },
         }),
         {
@@ -252,8 +222,8 @@ export const useUserStore = create(
     )
 );
 
-// ================= Axios Interceptor =================
-// Automatically handle token refresh on 401 errors
+// ================= Minimal Axios Interceptor =================
+// Only handle token refresh, don't redirect to login
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -302,11 +272,7 @@ axios.interceptors.response.use(
                 processQueue(refreshError, null);
                 useUserStore.getState().clearAuth();
 
-                // Redirect to login if not already there
-                if (window.location.pathname !== '/login') {
-                    window.location.href = '/login';
-                }
-
+                // Don't redirect - just let the operation fail gracefully
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;

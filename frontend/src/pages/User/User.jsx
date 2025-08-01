@@ -5,24 +5,17 @@ import { useUserStore } from '../../stores/useUserStore';
 
 const ProfilePage = () => {
     const navigate = useNavigate();
-    const { user, loading, logout, forgotPassword, isAuthenticated, getUserRole } = useUserStore();
+    const { user, loading, logout } = useUserStore(); // ✅ Only use what exists in simplified store
 
     // Redirect if not authenticated
-    if (!isAuthenticated()) {
+    if (!user) {
         navigate('/login');
         return null;
     }
 
-
     const handleLogout = async () => {
         await logout();
         navigate('/login');
-    };
-
-    const handleResetPassword = async () => {
-        if (user?.email) {
-            await forgotPassword(user.email);
-        }
     };
 
     return (
@@ -40,7 +33,7 @@ const ProfilePage = () => {
             {/* Profile Card */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 {/* Avatar Section */}
-                <div className=" px-8 py-12 text-center">
+                <div className="px-8 py-12 text-center">
                     <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <span className="text-2xl font-medium text-green-600">
                             {user?.firstName?.[0]}{user?.lastName?.[0]}
@@ -48,7 +41,7 @@ const ProfilePage = () => {
                     </div>
                     <div className="inline-flex items-center gap-2 bg-white px-3 py-1 rounded-full text-sm">
                         <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span className="text-gray-600 capitalize">{getUserRole()}</span>
+                        <span className="text-gray-600 capitalize">{user?.role?.toLowerCase()}</span> {/* ✅ Direct role access */}
                     </div>
                 </div>
 
@@ -61,7 +54,7 @@ const ProfilePage = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     First Name
                                 </label>
-                                <div className="px-4 py-3  rounded-lg text-gray-900">
+                                <div className="px-4 py-3 bg-gray-50 rounded-lg text-gray-900">
                                     {user?.firstName}
                                 </div>
                             </div>
@@ -70,7 +63,7 @@ const ProfilePage = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Last Name
                                 </label>
-                                <div className="px-4 py-3  rounded-lg text-gray-900">
+                                <div className="px-4 py-3 bg-gray-50 rounded-lg text-gray-900">
                                     {user?.lastName}
                                 </div>
                             </div>
@@ -81,7 +74,7 @@ const ProfilePage = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Email Address
                             </label>
-                            <div className="px-4 py-3  rounded-lg text-gray-900">
+                            <div className="px-4 py-3 bg-gray-50 rounded-lg text-gray-900">
                                 {user?.email}
                             </div>
                         </div>
@@ -92,12 +85,22 @@ const ProfilePage = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Account Role
                                 </label>
-                                <div className="px-4 py-3  rounded-lg text-gray-900 capitalize">
-                                    {getUserRole()}
+                                <div className="px-4 py-3 bg-gray-50 rounded-lg text-gray-900 capitalize">
+                                    {user?.role?.toLowerCase()}
                                 </div>
                             </div>
 
-
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Account Status
+                                </label>
+                                <div className="px-4 py-3 bg-gray-50 rounded-lg">
+                                    <span className="inline-flex items-center gap-2 text-green-600">
+                                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                        Active
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -106,25 +109,23 @@ const ProfilePage = () => {
                         <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            onClick={handleResetPassword}
-                            disabled={loading}
-                            className="flex-1 py-3 px-6 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                            onClick={() => navigate('/settings')} // ✅ Navigate to settings instead of reset password
+                            className="flex-1 py-3 px-6 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                         >
-                            {loading ? 'Sending...' : 'Reset Password'}
+                            Account Settings
                         </motion.button>
                         <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={handleLogout}
-                            className="flex-1 py-3 px-6 bg-red-700  rounded-lg hover:bg-red-800 text-white transition-colors font-medium"
+                            disabled={loading}
+                            className="flex-1 py-3 px-6 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50"
                         >
-                            Sign Out
+                            {loading ? 'Signing Out...' : 'Sign Out'}
                         </motion.button>
                     </div>
                 </div>
             </div>
-
-
         </motion.div>
     );
 };

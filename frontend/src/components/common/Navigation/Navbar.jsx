@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCartStore } from "../../../stores/useCartStore.js";
 import { useUserStore } from "../../../stores/useUserStore.js";
@@ -8,6 +8,7 @@ const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const location = useLocation();
+    const navigate = useNavigate();
     const { cart } = useCartStore();
     const { user, logout } = useUserStore();
 
@@ -25,12 +26,24 @@ const Navbar = () => {
         setIsMenuOpen(false);
     }, [location]);
 
-    const cartItemCount = cart.length
+    const cartItemCount = cart.length;
+
+    // Handle logout with redirect
+    const handleLogout = async () => {
+        try {
+            await logout();
+            // Redirect to homepage after successful logout
+            navigate('/', { replace: true });
+        } catch (error) {
+            console.error('Logout failed:', error);
+            // Even if logout fails, still redirect for UX
+            navigate('/', { replace: true });
+        }
+    };
 
     const navLinks = [
         { name: "Home", path: "/" },
         { name: "Store", path: "/store" },
-        { name: "Orders", path: "/order-history" },
 
     ];
 
@@ -73,7 +86,7 @@ const Navbar = () => {
                     {/* Desktop Actions */}
                     <div className="hidden md:flex items-center space-x-4">
                         <CartButton count={cartItemCount} />
-                        <UserMenu user={user} logout={logout} />
+                        <UserMenu user={user} onLogout={handleLogout} />
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -129,7 +142,7 @@ const Navbar = () => {
                                 >
                                     {user ? (
                                         <div className="space-y-2">
-                                            <p className="text-sm text-gray-500 px-4">Signed in as {user.name}</p>
+                                            <p className="text-sm text-gray-500 px-4">Signed in as {user.firstName}</p>
                                             <Link
                                                 to="/profile"
                                                 className="block px-4 py-2 text-gray-700 hover:text-green-600 transition-colors"
@@ -139,7 +152,7 @@ const Navbar = () => {
                                             </Link>
                                             <button
                                                 onClick={() => {
-                                                    logout();
+                                                    handleLogout();
                                                     setIsMenuOpen(false);
                                                 }}
                                                 className="block w-full text-left px-4 py-2 text-gray-700 hover:text-red-600 transition-colors"
@@ -221,7 +234,7 @@ const CartButton = ({ count }) => (
 );
 
 // User Menu Component
-const UserMenu = ({ user, logout }) => {
+const UserMenu = ({ user, onLogout }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
@@ -249,7 +262,7 @@ const UserMenu = ({ user, logout }) => {
                         {user ? (
                             <>
                                 <div className="px-4 py-2 border-b border-gray-100">
-                                    <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                                    <p className="text-sm font-medium text-gray-900">{user.firstName} {user.lastName}</p>
                                     <p className="text-xs text-gray-500">{user.email}</p>
                                 </div>
                                 <Link
@@ -273,9 +286,16 @@ const UserMenu = ({ user, logout }) => {
                                 >
                                     Payments
                                 </Link>
+                                <Link
+                                    to="/my-reviews"
+                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
+                                    onClick={() => setIsOpen(false)}
+                                >
+                                    My Reviews
+                                </Link>
                                 <button
                                     onClick={() => {
-                                        logout();
+                                        onLogout();
                                         setIsOpen(false);
                                     }}
                                     className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -298,28 +318,6 @@ const UserMenu = ({ user, logout }) => {
                                     onClick={() => setIsOpen(false)}
                                 >
                                     Sign Up
-                                </Link>
-
-                                <Link
-                                    to="/my-reviews"
-                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
-                                    onClick={() => setIsOpen(false)}
-                                >
-                                    My Reviews
-                                </Link>
-                                <Link
-                                    to="/payment-history"
-                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
-                                    onClick={() => setIsOpen(false)}
-                                >
-                                    Payment History
-                                </Link>
-                                <Link
-                                    to="/orders"
-                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
-                                    onClick={() => setIsOpen(false)}
-                                >
-                                    Orders
                                 </Link>
                             </>
                         )}

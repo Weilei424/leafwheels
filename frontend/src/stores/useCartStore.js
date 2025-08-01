@@ -1,12 +1,18 @@
 import { create } from "zustand";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useUserStore } from "./useUserStore";
+
+// Helper function to get auth headers for cart operations only
+const getAuthHeaders = () => {
+    const { accessToken } = useUserStore.getState();
+    return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+};
 
 export const useCartStore = create((set, get) => ({
     cart: [],
     subtotal: 0,
     total: 0,
-
     savings: 0,
     loading: false,
 
@@ -15,16 +21,15 @@ export const useCartStore = create((set, get) => ({
 
         set({ loading: true });
         try {
-            const response = await axios.get(`/api/v1/carts/${userId}`);
+            const response = await axios.get(`/api/v1/carts/${userId}`, {
+                headers: getAuthHeaders()
+            });
             const cartData = response.data;
             const items = cartData?.items || [];
 
             set({ cart: items, loading: false });
-
-
-            // Use backend total if available, otherwise calculate
             set({ total: cartData.totalPrice });
-            get().calculateOtherTotals(); // Calculate subtotal, savings
+            get().calculateOtherTotals();
 
         } catch (error) {
             const errorMessage = error.response?.data?.message || "Failed to load cart.";
@@ -50,14 +55,13 @@ export const useCartStore = create((set, get) => ({
                 payload.quantity = quantity;
             }
 
-            const response = await axios.post(`/api/v1/carts/${userId}/items`, payload);
+            const response = await axios.post(`/api/v1/carts/${userId}/items`, payload, {
+                headers: getAuthHeaders()
+            });
             const cartData = response.data;
             const items = cartData?.items || [];
 
             set({ cart: items, loading: false });
-
-
-            // Use backend total if available
             set({ total: cartData.totalPrice });
             get().calculateOtherTotals();
 
@@ -77,7 +81,9 @@ export const useCartStore = create((set, get) => ({
 
         set({ loading: true });
         try {
-            const response = await axios.delete(`/api/v1/carts/${userId}/items/${itemId}`);
+            const response = await axios.delete(`/api/v1/carts/${userId}/items/${itemId}`, {
+                headers: getAuthHeaders()
+            });
             const cartData = response.data;
             const items = cartData?.items || [];
 
@@ -101,7 +107,9 @@ export const useCartStore = create((set, get) => ({
 
         set({ loading: true });
         try {
-            await axios.delete(`/api/v1/carts/${userId}`);
+            await axios.delete(`/api/v1/carts/${userId}`, {
+                headers: getAuthHeaders()
+            });
 
             set({
                 cart: [],
@@ -119,12 +127,8 @@ export const useCartStore = create((set, get) => ({
         }
     },
 
-    /**
-     * Calculate subtotal, and savings when backend provides total
-     */
     calculateOtherTotals: () => {
         let { cart, total } = get();
-
 
         let subtotal = 0;
         let savings = 0;
@@ -138,15 +142,12 @@ export const useCartStore = create((set, get) => ({
             const finalPrice = product.discountPrice
             const originalPrice = product.price || 0;
 
-
             subtotal += finalPrice * quantity;
 
             if (originalPrice > finalPrice) {
                 savings += (originalPrice - finalPrice) * quantity;
             }
         });
-
-
 
         set({ subtotal, savings, total });
     },
@@ -157,23 +158,24 @@ export const useCartStore = create((set, get) => ({
             item.type === "ACCESSORY" && item.accessory?.id === accessoryId
         );
 
-
         const newQuantity = cartItem.quantity + change;
         if (newQuantity < 1) return;
 
         try {
-
-            await axios.delete(`/api/v1/carts/${userId}/items/${cartItem.id}`);
+            await axios.delete(`/api/v1/carts/${userId}/items/${cartItem.id}`, {
+                headers: getAuthHeaders()
+            });
 
             const response = await axios.post(`/api/v1/carts/${userId}/items`, {
                 type: "ACCESSORY",
                 accessoryId,
                 quantity: newQuantity
+            }, {
+                headers: getAuthHeaders()
             });
 
             const cartData = response.data;
             const items = cartData?.items || [];
-
 
             set({ cart: items });
             set({ total: cartData.totalPrice });

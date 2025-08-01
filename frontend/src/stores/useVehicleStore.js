@@ -1,6 +1,13 @@
 import { create } from "zustand";
 import { toast } from "react-toastify";
 import axios from "axios";
+import { useUserStore } from "./useUserStore";
+
+// Helper function to get auth headers for authenticated operations
+const getAuthHeaders = () => {
+    const { accessToken } = useUserStore.getState();
+    return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+};
 
 export const useVehicleStore = create((set, get) => ({
     // State
@@ -17,6 +24,7 @@ export const useVehicleStore = create((set, get) => ({
 
     // ================= VEHICLE CRUD =================
 
+    // PUBLIC - No auth required
     getAllVehicles: async () => {
         set({ loading: true, error: null });
         try {
@@ -31,6 +39,7 @@ export const useVehicleStore = create((set, get) => ({
         }
     },
 
+    // PUBLIC - No auth required
     getVehicleById: async (vehicleId) => {
         set({ loading: true, error: null });
         try {
@@ -45,10 +54,13 @@ export const useVehicleStore = create((set, get) => ({
         }
     },
 
+    // REQUIRES AUTH - POST operation
     createVehicle: async (vehicleData) => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.post("/api/v1/vehicle", vehicleData);
+            const response = await axios.post("/api/v1/vehicle", vehicleData, {
+                headers: getAuthHeaders()
+            });
             set((prevState) => ({
                 vehicles: [...prevState.vehicles, response.data],
                 loading: false,
@@ -63,10 +75,13 @@ export const useVehicleStore = create((set, get) => ({
         }
     },
 
+    // REQUIRES AUTH - PUT operation
     updateVehicle: async (vehicleId, vehicleData) => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.put(`/api/v1/vehicle/${vehicleId}`, vehicleData);
+            const response = await axios.put(`/api/v1/vehicle/${vehicleId}`, vehicleData, {
+                headers: getAuthHeaders()
+            });
             set((prevState) => ({
                 vehicles: prevState.vehicles.map((vehicle) =>
                     vehicle.id === vehicleId ? response.data : vehicle
@@ -84,10 +99,13 @@ export const useVehicleStore = create((set, get) => ({
         }
     },
 
+    // REQUIRES AUTH - DELETE operation
     deleteVehicle: async (vehicleId) => {
         set({ loading: true, error: null });
         try {
-            await axios.delete(`/api/v1/vehicle/${vehicleId}`);
+            await axios.delete(`/api/v1/vehicle/${vehicleId}`, {
+                headers: getAuthHeaders()
+            });
             set((prevState) => ({
                 vehicles: prevState.vehicles.filter((vehicle) => vehicle.id !== vehicleId),
                 currentVehicle: prevState.currentVehicle?.id === vehicleId ? null : prevState.currentVehicle,
@@ -102,6 +120,7 @@ export const useVehicleStore = create((set, get) => ({
         }
     },
 
+    // PUBLIC - No auth required
     getAvailableVehicles: async () => {
         set({ loading: true, error: null });
         try {
@@ -116,6 +135,7 @@ export const useVehicleStore = create((set, get) => ({
         }
     },
 
+    // PUBLIC - No auth required
     getVehiclesByStatus: async (statuses) => {
         set({ loading: true, error: null });
         try {
@@ -131,6 +151,7 @@ export const useVehicleStore = create((set, get) => ({
         }
     },
 
+    // PUBLIC - No auth required
     getVehiclesExcludingStatus: async (excludedStatuses) => {
         set({ loading: true, error: null });
         try {
@@ -146,10 +167,13 @@ export const useVehicleStore = create((set, get) => ({
         }
     },
 
+    // REQUIRES AUTH - POST operation
     addImageUrls: async (vehicleId, imageUrls) => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.post(`/api/v1/vehicle/${vehicleId}/images`, imageUrls);
+            const response = await axios.post(`/api/v1/vehicle/${vehicleId}/images`, imageUrls, {
+                headers: getAuthHeaders()
+            });
             set((prevState) => ({
                 vehicles: prevState.vehicles.map((vehicle) =>
                     vehicle.id === vehicleId ? response.data : vehicle
@@ -167,7 +191,7 @@ export const useVehicleStore = create((set, get) => ({
         }
     },
 
-
+    // PUBLIC - No auth required
     filterVehicles: async (filters = {}) => {
         set({ loading: true, error: null });
         try {
@@ -193,6 +217,7 @@ export const useVehicleStore = create((set, get) => ({
 
     // ================= VEHICLE HISTORY =================
 
+    // PUBLIC - No auth required
     getVehicleHistoryByVehicleId: async (vehicleId) => {
         set({ historyLoading: true, error: null });
         try {
@@ -207,6 +232,7 @@ export const useVehicleStore = create((set, get) => ({
         }
     },
 
+    // PUBLIC - No auth required
     getHistoryRecordById: async (vehicleHistoryId) => {
         set({ historyLoading: true, error: null });
         try {
@@ -221,10 +247,13 @@ export const useVehicleStore = create((set, get) => ({
         }
     },
 
+    // REQUIRES AUTH - POST operation
     createVehicleHistory: async (vehicleHistoryData) => {
         set({ historyLoading: true, error: null });
         try {
-            const response = await axios.post("/api/v1/vehiclehistory", vehicleHistoryData);
+            const response = await axios.post("/api/v1/vehiclehistory", vehicleHistoryData, {
+                headers: getAuthHeaders()
+            });
             set({ historyLoading: false });
             toast.success("Vehicle history record created successfully!");
             return response.data;
@@ -236,10 +265,13 @@ export const useVehicleStore = create((set, get) => ({
         }
     },
 
+    // REQUIRES AUTH - PUT operation
     updateVehicleHistory: async (vehicleHistoryId, vehicleHistoryData) => {
         set({ historyLoading: true, error: null });
         try {
-            const response = await axios.put(`/api/v1/vehiclehistory/${vehicleHistoryId}`, vehicleHistoryData);
+            const response = await axios.put(`/api/v1/vehiclehistory/${vehicleHistoryId}`, vehicleHistoryData, {
+                headers: getAuthHeaders()
+            });
             set({ historyLoading: false });
             toast.success("Vehicle history updated successfully!");
             return response.data;
@@ -251,10 +283,13 @@ export const useVehicleStore = create((set, get) => ({
         }
     },
 
+    // REQUIRES AUTH - DELETE operation
     deleteVehicleHistory: async (vehicleHistoryId) => {
         set({ historyLoading: true, error: null });
         try {
-            await axios.delete(`/api/v1/vehiclehistory/${vehicleHistoryId}`);
+            await axios.delete(`/api/v1/vehiclehistory/${vehicleHistoryId}`, {
+                headers: getAuthHeaders()
+            });
             set({ historyLoading: false });
             toast.success("Vehicle history deleted successfully!");
         } catch (error) {
