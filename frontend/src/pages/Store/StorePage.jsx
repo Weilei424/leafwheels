@@ -14,177 +14,694 @@ import { useVehicleStore } from "../../stores/useVehicleStore.js";
 import { useAccessoryStore } from "../../stores/useAccessoryStore.js";
 import { handleAddToCart } from "../../hooks/handleAddToCart.js";
 
-const PAGE_SIZE = 8;
+// Configuration
+const PRODUCTS_PER_PAGE = 8;
+const DEFAULT_SEARCH_TERM = "";
+const DEFAULT_CATEGORY = "All";
+const DEFAULT_SORT_ORDER = "newest";
+const DEFAULT_STATUS_FILTER = "available";
+const DEFAULT_BRAND_FILTER = "all";
+const DEFAULT_BODY_TYPE_FILTER = "all";
+const DEFAULT_YEAR_FILTER = "all";
+const DEFAULT_ACCIDENT_HISTORY_FILTER = "all";
+const DEFAULT_MIN_PRICE = "";
+const DEFAULT_MAX_PRICE = "";
+const DEFAULT_MIN_MILEAGE = "";
+const DEFAULT_MAX_MILEAGE = "";
 
-const useStoreLogic = (products) => {
-  const [searchParams, setSearchParams] = useSearchParams();
+const SORT_OPTIONS = [
+  { value: "newest", label: "Newest" },
+  { value: "priceLowHigh", label: "Price: Low to High" },
+  { value: "priceHighLow", label: "Price: High to Low" },
+  { value: "mileageLowHigh", label: "Mileage: Low to High" },
+  { value: "mileageHighLow", label: "Mileage: High to Low" }
+];
 
-  const searchTerm = searchParams.get("search") || "";
-  const selectedCategory = searchParams.get("category") || "All";
-  const sortOrder = searchParams.get("sort") || "newest";
-  const statusFilter = searchParams.get("status") || "available";
+// Electric vehicle filter options based on your Java enums
+const VEHICLE_BRANDS = [
+  { value: "all", label: "All Brands" },
+  { value: "TESLA", label: "Tesla" },
+  { value: "NISSAN", label: "Nissan" },
+  { value: "CHEVROLET", label: "Chevrolet" },
+  { value: "FORD", label: "Ford" },
+  { value: "AUDI", label: "Audi" },
+  { value: "BMW", label: "BMW" },
+  { value: "HYUNDAI", label: "Hyundai" },
+  { value: "KIA", label: "Kia" },
+  { value: "VOLKSWAGEN", label: "Volkswagen" },
+  { value: "PORSCHE", label: "Porsche" },
+  { value: "JAGUAR", label: "Jaguar" },
+  { value: "RIVIAN", label: "Rivian" },
+  { value: "LUCID", label: "Lucid" },
+  { value: "MERCEDES_BENZ", label: "Mercedes-Benz" },
+  { value: "VOLVO", label: "Volvo" },
+  { value: "POLESTAR", label: "Polestar" },
+  { value: "TOYOTA", label: "Toyota" },
+  { value: "MAZDA", label: "Mazda" }
+];
 
-  const filteredProducts = useMemo(() => {
-    let result = products;
+const VEHICLE_BODY_TYPES = [
+  { value: "all", label: "All Shapes" },
+  { value: "SEDAN", label: "Sedan" },
+  { value: "SUV", label: "SUV" },
+  { value: "HATCHBACK", label: "Hatchback" },
+  { value: "COUPE", label: "Coupe" },
+  { value: "CONVERTIBLE", label: "Convertible" },
+  { value: "WAGON", label: "Wagon" },
+  { value: "MINIVAN", label: "Minivan" },
+  { value: "TRUCK", label: "Truck" },
+  { value: "CROSSOVER", label: "Crossover" }
+];
 
-    if (selectedCategory !== "All") {
-      result = result.filter((p) => p.category === selectedCategory);
+const MODEL_YEARS = [
+  { value: "all", label: "All Years" },
+  { value: "2024", label: "2024" },
+  { value: "2023", label: "2023" },
+  { value: "2022", label: "2022" },
+  { value: "2021", label: "2021" },
+  { value: "2020", label: "2020" },
+  { value: "2019", label: "2019" }
+];
+
+const ACCIDENT_HISTORY_OPTIONS = [
+  { value: "all", label: "All Vehicles" },
+  { value: "no_accidents", label: "No Accident History" },
+  { value: "with_accidents", label: "With Accident History" }
+];
+
+// Utility functions
+function formatProductDisplayName(product) {
+  if (product.category === "Vehicles") {
+    return `${product.year} ${product.make} ${product.model}`;
+  }
+  return product.name || "";
+}
+
+function productHasDiscount(product) {
+  return product.discountPercentage && product.discountPercentage * 100 > 0;
+}
+
+// Map frontend sort options to backend Spring Boot Pageable sort parameters
+function mapSortOrderToBackendSort(sortOrder) {
+  switch (sortOrder) {
+    case "priceLowHigh":
+      return "price,asc";
+    case "priceHighLow":
+      return "price,desc";
+    case "mileageLowHigh":
+      return "mileage,asc";
+    case "mileageHighLow":
+      return "mileage,desc";
+    case "newest":
+    default:
+      return "createdAt,desc";
+  }
+}
+
+// Build filter parameters for backend API
+function buildVehicleFilterParameters(filters, sortOrder) {
+  const params = {};
+
+  // Handle brand filter
+  if (filters.brandFilter && filters.brandFilter !== DEFAULT_BRAND_FILTER) {
+    params.make = filters.brandFilter;
+  }
+
+  // Handle body type filter
+  if (filters.bodyTypeFilter && filters.bodyTypeFilter !== DEFAULT_BODY_TYPE_FILTER) {
+    params.bodyType = filters.bodyTypeFilter;
+  }
+
+  // Handle year filter
+  if (filters.yearFilter && filters.yearFilter !== DEFAULT_YEAR_FILTER) {
+    if (filters.yearFilter === "older") {
+      // For older vehicles, we'll filter on frontend since backend doesn't have maxYear
+      // This will be handled in frontend filtering
+    } else {
+      params.year = parseInt(filters.yearFilter);
     }
+  }
 
-    if (searchTerm.trim()) {
-      result = result.filter((p) => {
-        const name =
-            p.category === "Vehicles"
-                ? `${p.year} ${p.make} ${p.model}`
-                : p.name || "";
-        return name.toLowerCase().includes(searchTerm.toLowerCase());
-      });
+  // Handle accident history filter
+  if (filters.accidentHistoryFilter && filters.accidentHistoryFilter !== DEFAULT_ACCIDENT_HISTORY_FILTER) {
+    if (filters.accidentHistoryFilter === "no_accidents") {
+      params.hasAccidentHistory = false;
+    } else if (filters.accidentHistoryFilter === "with_accidents") {
+      params.hasAccidentHistory = true;
     }
+  }
 
-    switch (sortOrder) {
-      case "priceLowHigh":
-        return [...result].sort(
-            (a, b) =>
-                (a.discountPrice || a.price || 0) -
-                (b.discountPrice || b.price || 0)
-        );
-      case "priceHighLow":
-        return [...result].sort(
-            (a, b) =>
-                (b.discountPrice || b.price || 0) -
-                (a.discountPrice || a.price || 0)
-        );
-      default:
-        return [...result].sort(
-            (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
-        );
+  // Handle price range filters
+  if (filters.minPrice && filters.minPrice !== DEFAULT_MIN_PRICE) {
+    params.minPrice = parseFloat(filters.minPrice);
+  }
+  if (filters.maxPrice && filters.maxPrice !== DEFAULT_MAX_PRICE) {
+    params.maxPrice = parseFloat(filters.maxPrice);
+  }
+
+  // Handle mileage range filters
+  if (filters.minMileage && filters.minMileage !== DEFAULT_MIN_MILEAGE) {
+    params.minMileage = parseInt(filters.minMileage);
+  }
+  if (filters.maxMileage && filters.maxMileage !== DEFAULT_MAX_MILEAGE) {
+    params.maxMileage = parseInt(filters.maxMileage);
+  }
+
+  // Handle status filter
+  if (filters.statusFilter && filters.statusFilter !== DEFAULT_STATUS_FILTER) {
+    if (filters.statusFilter === "pending") {
+      params.statuses = ["PENDING"];
+    } else if (filters.statusFilter === "available") {
+      params.statuses = ["AVAILABLE", "DEMO", "INCOMING"];
     }
-  }, [products, searchTerm, selectedCategory, sortOrder]);
+  }
 
-  const updateParam = (key, value, defaultValue = null) => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      if (value === defaultValue) newParams.delete(key);
-      else newParams.set(key, value);
-      return newParams;
+  // Add sorting parameters for Spring Boot Pageable
+  const backendSort = mapSortOrderToBackendSort(sortOrder);
+  params.sort = backendSort;
+
+  return params;
+}
+
+// Apply frontend filtering for accessories, search, and special cases
+function applyFrontendFilters(products, searchTerm, selectedCategory, yearFilter) {
+  let filteredProducts = [...products];
+
+  // Apply category filter
+  if (selectedCategory === "Hot Deal Vehicles") {
+    filteredProducts = filteredProducts.filter(product =>
+        product.category === "Vehicles" && productHasDiscount(product)
+    );
+  } else if (selectedCategory === "Hot Deal Accessories") {
+    filteredProducts = filteredProducts.filter(product =>
+        product.category === "Accessories" && productHasDiscount(product)
+    );
+  } else if (selectedCategory === "Hot Deals") {
+    filteredProducts = filteredProducts.filter(productHasDiscount);
+  } else if (selectedCategory !== DEFAULT_CATEGORY) {
+    filteredProducts = filteredProducts.filter(product =>
+        product.category === selectedCategory
+    );
+  }
+
+  // Apply search filter
+  if (searchTerm.trim()) {
+    const searchTermLowerCase = searchTerm.toLowerCase();
+    filteredProducts = filteredProducts.filter(product => {
+      const productDisplayName = formatProductDisplayName(product);
+      return productDisplayName.toLowerCase().includes(searchTermLowerCase);
     });
-  };
+  }
+
+  // Apply "older" year filter on frontend (since backend doesn't support maxYear)
+  if (yearFilter === "older") {
+    filteredProducts = filteredProducts.filter(product => {
+      if (product.category !== "Vehicles") return true;
+      return product.year && product.year <= 2017;
+    });
+  }
+
+  return filteredProducts;
+}
+
+// Frontend sorting for all products when not using backend filtering
+function sortAllProducts(products, sortOrder) {
+  const productsCopy = [...products];
+
+  if (sortOrder === "priceLowHigh") {
+    return productsCopy.sort((a, b) =>
+        (a.discountPrice || a.price || 0) - (b.discountPrice || b.price || 0)
+    );
+  }
+
+  if (sortOrder === "priceHighLow") {
+    return productsCopy.sort((a, b) =>
+        (b.discountPrice || b.price || 0) - (a.discountPrice || a.price || 0)
+    );
+  }
+
+  if (sortOrder === "mileageLowHigh") {
+    return productsCopy.sort((a, b) => {
+      // Only sort vehicles by mileage, keep accessories in original order
+      if (a.category === "Vehicles" && b.category === "Vehicles") {
+        return (a.mileage || 0) - (b.mileage || 0);
+      }
+      if (a.category === "Vehicles") return -1;
+      if (b.category === "Vehicles") return 1;
+      return 0;
+    });
+  }
+
+  if (sortOrder === "mileageHighLow") {
+    return productsCopy.sort((a, b) => {
+      // Only sort vehicles by mileage, keep accessories in original order
+      if (a.category === "Vehicles" && b.category === "Vehicles") {
+        return (b.mileage || 0) - (a.mileage || 0);
+      }
+      if (a.category === "Vehicles") return -1;
+      if (b.category === "Vehicles") return 1;
+      return 0;
+    });
+  }
+
+  // Default: newest first
+  return productsCopy.sort((a, b) =>
+      new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+  );
+}
+
+// Frontend sorting for accessories only (vehicles are sorted by backend)
+function sortAccessoriesOnly(products, sortOrder) {
+  const productsCopy = [...products];
+
+  // Separate vehicles and accessories
+  const vehicles = productsCopy.filter(p => p.category === "Vehicles");
+  const accessories = productsCopy.filter(p => p.category === "Accessories");
+
+  // Sort accessories on frontend (vehicles are already sorted by backend)
+  let sortedAccessories = accessories;
+
+  if (sortOrder === "priceLowHigh") {
+    sortedAccessories = accessories.sort((a, b) =>
+        (a.discountPrice || a.price || 0) - (b.discountPrice || b.price || 0)
+    );
+  } else if (sortOrder === "priceHighLow") {
+    sortedAccessories = accessories.sort((a, b) =>
+        (b.discountPrice || b.price || 0) - (a.discountPrice || a.price || 0)
+    );
+  } else if (sortOrder === "newest" || sortOrder === "mileageLowHigh" || sortOrder === "mileageHighLow") {
+    // For newest and mileage sorts, just use creation date for accessories
+    sortedAccessories = accessories.sort((a, b) =>
+        new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+    );
+  }
+
+  // Return vehicles (backend sorted) + accessories (frontend sorted)
+  return [...vehicles, ...sortedAccessories];
+}
+
+// Enhanced dropdown filter component
+function FilterDropdown({ label, value, onChange, options, className = "" }) {
+  return (
+      <div className={`flex flex-col gap-1 ${className}`}>
+        <label className="text-sm font-medium text-gray-700">{label}</label>
+        <select
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
+        >
+          {options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+          ))}
+        </select>
+      </div>
+  );
+}
+
+// Input field for price and mileage ranges
+function FilterInput({ label, value, onChange, placeholder, type = "number", className = "" }) {
+  return (
+      <div className={`flex flex-col gap-1 ${className}`}>
+        <label className="text-sm font-medium text-gray-700">{label}</label>
+        <input
+            type={type}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm w-24"
+        />
+      </div>
+  );
+}
+
+// Custom hook for managing URL parameters and backend filtering
+function useBackendFiltering(accessoryStore) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const vehicleStore = useVehicleStore();
+
+  const currentSearchTerm = searchParams.get("search") || DEFAULT_SEARCH_TERM;
+  const currentSelectedCategory = searchParams.get("category") || DEFAULT_CATEGORY;
+  const currentSortOrder = searchParams.get("sort") || DEFAULT_SORT_ORDER;
+  const currentStatusFilter = searchParams.get("status") || DEFAULT_STATUS_FILTER;
+  const currentBrandFilter = searchParams.get("brand") || DEFAULT_BRAND_FILTER;
+  const currentBodyTypeFilter = searchParams.get("bodyType") || DEFAULT_BODY_TYPE_FILTER;
+  const currentYearFilter = searchParams.get("year") || DEFAULT_YEAR_FILTER;
+  const currentAccidentHistoryFilter = searchParams.get("accidentHistory") || DEFAULT_ACCIDENT_HISTORY_FILTER;
+  const currentMinPrice = searchParams.get("minPrice") || DEFAULT_MIN_PRICE;
+  const currentMaxPrice = searchParams.get("maxPrice") || DEFAULT_MAX_PRICE;
+  const currentMinMileage = searchParams.get("minMileage") || DEFAULT_MIN_MILEAGE;
+  const currentMaxMileage = searchParams.get("maxMileage") || DEFAULT_MAX_MILEAGE;
+
+  // Combine vehicles (from backend filtering) and accessories (frontend filtering)
+  const allProducts = useMemo(() => {
+    const vehiclesWithCategory = vehicleStore.vehicles.map(vehicle => ({
+      ...vehicle,
+      category: "Vehicles"
+    }));
+
+    const accessoriesWithCategory = accessoryStore.accessories.map(accessory => ({
+      ...accessory,
+      category: "Accessories"
+    }));
+
+    return [...vehiclesWithCategory, ...accessoriesWithCategory];
+  }, [vehicleStore.vehicles, accessoryStore.accessories]);
+
+  // Apply frontend filtering for accessories and search
+  const filteredProducts = useMemo(() => {
+    const frontendFiltered = applyFrontendFilters(
+        allProducts,
+        currentSearchTerm,
+        currentSelectedCategory,
+        currentYearFilter
+    );
+
+    // Check if we have backend filters to determine sorting strategy
+    const hasBackendFilters = (
+        currentBrandFilter !== DEFAULT_BRAND_FILTER ||
+        currentBodyTypeFilter !== DEFAULT_BODY_TYPE_FILTER ||
+        currentYearFilter !== DEFAULT_YEAR_FILTER ||
+        currentAccidentHistoryFilter !== DEFAULT_ACCIDENT_HISTORY_FILTER ||
+        currentMinPrice !== DEFAULT_MIN_PRICE ||
+        currentMaxPrice !== DEFAULT_MAX_PRICE ||
+        currentMinMileage !== DEFAULT_MIN_MILEAGE ||
+        currentMaxMileage !== DEFAULT_MAX_MILEAGE
+    );
+
+    if (hasBackendFilters) {
+      // Backend handles vehicle sorting, frontend handles accessories
+      return sortAccessoriesOnly(frontendFiltered, currentSortOrder);
+    } else {
+      // Frontend handles all sorting (using original endpoints)
+      return sortAllProducts(frontendFiltered, currentSortOrder);
+    }
+  }, [allProducts, currentSearchTerm, currentSelectedCategory, currentYearFilter, currentSortOrder, currentBrandFilter, currentBodyTypeFilter, currentAccidentHistoryFilter, currentMinPrice, currentMaxPrice, currentMinMileage, currentMaxMileage]);
+
+  function updateUrlParameter(parameterName, newValue, defaultValue) {
+    setSearchParams(previousParams => {
+      const updatedParams = new URLSearchParams(previousParams);
+
+      if (newValue === defaultValue) {
+        updatedParams.delete(parameterName);
+      } else {
+        updatedParams.set(parameterName, newValue);
+      }
+
+      return updatedParams;
+    });
+  }
+
+  function clearAllFilters() {
+    setSearchParams(new URLSearchParams());
+  }
+
+  const hasActiveFilters = (
+      currentSearchTerm !== DEFAULT_SEARCH_TERM ||
+      currentSelectedCategory !== DEFAULT_CATEGORY ||
+      currentStatusFilter !== DEFAULT_STATUS_FILTER ||
+      currentBrandFilter !== DEFAULT_BRAND_FILTER ||
+      currentBodyTypeFilter !== DEFAULT_BODY_TYPE_FILTER ||
+      currentYearFilter !== DEFAULT_YEAR_FILTER ||
+      currentAccidentHistoryFilter !== DEFAULT_ACCIDENT_HISTORY_FILTER ||
+      currentMinPrice !== DEFAULT_MIN_PRICE ||
+      currentMaxPrice !== DEFAULT_MAX_PRICE ||
+      currentMinMileage !== DEFAULT_MIN_MILEAGE ||
+      currentMaxMileage !== DEFAULT_MAX_MILEAGE
+  );
+
+  // Build filter parameters for backend API calls
+  const vehicleFilters = useMemo(() => ({
+    brandFilter: currentBrandFilter,
+    bodyTypeFilter: currentBodyTypeFilter,
+    yearFilter: currentYearFilter,
+    accidentHistoryFilter: currentAccidentHistoryFilter,
+    statusFilter: currentStatusFilter,
+    minPrice: currentMinPrice,
+    maxPrice: currentMaxPrice,
+    minMileage: currentMinMileage,
+    maxMileage: currentMaxMileage
+  }), [currentBrandFilter, currentBodyTypeFilter, currentYearFilter, currentAccidentHistoryFilter, currentStatusFilter, currentMinPrice, currentMaxPrice, currentMinMileage, currentMaxMileage]);
+
+  const sortOrder = currentSortOrder;
 
   return {
-    searchTerm,
-    selectedCategory,
-    sortOrder,
-    statusFilter,
+    searchTerm: currentSearchTerm,
+    selectedCategory: currentSelectedCategory,
+    statusFilter: currentStatusFilter,
+    brandFilter: currentBrandFilter,
+    bodyTypeFilter: currentBodyTypeFilter,
+    yearFilter: currentYearFilter,
+    accidentHistoryFilter: currentAccidentHistoryFilter,
+    minPrice: currentMinPrice,
+    maxPrice: currentMaxPrice,
+    minMileage: currentMinMileage,
+    maxMileage: currentMaxMileage,
     filteredProducts,
-    setSearchTerm: (value) => updateParam("search", value, ""),
-    setSelectedCategory: (value) => updateParam("category", value, "All"),
-    setSortOrder: (value) => updateParam("sort", value, "newest"),
-    setStatusFilter: (value) => updateParam("status", value, "available"),
-    clearAllFilters: () => setSearchParams(new URLSearchParams()),
-    hasActiveFilters:
-        searchTerm || selectedCategory !== "All" || statusFilter !== "available",
+    hasActiveFilters,
+    vehicleFilters,
+    sortOrder,
+    setSearchTerm: (value) => updateUrlParameter("search", value, DEFAULT_SEARCH_TERM),
+    setSelectedCategory: (value) => updateUrlParameter("category", value, DEFAULT_CATEGORY),
+    setSortOrder: (value) => updateUrlParameter("sort", value, DEFAULT_SORT_ORDER),
+    setStatusFilter: (value) => updateUrlParameter("status", value, DEFAULT_STATUS_FILTER),
+    setBrandFilter: (value) => updateUrlParameter("brand", value, DEFAULT_BRAND_FILTER),
+    setBodyTypeFilter: (value) => updateUrlParameter("bodyType", value, DEFAULT_BODY_TYPE_FILTER),
+    setYearFilter: (value) => updateUrlParameter("year", value, DEFAULT_YEAR_FILTER),
+    setAccidentHistoryFilter: (value) => updateUrlParameter("accidentHistory", value, DEFAULT_ACCIDENT_HISTORY_FILTER),
+    setMinPrice: (value) => updateUrlParameter("minPrice", value, DEFAULT_MIN_PRICE),
+    setMaxPrice: (value) => updateUrlParameter("maxPrice", value, DEFAULT_MAX_PRICE),
+    setMinMileage: (value) => updateUrlParameter("minMileage", value, DEFAULT_MIN_MILEAGE),
+    setMaxMileage: (value) => updateUrlParameter("maxMileage", value, DEFAULT_MAX_MILEAGE),
+    clearAllFilters
   };
-};
+}
 
-const StorePage = () => {
-  const {
-    vehicles,
-    loading: vehiclesLoading,
-    error: vehiclesError,
-    getAvailableVehicles,
-    getVehiclesByStatus,
-  } = useVehicleStore();
+// UI Components
+function ActiveFilterTag({ children, onRemoveFilter }) {
+  return (
+      <motion.span
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          className="bg-white px-3 py-1 rounded-full flex items-center gap-2 shadow-sm border"
+      >
+        {children}
+        <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={onRemoveFilter}
+            className="text-gray-400 hover:text-gray-600 font-bold text-lg leading-none"
+            aria-label="Remove this filter"
+        >
+          ×
+        </motion.button>
+      </motion.span>
+  );
+}
 
-  const {
-    accessories,
-    loading: accessoriesLoading,
-    error: accessoriesError,
-    getAllAccessories,
-  } = useAccessoryStore();
+function LoadingSpinner() {
+  return (
+      <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex justify-center py-20"
+      >
+        <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+            className="w-8 h-8 border-2 border-gray-300 border-t-gray-900 rounded-full"
+        />
+      </motion.div>
+  );
+}
 
-  const [pageItems, setPageItems] = useState([]);
+function EmptyProductsMessage({ selectedCategory, onClearAllFilters }) {
+  const productTypeText = selectedCategory === DEFAULT_CATEGORY
+      ? "products"
+      : selectedCategory.toLowerCase();
 
-  // Combine vehicles and accessories
-  const products = useMemo(() => {
-    const vehicleProducts = vehicles.map((v) => ({ ...v, category: "Vehicles" }));
-    const accessoryProducts = accessories.map((a) => ({ ...a, category: "Accessories" }));
-    return [...vehicleProducts, ...accessoryProducts];
-  }, [vehicles, accessories]);
+  return (
+      <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-20"
+      >
+        <p className="text-gray-500 mb-4">
+          No {productTypeText} found
+        </p>
+        <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onClearAllFilters}
+            className="text-gray-900 underline hover:no-underline"
+        >
+          Clear filters
+        </motion.button>
+      </motion.div>
+  );
+}
+
+function ErrorMessage({ errorText, onRetryClick }) {
+  return (
+      <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="min-h-screen flex items-center justify-center"
+      >
+        <div className="text-center space-y-4">
+          <p className="text-red-600 text-lg">Error: {errorText}</p>
+          <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onRetryClick}
+              className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            Try Again
+          </motion.button>
+        </div>
+      </motion.div>
+  );
+}
+
+// Main component
+function StorePage() {
+  const vehicleStore = useVehicleStore();
+  const accessoryStore = useAccessoryStore();
+  const [currentPageProducts, setCurrentPageProducts] = useState([]);
 
   const {
     searchTerm,
     selectedCategory,
     sortOrder,
     statusFilter,
+    brandFilter,
+    bodyTypeFilter,
+    yearFilter,
+    accidentHistoryFilter,
+    minPrice,
+    maxPrice,
+    minMileage,
+    maxMileage,
     filteredProducts,
+    hasActiveFilters,
+    vehicleFilters,
     setSearchTerm,
     setSelectedCategory,
     setSortOrder,
     setStatusFilter,
-    clearAllFilters,
-    hasActiveFilters,
-  } = useStoreLogic(products);
+    setBrandFilter,
+    setBodyTypeFilter,
+    setYearFilter,
+    setAccidentHistoryFilter,
+    setMinPrice,
+    setMaxPrice,
+    setMinMileage,
+    setMaxMileage,
+    clearAllFilters
+  } = useBackendFiltering(accessoryStore);
 
+  // Fetch data using smart endpoint selection
   useEffect(() => {
-    const fetchData = async () => {
+    async function fetchFilteredData() {
       try {
-        // Fetch vehicles
-        if (statusFilter === "pending") {
-          await getVehiclesByStatus(["PENDING"]);
+        // Check if we have any backend filter parameters
+        const hasBackendFilters = (
+            vehicleFilters.brandFilter !== DEFAULT_BRAND_FILTER ||
+            vehicleFilters.bodyTypeFilter !== DEFAULT_BODY_TYPE_FILTER ||
+            vehicleFilters.yearFilter !== DEFAULT_YEAR_FILTER ||
+            vehicleFilters.accidentHistoryFilter !== DEFAULT_ACCIDENT_HISTORY_FILTER ||
+            vehicleFilters.minPrice !== DEFAULT_MIN_PRICE ||
+            vehicleFilters.maxPrice !== DEFAULT_MAX_PRICE ||
+            vehicleFilters.minMileage !== DEFAULT_MIN_MILEAGE ||
+            vehicleFilters.maxMileage !== DEFAULT_MAX_MILEAGE
+        );
+
+        if (hasBackendFilters) {
+          // Use filter endpoint when we have actual filters
+          const filterParams = buildVehicleFilterParameters(vehicleFilters, sortOrder);
+          // Add a large page size to get all results
+          filterParams.size = 1000; // Large number to get all results
+          await vehicleStore.filterVehicles(filterParams);
         } else {
-          await getAvailableVehicles();
+          // Use original endpoints when no filters (your working approach)
+          if (vehicleFilters.statusFilter === "pending") {
+            await vehicleStore.getVehiclesByStatus(["PENDING"]);
+          } else {
+            await vehicleStore.getAvailableVehicles();
+          }
         }
 
-        // Fetch accessories
-        await getAllAccessories();
-      } catch (err) {
-        console.error("Failed to fetch data:", err);
+        // Always fetch all accessories (they'll be filtered on frontend)
+        await accessoryStore.getAllAccessories();
+      } catch (error) {
+        console.error("Failed to fetch filtered data:", error);
       }
-    };
-    fetchData();
-  }, [statusFilter]);
+    }
 
-  const onAddToCartVehicle = (product) => {
+    fetchFilteredData();
+  }, [vehicleFilters, sortOrder]);
+
+  // Handle adding products to cart
+  function addVehicleToCart(vehicle) {
     handleAddToCart({
-      product,
+      product: vehicle,
       type: "VEHICLE"
     });
-  };
+  }
 
-  const  onAddToCartAccessory = (product, quantity = 1) => {
+  function addAccessoryToCart(accessory, quantity = 1) {
     handleAddToCart({
-      product,
+      product: accessory,
       type: "ACCESSORY",
       quantity
     });
-  };
+  }
 
-  const loading = vehiclesLoading || accessoriesLoading;
-  const error = vehiclesError || accessoriesError;
+  // Handle retry when there's an error
+  async function retryDataFetch() {
+    try {
+      // Check if we have any backend filter parameters
+      const hasBackendFilters = (
+          vehicleFilters.brandFilter !== DEFAULT_BRAND_FILTER ||
+          vehicleFilters.bodyTypeFilter !== DEFAULT_BODY_TYPE_FILTER ||
+          vehicleFilters.yearFilter !== DEFAULT_YEAR_FILTER ||
+          vehicleFilters.accidentHistoryFilter !== DEFAULT_ACCIDENT_HISTORY_FILTER ||
+          vehicleFilters.minPrice !== DEFAULT_MIN_PRICE ||
+          vehicleFilters.maxPrice !== DEFAULT_MAX_PRICE ||
+          vehicleFilters.minMileage !== DEFAULT_MIN_MILEAGE ||
+          vehicleFilters.maxMileage !== DEFAULT_MAX_MILEAGE
+      );
 
-  if (error) {
+      if (hasBackendFilters) {
+        const filterParams = buildVehicleFilterParameters(vehicleFilters, sortOrder);
+        filterParams.size = 1000; // Large number to get all results
+        await vehicleStore.filterVehicles(filterParams);
+      } else {
+        if (vehicleFilters.statusFilter === "pending") {
+          await vehicleStore.getVehiclesByStatus(["PENDING"]);
+        } else {
+          await vehicleStore.getAvailableVehicles();
+        }
+      }
+
+      await accessoryStore.getAllAccessories();
+    } catch (error) {
+      console.error("Retry failed:", error);
+    }
+  }
+
+  const isCurrentlyLoading = vehicleStore.loading || accessoryStore.loading;
+  const currentError = vehicleStore.error || accessoryStore.error;
+
+  // Show error state if there's an error
+  if (currentError) {
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="min-h-screen flex items-center justify-center"
-        >
-          <div className="text-center space-y-4">
-            <p className="text-red-600 text-lg">Error: {error}</p>
-            <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() =>
-                    statusFilter === "available"
-                        ? getAvailableVehicles()
-                        : setStatusFilter(statusFilter)
-                }
-                className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
-            >
-              Try Again
-            </motion.button>
-          </div>
-        </motion.div>
+        <ErrorMessage
+            errorText={currentError}
+            onRetryClick={retryDataFetch}
+        />
     );
   }
 
@@ -194,6 +711,7 @@ const StorePage = () => {
           animate={{ opacity: 1 }}
           className="min-h-screen mt-6 py-8 px-4 max-w-7xl mx-auto"
       >
+        {/* Page title */}
         <motion.h1
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -202,16 +720,16 @@ const StorePage = () => {
           Store
         </motion.h1>
 
-        {/* Clean Filters */}
+        {/* Primary filter and search controls */}
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="flex flex-wrap gap-4 mb-8 justify-center"
+            className="flex flex-wrap gap-4 mb-6 justify-center"
         >
           <SearchBar
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Search vehicles and accessories..."
           />
           <CategoryFilter
@@ -219,19 +737,84 @@ const StorePage = () => {
               selectedCategory={selectedCategory}
               onChangeCategory={setSelectedCategory}
           />
-          <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+          <StatusFilter
+              value={statusFilter}
+              onChange={setStatusFilter}
+          />
           <SortDropDown
               value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
-              options={[
-                { value: "newest", label: "Newest" },
-                { value: "priceLowHigh", label: "Price: Low to High" },
-                { value: "priceHighLow", label: "Price: High to Low" },
-              ]}
+              onChange={(event) => setSortOrder(event.target.value)}
+              options={SORT_OPTIONS}
           />
         </motion.div>
 
-        {/* Active Filters */}
+        {/* Electric vehicle specific filters */}
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex flex-wrap gap-4 mb-6 justify-center"
+        >
+          <FilterDropdown
+              label="Brand"
+              value={brandFilter}
+              onChange={setBrandFilter}
+              options={VEHICLE_BRANDS}
+          />
+          <FilterDropdown
+              label="Body Type"
+              value={bodyTypeFilter}
+              onChange={setBodyTypeFilter}
+              options={VEHICLE_BODY_TYPES}
+          />
+          <FilterDropdown
+              label="Model Year"
+              value={yearFilter}
+              onChange={setYearFilter}
+              options={MODEL_YEARS}
+          />
+          <FilterDropdown
+              label="Accident History"
+              value={accidentHistoryFilter}
+              onChange={setAccidentHistoryFilter}
+              options={ACCIDENT_HISTORY_OPTIONS}
+          />
+        </motion.div>
+
+        {/* Price and Mileage range filters */}
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-wrap gap-4 mb-8 justify-center"
+        >
+          <FilterInput
+              label="Min Price ($)"
+              value={minPrice}
+              onChange={setMinPrice}
+              placeholder="0"
+          />
+          <FilterInput
+              label="Max Price ($)"
+              value={maxPrice}
+              onChange={setMaxPrice}
+              placeholder="100000"
+          />
+          <FilterInput
+              label="Min Mileage"
+              value={minMileage}
+              onChange={setMinMileage}
+              placeholder="0"
+          />
+          <FilterInput
+              label="Max Mileage"
+              value={maxMileage}
+              onChange={setMaxMileage}
+              placeholder="200000"
+          />
+        </motion.div>
+
+        {/* Active filters display */}
         <AnimatePresence>
           {hasActiveFilters && (
               <motion.div
@@ -242,19 +825,59 @@ const StorePage = () => {
               >
                 <div className="rounded-lg p-4 flex flex-wrap items-center gap-2 text-sm">
                   {searchTerm && (
-                      <FilterTag onRemove={() => setSearchTerm("")}>
+                      <ActiveFilterTag onRemoveFilter={() => setSearchTerm(DEFAULT_SEARCH_TERM)}>
                         "{searchTerm}"
-                      </FilterTag>
+                      </ActiveFilterTag>
                   )}
-                  {selectedCategory !== "All" && (
-                      <FilterTag onRemove={() => setSelectedCategory("All")}>
+                  {selectedCategory !== DEFAULT_CATEGORY && (
+                      <ActiveFilterTag onRemoveFilter={() => setSelectedCategory(DEFAULT_CATEGORY)}>
                         {selectedCategory}
-                      </FilterTag>
+                      </ActiveFilterTag>
                   )}
-                  {statusFilter !== "available" && (
-                      <FilterTag onRemove={() => setStatusFilter("available")}>
+                  {statusFilter !== DEFAULT_STATUS_FILTER && (
+                      <ActiveFilterTag onRemoveFilter={() => setStatusFilter(DEFAULT_STATUS_FILTER)}>
                         {statusFilter}
-                      </FilterTag>
+                      </ActiveFilterTag>
+                  )}
+                  {brandFilter !== DEFAULT_BRAND_FILTER && (
+                      <ActiveFilterTag onRemoveFilter={() => setBrandFilter(DEFAULT_BRAND_FILTER)}>
+                        {VEHICLE_BRANDS.find(b => b.value === brandFilter)?.label}
+                      </ActiveFilterTag>
+                  )}
+                  {bodyTypeFilter !== DEFAULT_BODY_TYPE_FILTER && (
+                      <ActiveFilterTag onRemoveFilter={() => setBodyTypeFilter(DEFAULT_BODY_TYPE_FILTER)}>
+                        {VEHICLE_BODY_TYPES.find(b => b.value === bodyTypeFilter)?.label}
+                      </ActiveFilterTag>
+                  )}
+                  {yearFilter !== DEFAULT_YEAR_FILTER && (
+                      <ActiveFilterTag onRemoveFilter={() => setYearFilter(DEFAULT_YEAR_FILTER)}>
+                        {MODEL_YEARS.find(y => y.value === yearFilter)?.label}
+                      </ActiveFilterTag>
+                  )}
+                  {accidentHistoryFilter !== DEFAULT_ACCIDENT_HISTORY_FILTER && (
+                      <ActiveFilterTag onRemoveFilter={() => setAccidentHistoryFilter(DEFAULT_ACCIDENT_HISTORY_FILTER)}>
+                        {ACCIDENT_HISTORY_OPTIONS.find(a => a.value === accidentHistoryFilter)?.label}
+                      </ActiveFilterTag>
+                  )}
+                  {minPrice && (
+                      <ActiveFilterTag onRemoveFilter={() => setMinPrice(DEFAULT_MIN_PRICE)}>
+                        Min: ${minPrice}
+                      </ActiveFilterTag>
+                  )}
+                  {maxPrice && (
+                      <ActiveFilterTag onRemoveFilter={() => setMaxPrice(DEFAULT_MAX_PRICE)}>
+                        Max: ${maxPrice}
+                      </ActiveFilterTag>
+                  )}
+                  {minMileage && (
+                      <ActiveFilterTag onRemoveFilter={() => setMinMileage(DEFAULT_MIN_MILEAGE)}>
+                        Min Miles: {minMileage}
+                      </ActiveFilterTag>
+                  )}
+                  {maxMileage && (
+                      <ActiveFilterTag onRemoveFilter={() => setMaxMileage(DEFAULT_MAX_MILEAGE)}>
+                        Max Miles: {maxMileage}
+                      </ActiveFilterTag>
                   )}
                   <motion.button
                       whileHover={{ scale: 1.02 }}
@@ -269,46 +892,23 @@ const StorePage = () => {
           )}
         </AnimatePresence>
 
-        {/* Content */}
-        {loading ? (
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex justify-center py-20"
-            >
-              <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                  className="w-8 h-8 border-2 border-gray-300 border-t-gray-900 rounded-full"
-              />
-            </motion.div>
+        {/* Main content area */}
+        {isCurrentlyLoading ? (
+            <LoadingSpinner />
         ) : filteredProducts.length === 0 ? (
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center py-20"
-            >
-              <p className="text-gray-500 mb-4">
-                No {selectedCategory === "All" ? "products" : selectedCategory.toLowerCase()} found
-              </p>
-              <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={clearAllFilters}
-                  className="text-gray-900 underline hover:no-underline"
-              >
-                Clear filters
-              </motion.button>
-            </motion.div>
+            <EmptyProductsMessage
+                selectedCategory={selectedCategory}
+                onClearAllFilters={clearAllFilters}
+            />
         ) : (
             <>
-              {/* Results Grid */}
+              {/* Product grid */}
               <motion.div
                   layout
                   className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12"
               >
                 <AnimatePresence>
-                  {pageItems.map((product) => (
+                  {currentPageProducts.map((product) => (
                       <motion.div
                           key={product.id}
                           layout
@@ -322,12 +922,12 @@ const StorePage = () => {
                         {product.category === "Vehicles" ? (
                             <VehicleCard
                                 vehicle={product}
-                                onAddToCart={() => onAddToCartVehicle(product)}
+                                onAddToCart={() => addVehicleToCart(product)}
                             />
                         ) : (
                             <AccessoryCard
                                 accessory={product}
-                                onAddToCart={onAddToCartAccessory}
+                                onAddToCart={addAccessoryToCart}
                             />
                         )}
                       </motion.div>
@@ -335,35 +935,16 @@ const StorePage = () => {
                 </AnimatePresence>
               </motion.div>
 
-              {/* Clean Pagination */}
+              {/* Pagination controls */}
               <Pagination
                   items={filteredProducts}
-                  pageLimit={PAGE_SIZE}
-                  setPageItems={setPageItems}
+                  pageLimit={PRODUCTS_PER_PAGE}
+                  setPageItems={setCurrentPageProducts}
               />
             </>
         )}
       </motion.div>
   );
-};
-
-const FilterTag = ({ children, onRemove }) => (
-    <motion.span
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.8 }}
-        className="bg-white px-3 py-1 rounded-full flex items-center gap-2 shadow-sm border"
-    >
-      {children}
-      <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={onRemove}
-          className="text-gray-400 hover:text-gray-600 font-bold text-lg leading-none"
-      >
-        ×
-      </motion.button>
-    </motion.span>
-);
+}
 
 export default StorePage;

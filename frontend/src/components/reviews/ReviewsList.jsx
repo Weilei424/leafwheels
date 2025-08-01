@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useReviewStore } from "../../stores/useReviewsStore.js";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { ReviewCard } from "../../components/reviews/ReviewComponents.jsx";
 import { useUserStore } from "../../stores/useUserStore.js";
 

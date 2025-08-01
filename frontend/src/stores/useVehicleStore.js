@@ -9,6 +9,25 @@ const getAuthHeaders = () => {
     return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
 };
 
+// Helper function to build filter query parameters
+const buildFilterQueryString = (filters) => {
+    const params = new URLSearchParams();
+
+    // Add all filter parameters, only if they have values
+    Object.entries(filters).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== '' && value !== 'all') {
+            // Handle array parameters (like statuses)
+            if (Array.isArray(value)) {
+                value.forEach(item => params.append(key, item));
+            } else {
+                params.append(key, value);
+            }
+        }
+    });
+
+    return params.toString();
+};
+
 export const useVehicleStore = create((set, get) => ({
     // State
     vehicles: [],
@@ -191,21 +210,21 @@ export const useVehicleStore = create((set, get) => ({
         }
     },
 
-    // PUBLIC - No auth required
+    // PUBLIC - Enhanced backend filtering - No auth required
     filterVehicles: async (filters = {}) => {
         set({ loading: true, error: null });
         try {
-            const params = new URLSearchParams();
+            // Build query string from filters
+            const queryString = buildFilterQueryString(filters);
+            const url = queryString ? `/api/v1/vehicle/filter?${queryString}` : '/api/v1/vehicle/filter';
 
-            // Add all filter parameters
-            Object.entries(filters).forEach(([key, value]) => {
-                if (value !== null && value !== undefined && value !== '') {
-                    params.append(key, value);
-                }
-            });
 
-            const response = await axios.get(`/api/v1/vehicle/filter?${params.toString()}`);
-            set({ vehicles: response.data.content || response.data, loading: false });
+            const response = await axios.get(url);
+
+            // Handle both paginated and non-paginated responses
+            const vehicleData = response.data.content || response.data;
+
+            set({ vehicles: vehicleData, loading: false });
             return response.data;
         } catch (error) {
             const errorMessage = error.response?.data?.message || "Failed to filter vehicles";
@@ -213,6 +232,65 @@ export const useVehicleStore = create((set, get) => ({
             toast.error(errorMessage);
             throw error;
         }
+    },
+
+    // Enhanced filter function with predefined common filters
+    filterVehiclesByCommonCriteria: async ({
+                                               make = null,
+                                               bodyType = null,
+                                               year = null,
+                                               minPrice = null,
+                                               maxPrice = null,
+                                               minMileage = null,
+                                               maxMileage = null,
+                                               hasAccidentHistory = null,
+                                               onDeal = null,
+                                               statuses = null
+                                           } = {}) => {
+        const filters = {
+            make,
+            bodyType,
+            year,
+            minPrice,
+            maxPrice,
+            minMileage,
+            maxMileage,
+            hasAccidentHistory,
+            onDeal,
+            statuses
+        };
+
+        return await get().filterVehicles(filters);
+    },
+
+    // Get hot deal vehicles (vehicles with discounts)
+    getHotDealVehicles: async () => {
+        return await get().filterVehicles({ onDeal: true });
+    },
+
+    // Get vehicles by specific make/brand
+    getVehiclesByMake: async (make) => {
+        return await get().filterVehicles({ make });
+    },
+
+    // Get vehicles by body type
+    getVehiclesByBodyType: async (bodyType) => {
+        return await get().filterVehicles({ bodyType });
+    },
+
+    // Get vehicles within price range
+    getVehiclesByPriceRange: async (minPrice, maxPrice) => {
+        return await get().filterVehicles({ minPrice, maxPrice });
+    },
+
+    // Get vehicles within mileage range
+    getVehiclesByMileageRange: async (minMileage, maxMileage) => {
+        return await get().filterVehicles({ minMileage, maxMileage });
+    },
+
+    // Get vehicles by accident history
+    getVehiclesByAccidentHistory: async (hasAccidentHistory) => {
+        return await get().filterVehicles({ hasAccidentHistory });
     },
 
     // ================= VEHICLE HISTORY =================

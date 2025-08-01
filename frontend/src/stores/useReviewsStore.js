@@ -20,10 +20,6 @@ export const useReviewStore = create((set, get) => ({
 
     // Clear functions
     clearError: () => set({ error: null }),
-    clearReviews: () => set({ reviews: [] }),
-    clearCurrentReviewSummary: () => set({ currentReviewSummary: null }),
-    clearUserReviews: () => set({ userReviews: [] }),
-    clearMakeModelReviews: () => set({ makeModelReviews: [] }),
 
     /**
      * Create a new review
@@ -86,7 +82,6 @@ export const useReviewStore = create((set, get) => ({
         set({ loading: true, error: null });
         try {
             const response = await axios.get(`/api/v1/reviews/user/${userId}`);
-
             set({
                 userReviews: response.data,
                 loading: false,
@@ -136,7 +131,6 @@ export const useReviewStore = create((set, get) => ({
         set({ loading: true, error: null });
         try {
             const response = await axios.get(`/api/v1/reviews/make/${make.toUpperCase()}/model/${encodeURIComponent(model)}/summary`);
-
             set({
                 currentReviewSummary: response.data,
                 loading: false,
@@ -192,30 +186,5 @@ export const useReviewStore = create((set, get) => ({
             review.make === make.toUpperCase() &&
             review.model === model
         );
-    },
-
-    /**
-     * Helper function to get average rating for make/model from current data
-     */
-    getAverageRating: (make, model) => {
-        const { makeModelReviews } = get();
-        const relevantReviews = makeModelReviews.filter(review =>
-            review.make === make.toUpperCase() && review.model === model
-        );
-
-        if (relevantReviews.length === 0) return 0;
-
-        const sum = relevantReviews.reduce((acc, review) => acc + review.rating, 0);
-        return (sum / relevantReviews.length).toFixed(1);
-    },
-
-    /**
-     * Helper function to get review count for make/model
-     */
-    getReviewCount: (make, model) => {
-        const { makeModelReviews } = get();
-        return makeModelReviews.filter(review =>
-            review.make === make.toUpperCase() && review.model === model
-        ).length;
     },
 }));

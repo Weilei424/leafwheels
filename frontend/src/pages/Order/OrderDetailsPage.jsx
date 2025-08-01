@@ -75,7 +75,7 @@ const OrderDetailsPage = () => {
                 <div className="text-center">
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">Order not found</h2>
                     <button
-                        onClick={() => navigate("/profile/orders")}
+                        onClick={() => window.history.back()}
                         className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
                     >
                         Back to Orders
@@ -100,7 +100,7 @@ const OrderDetailsPage = () => {
                 >
                     <div className="flex items-center space-x-2">
                         <button
-                            onClick={() => navigate("/order-history")}
+                            onClick={() => window.history.back()}
                             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                         >
                             <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
