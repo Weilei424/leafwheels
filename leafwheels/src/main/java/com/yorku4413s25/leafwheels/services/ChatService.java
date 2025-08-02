@@ -10,6 +10,7 @@ import com.yorku4413s25.leafwheels.web.models.AnalyticsEventDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -66,38 +67,25 @@ public class ChatService {
         chatMessageRepository.save(userMessage);
         
         try {
+            // PRIMARY: Use AWS Lex for natural language understanding and intent recognition
             String botResponse;
-            String detectedIntent = "general_chat";
+            String detectedIntent;
             
-            // Try Lex first if available
             if (lexService.isServiceAvailable()) {
-                try {
-                    LexService.LexResponse lexResponse = lexService.sendMessage(message, sessionId, username);
-                    if (lexResponse != null && lexResponse.getMessage() != null && !lexResponse.getMessage().trim().isEmpty()) {
-                        // Lex provided a response
-                        botResponse = lexResponse.getMessage();
-                        detectedIntent = lexResponse.getIntent() != null ? lexResponse.getIntent() : "lex_response";
-                        
-                        // If Lex detected a specific intent, use the intent handler for better responses
-                        if (lexResponse.getIntent() != null && lexResponse.getSlots() != null) {
-                            String intentResponse = intentHandlerService.handleIntent(lexResponse.getIntent(), lexResponse.getSlots(), username);
-                            if (intentResponse != null && !intentResponse.trim().isEmpty()) {
-                                botResponse = intentResponse;
-                                detectedIntent = lexResponse.getIntent();
-                            }
-                        }
-                    } else {
-                        // Lex didn't provide a useful response, fall back to simple response
-                        botResponse = generateSimpleResponse(message, username);
-                    }
-                } catch (Exception lexException) {
-                    System.err.println("Lex service error: " + lexException.getMessage());
-                    // Fall back to simple response if Lex fails
-                    botResponse = generateSimpleResponse(message, username);
-                }
+                // Get conversation context for Lex session attributes
+                Map<String, String> sessionAttributes = getConversationContextForLex(session);
+                
+                // AWS Lex processes natural language and extracts intent + slots
+                LexService.LexResponse lexResponse = lexService.sendMessage(message, sessionId, username, sessionAttributes);
+                
+                // Use Lex-extracted intent and slots to call APIs and generate response with links
+                botResponse = intentHandlerService.handleIntent(lexResponse.getIntent(), lexResponse.getSlots(), username);
+                detectedIntent = lexResponse.getIntent() != null ? lexResponse.getIntent() : "unknown";
+                
             } else {
-                // Lex not available, use simple response
-                botResponse = generateSimpleResponse(message, username);
+                // FALLBACK: Only basic intents when Lex is completely unavailable
+                detectedIntent = detectBasicIntent(message);
+                botResponse = intentHandlerService.handleIntent(detectedIntent, new HashMap<>(), username);
             }
 
             ChatMessage botMessage = new ChatMessage();
@@ -188,36 +176,36 @@ public class ChatService {
         return chatSessionRepository.save(newSession);
     }
     
-    private String generateSimpleResponse(String message, String username) {
+    private Map<String, String> getConversationContextForLex(ChatSession session) {
+        Map<String, String> sessionAttributes = new HashMap<>();
+        
+        // Get the last few messages to provide context to Lex
+        Page<ChatMessage> recentMessagesPage = chatMessageRepository.findByChatSessionOrderByCreatedAtDesc(session, 
+                PageRequest.of(0, 2)); // Get last 2 messages for context
+        List<ChatMessage> recentMessages = recentMessagesPage.getContent();
+        
+        if (!recentMessages.isEmpty()) {
+            ChatMessage lastMessage = recentMessages.get(0);
+            if (lastMessage.getIntent() != null) {
+                sessionAttributes.put("lastIntent", lastMessage.getIntent());
+            }
+            sessionAttributes.put("lastMessage", lastMessage.getMessageContent());
+            sessionAttributes.put("username", session.getUser() != null ? session.getUser().getEmail() : "anonymous");
+        }
+        
+        return sessionAttributes;
+    }
+    
+    private String detectBasicIntent(String message) {
+        // Simple fallback when Lex is unavailable - only handle basic intents
         String lowerMessage = message.toLowerCase().trim();
         
-        // Greeting responses
-        if (lowerMessage.contains("hello") || lowerMessage.contains("hi") || lowerMessage.contains("hey")) {
-            return "Hello! I'm the LeafWheels chatbot. How can I help you today?";
-        }
+        if (lowerMessage.matches(".*(hello|hi|hey|good morning|good afternoon|good evening).*")) return "greeting";
+        if (lowerMessage.matches(".*(help|what can you do|capabilities).*")) return "help";
+        if (lowerMessage.matches(".*(bye|goodbye|thank you|thanks).*")) return "goodbye";
         
-        // Help responses  
-        if (lowerMessage.contains("help") || lowerMessage.contains("what can you do")) {
-            return "I can help you with information about our electric vehicles, answer questions about our products, and assist with general inquiries. What would you like to know?";
-        }
-        
-        // Vehicle-related responses
-        if (lowerMessage.contains("vehicle") || lowerMessage.contains("car") || lowerMessage.contains("electric")) {
-            return "We offer a wide range of electric vehicles! You can browse our inventory on the main page. Each vehicle comes with detailed specifications and history information.";
-        }
-        
-        // Price-related responses
-        if (lowerMessage.contains("price") || lowerMessage.contains("cost") || lowerMessage.contains("loan")) {
-            return "You can find pricing information for each vehicle on our store page. We also offer loan calculators to help you estimate monthly payments.";
-        }
-        
-        // Goodbye responses
-        if (lowerMessage.contains("bye") || lowerMessage.contains("goodbye") || lowerMessage.contains("thanks")) {
-            return "Thank you for using LeafWheels! Feel free to reach out if you have any more questions.";
-        }
-        
-        // Default response - more general and helpful
-        return "I understand you're asking about: \"" + message + "\". I'm here to help with questions about electric vehicles, our LeafWheels inventory, pricing, and general automotive topics. Is there something specific you'd like to know more about?";
+        // For any other message when Lex is down, provide helpful fallback
+        return "lex_unavailable";
     }
     
     private void trackChatInteraction(String username, String intent, String userMessage, String botResponse) {
