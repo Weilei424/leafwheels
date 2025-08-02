@@ -380,13 +380,13 @@ resource "aws_lexv2models_slot" "max_price_slot" {
 resource "aws_lexv2models_bot_version" "v1" {
   bot_id      = aws_lexv2models_bot.leafwheels_bot.id
   description = "Version 1 with all intents configured"
-  
+
   locale_specification = {
     (aws_lexv2models_bot_locale.en_us.locale_id) = {
       source_bot_version = "DRAFT"
     }
   }
-  
+
   depends_on = [
     aws_lexv2models_intent.search_vehicles,
     aws_lexv2models_intent.view_cart,
