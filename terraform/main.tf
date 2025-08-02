@@ -160,6 +160,11 @@ module "ecs" {
   ecs_task_execution_role_arn = module.iam.ecs_task_execution_role_arn
   ecs_task_role_arn           = module.iam.ecs_task_role_arn
 
+  # Lex Bot Configuration
+  lex_bot_id       = module.lex.bot_id
+  lex_bot_alias_id = module.lex.production_alias_id
+  lex_locale_id    = module.lex.locale_id
+
   tags = local.common_tags
 }
 

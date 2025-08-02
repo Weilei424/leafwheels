@@ -143,3 +143,21 @@ variable "ecs_task_role_arn" {
   description = "ARN of the ECS task role"
   type        = string
 }
+
+# Lex Bot Configuration
+variable "lex_bot_id" {
+  description = "AWS Lex Bot ID"
+  type        = string
+}
+
+variable "lex_bot_alias_id" {
+  description = "AWS Lex Bot Alias ID"
+  type        = string
+  default     = "TSTALIASID"
+}
+
+variable "lex_locale_id" {
+  description = "AWS Lex Locale ID"
+  type        = string
+  default     = "en_US"
+}

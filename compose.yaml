@@ -60,6 +60,8 @@ services:
   frontend:
     build: ./frontend
     container_name: leafwheels-frontend
+    environment:
+      - DOCKER_ENV=true
     ports:
       - "3000:3000"
     networks:
