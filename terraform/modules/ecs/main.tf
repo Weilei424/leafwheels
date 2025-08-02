@@ -216,6 +216,10 @@ resource "aws_ecs_task_definition" "backend" {
       {
         name  = "USE_IAM_ROLES"
         value = "true"
+      },
+      {
+        name  = "APP_BASE_URL"
+        value = "http://leafwheels-alb-1205016128.us-east-1.elb.amazonaws.com"
       }
     ]
 

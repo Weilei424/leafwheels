@@ -36,11 +36,17 @@ output "locale_id" {
 }
 
 # Configuration outputs for application use
+output "bot_version" {
+  description = "The bot version number"
+  value       = aws_lexv2models_bot_version.v1.bot_version
+}
+
 output "bot_configuration" {
   description = "Bot configuration for Spring Boot application"
   value = {
     bot_id       = aws_lexv2models_bot.leafwheels_bot.id
     bot_alias_id = "TSTALIASID"
+    bot_version  = aws_lexv2models_bot_version.v1.bot_version
     locale_id    = aws_lexv2models_bot_locale.en_us.locale_id
     region       = data.aws_region.current.name
   }

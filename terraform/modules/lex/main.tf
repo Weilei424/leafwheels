@@ -85,7 +85,7 @@ resource "aws_lexv2models_bot_locale" "en_us" {
   depends_on = [aws_lexv2models_bot.leafwheels_bot]
 }
 
-# Slot Types
+# Slot Types - Create these first
 resource "aws_lexv2models_slot_type" "vehicle_make" {
   bot_id      = aws_lexv2models_bot.leafwheels_bot.id
   bot_version = "DRAFT"
@@ -93,15 +93,12 @@ resource "aws_lexv2models_slot_type" "vehicle_make" {
   name        = "VehicleMake"
 
   value_selection_setting {
-    resolution_strategy = "OriginalValue"
+    resolution_strategy = "TopResolution"
   }
 
   slot_type_values {
     sample_value {
       value = "Tesla"
-    }
-    synonyms {
-      value = "TESLA"
     }
   }
 
@@ -109,17 +106,11 @@ resource "aws_lexv2models_slot_type" "vehicle_make" {
     sample_value {
       value = "BMW"
     }
-    synonyms {
-      value = "bmw"
-    }
   }
 
   slot_type_values {
     sample_value {
       value = "Nissan"
-    }
-    synonyms {
-      value = "NISSAN"
     }
   }
 
@@ -127,17 +118,11 @@ resource "aws_lexv2models_slot_type" "vehicle_make" {
     sample_value {
       value = "Ford"
     }
-    synonyms {
-      value = "FORD"
-    }
   }
 
   slot_type_values {
     sample_value {
       value = "Audi"
-    }
-    synonyms {
-      value = "AUDI"
     }
   }
 
@@ -145,20 +130,11 @@ resource "aws_lexv2models_slot_type" "vehicle_make" {
     sample_value {
       value = "Chevrolet"
     }
-    synonyms {
-      value = "CHEVROLET"
-    }
-    synonyms {
-      value = "Chevy"
-    }
   }
 
   slot_type_values {
     sample_value {
       value = "Kia"
-    }
-    synonyms {
-      value = "KIA"
     }
   }
 
@@ -166,23 +142,11 @@ resource "aws_lexv2models_slot_type" "vehicle_make" {
     sample_value {
       value = "Hyundai"
     }
-    synonyms {
-      value = "HYUNDAI"
-    }
   }
 
   slot_type_values {
     sample_value {
       value = "Mercedes"
-    }
-    synonyms {
-      value = "MERCEDES_BENZ"
-    }
-    synonyms {
-      value = "Mercedes-Benz"
-    }
-    synonyms {
-      value = "Benz"
     }
   }
 
@@ -190,20 +154,11 @@ resource "aws_lexv2models_slot_type" "vehicle_make" {
     sample_value {
       value = "Volkswagen"
     }
-    synonyms {
-      value = "VOLKSWAGEN"
-    }
-    synonyms {
-      value = "VW"
-    }
   }
 
   slot_type_values {
     sample_value {
       value = "Toyota"
-    }
-    synonyms {
-      value = "TOYOTA"
     }
   }
 
@@ -211,54 +166,25 @@ resource "aws_lexv2models_slot_type" "vehicle_make" {
     sample_value {
       value = "Rivian"
     }
-    synonyms {
-      value = "RIVIAN"
-    }
   }
 
   slot_type_values {
     sample_value {
       value = "Lucid"
     }
-    synonyms {
-      value = "LUCID"
-    }
   }
 
   depends_on = [aws_lexv2models_bot_locale.en_us]
 }
 
-# SearchVehicles Intent
+# Intents - Create WITHOUT slot references first
 resource "aws_lexv2models_intent" "search_vehicles" {
   bot_id      = aws_lexv2models_bot.leafwheels_bot.id
   bot_version = "DRAFT"
   locale_id   = aws_lexv2models_bot_locale.en_us.locale_id
   name        = "SearchVehicles"
 
-  sample_utterance {
-    utterance = "Show me {make} vehicles"
-  }
-
-  sample_utterance {
-    utterance = "Find {make} cars"
-  }
-
-  sample_utterance {
-    utterance = "Do you have {make} models"
-  }
-
-  sample_utterance {
-    utterance = "Search for {make} {model}"
-  }
-
-  sample_utterance {
-    utterance = "What {make} vehicles do you have"
-  }
-
-  sample_utterance {
-    utterance = "Find vehicles under {maxPrice} dollars"
-  }
-
+  # Simple utterances without slot references initially
   sample_utterance {
     utterance = "Show me electric vehicles"
   }
@@ -287,13 +213,9 @@ resource "aws_lexv2models_intent" "search_vehicles" {
     utterance = "what is the price of nissan leaf"
   }
 
-  depends_on = [aws_lexv2models_slot_type.vehicle_make]
+  depends_on = [aws_lexv2models_bot_locale.en_us]
 }
 
-# Note: Removing slots due to AWS Lex v2 API constraints on ID format
-# The intent will work without explicit slots defined
-
-# ViewCart Intent
 resource "aws_lexv2models_intent" "view_cart" {
   bot_id      = aws_lexv2models_bot.leafwheels_bot.id
   bot_version = "DRAFT"
@@ -323,7 +245,6 @@ resource "aws_lexv2models_intent" "view_cart" {
   depends_on = [aws_lexv2models_bot_locale.en_us]
 }
 
-# LoanCalculation Intent
 resource "aws_lexv2models_intent" "loan_calculation" {
   bot_id      = aws_lexv2models_bot.leafwheels_bot.id
   bot_version = "DRAFT"
@@ -353,7 +274,6 @@ resource "aws_lexv2models_intent" "loan_calculation" {
   depends_on = [aws_lexv2models_bot_locale.en_us]
 }
 
-# SearchAccessories Intent
 resource "aws_lexv2models_intent" "search_accessories" {
   bot_id      = aws_lexv2models_bot.leafwheels_bot.id
   bot_version = "DRAFT"
@@ -379,7 +299,6 @@ resource "aws_lexv2models_intent" "search_accessories" {
   depends_on = [aws_lexv2models_bot_locale.en_us]
 }
 
-# ViewOrders Intent
 resource "aws_lexv2models_intent" "view_orders" {
   bot_id      = aws_lexv2models_bot.leafwheels_bot.id
   bot_version = "DRAFT"
@@ -403,4 +322,79 @@ resource "aws_lexv2models_intent" "view_orders" {
   }
 
   depends_on = [aws_lexv2models_bot_locale.en_us]
+}
+
+# Slots - Create after intents exist
+resource "aws_lexv2models_slot" "vehicle_make_slot" {
+  bot_id      = aws_lexv2models_bot.leafwheels_bot.id
+  bot_version = "DRAFT"
+  locale_id   = aws_lexv2models_bot_locale.en_us.locale_id
+  intent_id   = aws_lexv2models_intent.search_vehicles.intent_id
+  name        = "make"
+
+  slot_type_id = aws_lexv2models_slot_type.vehicle_make.slot_type_id
+
+  value_elicitation_setting {
+    slot_constraint = "Optional"
+  }
+
+  depends_on = [
+    aws_lexv2models_intent.search_vehicles,
+    aws_lexv2models_slot_type.vehicle_make
+  ]
+}
+
+resource "aws_lexv2models_slot" "vehicle_model_slot" {
+  bot_id      = aws_lexv2models_bot.leafwheels_bot.id
+  bot_version = "DRAFT"
+  locale_id   = aws_lexv2models_bot_locale.en_us.locale_id
+  intent_id   = aws_lexv2models_intent.search_vehicles.intent_id
+  name        = "model"
+
+  slot_type_id = "AMAZON.AlphaNumeric"
+
+  value_elicitation_setting {
+    slot_constraint = "Optional"
+  }
+
+  depends_on = [aws_lexv2models_intent.search_vehicles]
+}
+
+resource "aws_lexv2models_slot" "max_price_slot" {
+  bot_id      = aws_lexv2models_bot.leafwheels_bot.id
+  bot_version = "DRAFT"
+  locale_id   = aws_lexv2models_bot_locale.en_us.locale_id
+  intent_id   = aws_lexv2models_intent.search_vehicles.intent_id
+  name        = "maxPrice"
+
+  slot_type_id = "AMAZON.Number"
+
+  value_elicitation_setting {
+    slot_constraint = "Optional"
+  }
+
+  depends_on = [aws_lexv2models_intent.search_vehicles]
+}
+
+# Bot version for production use  
+resource "aws_lexv2models_bot_version" "v1" {
+  bot_id      = aws_lexv2models_bot.leafwheels_bot.id
+  description = "Version 1 with all intents configured"
+  
+  locale_specification = {
+    (aws_lexv2models_bot_locale.en_us.locale_id) = {
+      source_bot_version = "DRAFT"
+    }
+  }
+  
+  depends_on = [
+    aws_lexv2models_intent.search_vehicles,
+    aws_lexv2models_intent.view_cart,
+    aws_lexv2models_intent.loan_calculation,
+    aws_lexv2models_intent.search_accessories,
+    aws_lexv2models_intent.view_orders,
+    aws_lexv2models_slot.vehicle_make_slot,
+    aws_lexv2models_slot.vehicle_model_slot,
+    aws_lexv2models_slot.max_price_slot
+  ]
 }

@@ -112,9 +112,21 @@ public class LexServiceImpl implements LexService {
     
     @Override
     public boolean isServiceAvailable() {
-        return lexClient != null && 
+        boolean available = lexClient != null && 
                botId != null && !botId.isEmpty() &&
                botAliasId != null && !botAliasId.isEmpty();
+        
+        System.out.println("=== LEX SERVICE AVAILABILITY CHECK ===");
+        System.out.println("LexClient initialized: " + (lexClient != null));
+        System.out.println("Bot ID: '" + botId + "' (empty: " + (botId == null || botId.isEmpty()) + ")");
+        System.out.println("Bot Alias ID: '" + botAliasId + "' (empty: " + (botAliasId == null || botAliasId.isEmpty()) + ")");
+        System.out.println("Locale ID: '" + localeId + "'");
+        System.out.println("Region: '" + region + "'");
+        System.out.println("Use IAM Roles: " + useIamRoles);
+        System.out.println("Service Available: " + available);
+        System.out.println("=======================================");
+        
+        return available;
     }
     
     private LexResponse mapToLexResponse(RecognizeTextResponse response) {

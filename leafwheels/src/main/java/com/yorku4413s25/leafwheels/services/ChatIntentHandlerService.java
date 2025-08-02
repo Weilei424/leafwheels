@@ -35,6 +35,9 @@ public class ChatIntentHandlerService {
     @Autowired
     private AccessoryService accessoryService;
     
+    @org.springframework.beans.factory.annotation.Value("${app.base-url:http://localhost:3000}")
+    private String baseUrl;
+    
     public String handleIntent(String intent, Map<String, String> slots, String username) {
         if (intent == null) {
             return "I'm not sure how I can help you. Could you please be more specific?";
@@ -70,6 +73,7 @@ public class ChatIntentHandlerService {
             case "availability":
                 return handleAvailability(slots);
                 
+            case "fallbackintent":
             case "greeting":
                 return handleGreeting();
                 
@@ -82,6 +86,9 @@ public class ChatIntentHandlerService {
             case "lex_unavailable":
                 return handleLexUnavailable();
                 
+            case "general_conversation":
+                return handleGeneralConversation();
+                
             default:
                 return handleUnknownIntent(intent);
         }
@@ -89,6 +96,14 @@ public class ChatIntentHandlerService {
     
     private String handleVehicleSearch(Map<String, String> slots) {
         try {
+            // Debug: Log received slots
+            System.out.println("=== VEHICLE SEARCH DEBUG ===");
+            System.out.println("Received slots: " + slots);
+            for (Map.Entry<String, String> entry : slots.entrySet()) {
+                System.out.println("  " + entry.getKey() + " = '" + entry.getValue() + "'");
+            }
+            System.out.println("============================");
+            
             // Extract search parameters from slots
             Make make = parseMake(slots.get("make"));
             String model = slots.get("model");
@@ -96,6 +111,19 @@ public class ChatIntentHandlerService {
             BigDecimal minPrice = parsePrice(slots.get("minPrice"));
             BigDecimal maxPrice = parsePrice(slots.get("maxPrice"));
             Integer year = parseYear(slots.get("year"));
+            
+            // If no make was extracted from slots, try to detect it from the original message 
+            // (This is a fallback when Lex doesn't extract slots properly)
+            if (make == null && slots.containsKey("originalMessage")) {
+                String originalMessage = slots.get("originalMessage").toLowerCase();
+                for (Make possibleMake : Make.values()) {
+                    if (originalMessage.contains(possibleMake.toString().toLowerCase())) {
+                        make = possibleMake;
+                        System.out.println("Fallback detected make: " + make);
+                        break;
+                    }
+                }
+            }
             
             // Build store URL with filters
             String storeUrl = buildStoreUrl(make, model, bodyType, year, minPrice, maxPrice);
@@ -111,7 +139,7 @@ public class ChatIntentHandlerService {
             
             if (vehicles.isEmpty()) {
                 response.append("I couldn't find any vehicles matching your criteria. ");
-                response.append("You can [browse all available vehicles](/store?category=Vehicles) or try different search terms.");
+                response.append("You can [browse all available vehicles](").append(baseUrl).append("/store?category=Vehicles) or try different search terms.");
                 return response.toString();
             }
             
@@ -132,12 +160,12 @@ public class ChatIntentHandlerService {
                 response.append("\n");
             }
             
-            response.append("\n[View all ").append(searchTerms).append(" vehicles](").append(storeUrl).append(")");
+            response.append("\n\n[View all ").append(searchTerms).append(" vehicles](").append(baseUrl).append(storeUrl).append(")");
             
             return response.toString();
             
         } catch (Exception e) {
-            return "I encountered an error while searching for vehicles. You can [browse our full inventory](/store?category=Vehicles) instead.";
+            return "I encountered an error while searching for vehicles. You can [browse our full inventory](" + baseUrl + "/store?category=Vehicles) instead.";
         }
     }
     
@@ -189,7 +217,7 @@ public class ChatIntentHandlerService {
             CartDto cart = cartService.getCartByUserId(userOpt.get().getId());
             
             if (cart.getItems().isEmpty()) {
-                return "Your cart is empty. [Browse vehicles](/store?category=Vehicles) or [browse accessories](/store?category=Accessories) to get started!";
+                return "Your cart is empty. You can browse vehicles or accessories in our store to get started!";
             }
             
             StringBuilder response = new StringBuilder();
@@ -221,12 +249,12 @@ public class ChatIntentHandlerService {
             }
             
             response.append("\nEstimated Total: $").append(total);
-            response.append("\n\n[View Full Cart](/cart) | [Proceed to Checkout](/checkout)");
+            response.append("\n\nYou can [view your full cart](" + baseUrl + "/cart) or proceed to checkout from the cart page.");
             
             return response.toString();
             
         } catch (Exception e) {
-            return "I couldn't retrieve your cart. [Go to cart page](/cart) to view it directly.";
+            return "I couldn't retrieve your cart. You can [go to the cart page](" + baseUrl + "/cart) to view it directly.";
         }
     }
     
@@ -234,14 +262,14 @@ public class ChatIntentHandlerService {
         try {
             String vehicleIdStr = slots.get("vehicleId");
             if (vehicleIdStr == null || vehicleIdStr.isEmpty()) {
-                return "I need a vehicle ID to get the details. You can find vehicle IDs on our [vehicle listings](/store?category=Vehicles).";
+                return "I need a vehicle ID to get the details. You can find vehicle IDs on our [vehicle listings](" + baseUrl + "/store?category=Vehicles).";
             }
             
             UUID vehicleId = UUID.fromString(vehicleIdStr);
             VehicleDto vehicle = vehicleService.getById(vehicleId);
             
             if (vehicle == null) {
-                return "I couldn't find a vehicle with that ID. Please check the ID or [browse our vehicles](/store?category=Vehicles).";
+                return "I couldn't find a vehicle with that ID. Please check the ID or [browse our vehicles](" + baseUrl + "/store?category=Vehicles).";
             }
             
             StringBuilder response = new StringBuilder();
@@ -297,31 +325,29 @@ public class ChatIntentHandlerService {
     }
     
     private String handleGreeting() {
-        return "Hello! Welcome to LeafWheels. I'm your AI assistant here to help you find the perfect electric vehicle! 🚗⚡\n\n" +
+        return "Hello! Welcome to LeafWheels. I'm your AI assistant here to help you find the perfect electric vehicle!\n\n" +
                "I can help you:\n" +
                "• Search for vehicles and accessories\n" +
                "• View your cart and order history\n" +
                "• Get vehicle details and pricing\n" +
                "• Calculate loan payments\n\n" +
-               "Try saying something like 'Show me Tesla vehicles' or 'What's in my cart?' to get started!\n\n" +
-               "[Browse All Vehicles](/store?category=Vehicles) | [Browse Accessories](/store?category=Accessories)";
+               "Try saying something like 'Show me Tesla vehicles' or 'What's in my cart?' to get started!";
     }
     
     private String handleHelp() {
         return "Here's what I can help you with:\n\n" +
-               "**Vehicle Search:**\n" +
+               "Vehicle Search:\n" +
                "• 'Show me Tesla Model 3 vehicles'\n" +
                "• 'Find 2023 electric vehicles under $50,000'\n" +
                "• 'Search for BMW vehicles'\n\n" +
-               "**Cart & Orders:**\n" +
+               "Cart & Orders:\n" +
                "• 'What's in my cart?'\n" +
                "• 'Show my order history'\n" +
                "• 'Add vehicle [ID] to cart'\n\n" +
-               "**Information:**\n" +
+               "Information:\n" +
                "• 'Tell me about vehicle [ID]'\n" +
                "• 'Show me accessories'\n" +
-               "• 'Calculate loan payments'\n\n" +
-               "[Browse Store](/store) | [View Cart](/cart) | [My Account](/profile)";
+               "• 'Calculate loan payments'";
     }
     
     private String handleGoodbye() {
@@ -330,13 +356,23 @@ public class ChatIntentHandlerService {
     }
     
     private String handleLexUnavailable() {
-        return "I'm experiencing some technical difficulties with my AI processing, but I can still help you! " +
-               "You can:\n\n" +
-               "[Browse All Vehicles](/store?category=Vehicles)\n" +
-               "[Browse Accessories](/store?category=Accessories)\n" +
-               "[View Your Cart](/cart)\n" +
-               "[Check Order History](/order-history)\n\n" +
+        return "I'm experiencing some technical difficulties with my AI processing, but I can still help you!\n\n" +
+               "You can:\n" +
+               "• Browse all vehicles in our store\n" +
+               "• Browse accessories\n" +
+               "• View your cart\n" +
+               "• Check your order history\n\n" +
                "Or try asking me again in a moment - my systems should be back online shortly.";
+    }
+    
+    private String handleGeneralConversation() {
+        return "I can help you with finding electric vehicles, checking your cart, viewing orders, and calculating loans.\n\n" +
+               "Try asking me something like:\n" +
+               "• 'Show me Tesla vehicles'\n" +
+               "• 'What's in my cart?'\n" +
+               "• 'Do you have BMW models?'\n" +
+               "• 'Calculate loan payment'\n\n" +
+               "What would you like to know about?";
     }
     
     private String handleUnknownIntent(String intent) {
@@ -407,27 +443,27 @@ public class ChatIntentHandlerService {
                 response.append("\n");
             }
             
-            response.append("\n[Browse all accessories](/store?category=Accessories)");
+            response.append("\n\n[Browse all accessories](" + baseUrl + "/store?category=Accessories)");
             
             return response.toString();
             
         } catch (Exception e) {
-            return "I encountered an error while searching for accessories. You can [browse our accessories](/store?category=Accessories) directly.";
+            return "I encountered an error while searching for accessories. You can [browse our accessories](" + baseUrl + "/store?category=Accessories) directly.";
         }
     }
     
     private String handleViewOrders(String username) {
         if (username == null) {
-            return "Please log in to view your order history. [Go to login](/login)";
+            return "Please log in to view your order history. [Go to login](" + baseUrl + "/login)";
         }
         
-        return "You can view your complete order history here: [View Orders](/order-history)";
+        return "You can view your complete order history here: [View Orders](" + baseUrl + "/order-history)";
     }
     
     private String handleLoanCalculation(Map<String, String> slots) {
         return "I can help you calculate loan payments for your vehicle purchase! " +
                "Our loan calculator can estimate monthly payments based on the vehicle price, down payment, interest rate, and loan term.\n\n" +
-               "[Use Loan Calculator](/store) (available on vehicle detail pages)";
+               "[Use Loan Calculator](" + baseUrl + "/store) (available on vehicle detail pages)";
     }
     
     // URL helper methods

@@ -79,7 +79,9 @@ public class ChatService {
                 LexService.LexResponse lexResponse = lexService.sendMessage(message, sessionId, username, sessionAttributes);
                 
                 // Use Lex-extracted intent and slots to call APIs and generate response with links
-                botResponse = intentHandlerService.handleIntent(lexResponse.getIntent(), lexResponse.getSlots(), username);
+                Map<String, String> enrichedSlots = new HashMap<>(lexResponse.getSlots());
+                enrichedSlots.put("originalMessage", message); // Add original message for fallback detection
+                botResponse = intentHandlerService.handleIntent(lexResponse.getIntent(), enrichedSlots, username);
                 detectedIntent = lexResponse.getIntent() != null ? lexResponse.getIntent() : "unknown";
                 
             } else {
@@ -197,15 +199,33 @@ public class ChatService {
     }
     
     private String detectBasicIntent(String message) {
-        // Simple fallback when Lex is unavailable - only handle basic intents
+        // Enhanced fallback when Lex is unavailable - handle more intents
         String lowerMessage = message.toLowerCase().trim();
         
+        // Basic conversational intents
         if (lowerMessage.matches(".*(hello|hi|hey|good morning|good afternoon|good evening).*")) return "greeting";
         if (lowerMessage.matches(".*(help|what can you do|capabilities).*")) return "help";
         if (lowerMessage.matches(".*(bye|goodbye|thank you|thanks).*")) return "goodbye";
         
-        // For any other message when Lex is down, provide helpful fallback
-        return "lex_unavailable";
+        // Vehicle search intents - include all makes from Make enum
+        if (lowerMessage.matches(".*(find|search|show|looking for).*(tesla|nissan|chevrolet|ford|audi|bmw|hyundai|kia|volkswagen|porsche|jaguar|rivian|lucid|mercedes|benz|volvo|polestar|toyota|mazda|alfa|romeo|gmc|land|rover|ram|dodge|mitsubishi|mini|subaru|acura|infiniti|lexus|genesis|cadillac).*")) return "searchvehicles";
+        if (lowerMessage.matches(".*(what|do you have|have any).*(models|vehicles|cars).*")) return "searchvehicles";
+        if (lowerMessage.matches(".*(tesla|nissan|chevrolet|ford|audi|bmw|hyundai|kia|volkswagen|porsche|jaguar|rivian|lucid|mercedes|benz|volvo|polestar|toyota|mazda|alfa|romeo|gmc|land|rover|ram|dodge|mitsubishi|mini|subaru|acura|infiniti|lexus|genesis|cadillac).*(vehicles|cars|models).*")) return "searchvehicles";
+        if (lowerMessage.matches(".*(price|cost|pricing).*(of|for).*(tesla|nissan|chevrolet|ford|audi|bmw|hyundai|kia|volkswagen|porsche|jaguar|rivian|lucid|mercedes|benz|volvo|polestar|toyota|mazda|alfa|romeo|gmc|land|rover|ram|dodge|mitsubishi|mini|subaru|acura|infiniti|lexus|genesis|cadillac).*")) return "searchvehicles";
+        
+        // Cart and order intents
+        if (lowerMessage.matches("^(cart|my cart|view cart|shopping cart)$")) return "viewcart";
+        if (lowerMessage.matches(".*(what.*in.*cart|cart.*content|show.*cart).*")) return "viewcart";
+        if (lowerMessage.matches(".*(order|orders|order history|my orders|purchase history).*")) return "vieworders";
+        
+        // Loan calculator
+        if (lowerMessage.matches(".*(loan|finance|financing|payment|monthly payment|calculate).*")) return "loancalculation";
+        
+        // Accessory search
+        if (lowerMessage.matches(".*(accessory|accessories|parts|equipment).*")) return "searchaccessories";
+        
+        // If we can't determine intent, try to provide helpful response
+        return "general_conversation";
     }
     
     private void trackChatInteraction(String username, String intent, String userMessage, String botResponse) {
