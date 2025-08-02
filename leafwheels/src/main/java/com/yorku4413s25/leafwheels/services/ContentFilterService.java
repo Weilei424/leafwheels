@@ -84,7 +84,6 @@ public class ContentFilterService {
                 loadWordsFromResource(resource, whitelist);
             }
         } catch (Exception e) {
-            System.out.println("Warning: Could not load whitelist file: " + e.getMessage());
         }
     }
     
@@ -98,7 +97,6 @@ public class ContentFilterService {
                 loadDefaultBlacklist();
             }
         } catch (Exception e) {
-            System.out.println("Warning: Could not load blacklist file, using defaults: " + e.getMessage());
             loadDefaultBlacklist();
         }
     }

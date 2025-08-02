@@ -96,39 +96,22 @@ public class ChatIntentHandlerService {
     
     private String handleVehicleSearch(Map<String, String> slots) {
         try {
-            // Debug: Log received slots
-            System.out.println("=== VEHICLE SEARCH DEBUG ===");
-            System.out.println("Received slots: " + slots);
-            for (Map.Entry<String, String> entry : slots.entrySet()) {
-                System.out.println("  " + entry.getKey() + " = '" + entry.getValue() + "'");
-            }
-            System.out.println("============================");
-            
-            // Extract search parameters from slots
             Make make = parseMake(slots.get("make"));
             String model = slots.get("model");
             BodyType bodyType = parseBodyType(slots.get("bodyType"));
             BigDecimal minPrice = parsePrice(slots.get("minPrice"));
             BigDecimal maxPrice = parsePrice(slots.get("maxPrice"));
             Integer year = parseYear(slots.get("year"));
-            
-            // If no make was extracted from slots, try to detect it from the original message 
-            // (This is a fallback when Lex doesn't extract slots properly)
             if (make == null && slots.containsKey("originalMessage")) {
                 String originalMessage = slots.get("originalMessage").toLowerCase();
                 for (Make possibleMake : Make.values()) {
                     if (originalMessage.contains(possibleMake.toString().toLowerCase())) {
                         make = possibleMake;
-                        System.out.println("Fallback detected make: " + make);
                         break;
                     }
                 }
             }
-            
-            // Build store URL with filters
             String storeUrl = buildStoreUrl(make, model, bodyType, year, minPrice, maxPrice);
-            
-            // Get a quick count for available vehicles
             Pageable pageable = PageRequest.of(0, 3); // Just get a few for preview
             Page<VehicleDto> vehicles = vehicleService.filterVehicles(
                 year, make, model, bodyType, null, null, null, null, null, null, null,
@@ -147,8 +130,6 @@ public class ChatIntentHandlerService {
             response.append("Great! I found ").append(vehicles.getTotalElements())
                     .append(" ").append(searchTerms).append(" vehicle").append(vehicles.getTotalElements() == 1 ? "" : "s")
                     .append(" available.\n\n");
-            
-            // Show preview of first few results
             response.append("Here are some highlights:\n");
             for (VehicleDto vehicle : vehicles.getContent()) {
                 response.append("• ").append(vehicle.getYear()).append(" ")
@@ -417,8 +398,6 @@ public class ChatIntentHandlerService {
             return null;
         }
     }
-    
-    // New intent handlers
     private String handleAccessorySearch(Map<String, String> slots) {
         try {
             List<com.yorku4413s25.leafwheels.web.models.AccessoryDto> accessories = accessoryService.getAllAccessories();
@@ -429,8 +408,6 @@ public class ChatIntentHandlerService {
             
             StringBuilder response = new StringBuilder();
             response.append("We have ").append(accessories.size()).append(" accessories available!\n\n");
-            
-            // Show first few accessories
             int limit = Math.min(3, accessories.size());
             response.append("Here are some popular items:\n");
             for (int i = 0; i < limit; i++) {
@@ -465,8 +442,6 @@ public class ChatIntentHandlerService {
                "Our loan calculator can estimate monthly payments based on the vehicle price, down payment, interest rate, and loan term.\n\n" +
                "[Use Loan Calculator](" + baseUrl + "/store) (available on vehicle detail pages)";
     }
-    
-    // URL helper methods
     private String buildStoreUrl(Make make, String model, BodyType bodyType, Integer year, BigDecimal minPrice, BigDecimal maxPrice) {
         StringBuilder url = new StringBuilder("/store?category=Vehicles");
         

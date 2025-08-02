@@ -1,4 +1,3 @@
-# Lex Module Outputs
 
 output "bot_id" {
   description = "The unique identifier of the bot"
@@ -35,7 +34,6 @@ output "locale_id" {
   value       = aws_lexv2models_bot_locale.en_us.locale_id
 }
 
-# Configuration outputs for application use
 output "bot_version" {
   description = "The bot version number"
   value       = aws_lexv2models_bot_version.v1.bot_version
@@ -52,5 +50,4 @@ output "bot_configuration" {
   }
 }
 
-# Data source for current region
 data "aws_region" "current" {}

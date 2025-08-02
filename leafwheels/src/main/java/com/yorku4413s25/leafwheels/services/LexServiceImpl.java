@@ -43,13 +43,11 @@ public class LexServiceImpl implements LexService {
     @PostConstruct
     public void init() {
         if (useIamRoles) {
-            System.out.println("LexServiceImpl: Using IAM roles for AWS authentication");
             this.lexClient = LexRuntimeV2Client.builder()
                     .region(Region.of(region))
                     .build();
         } else if (accessKeyId != null && !accessKeyId.isEmpty() && 
                    secretAccessKey != null && !secretAccessKey.isEmpty()) {
-            System.out.println("LexServiceImpl: Using access keys for AWS authentication");
             AwsBasicCredentials awsCredentials = AwsBasicCredentials.create(accessKeyId, secretAccessKey);
             
             this.lexClient = LexRuntimeV2Client.builder()
@@ -57,7 +55,6 @@ public class LexServiceImpl implements LexService {
                     .credentialsProvider(StaticCredentialsProvider.create(awsCredentials))
                     .build();
         } else {
-            System.out.println("LexServiceImpl: Using default credential provider chain");
             this.lexClient = LexRuntimeV2Client.builder()
                     .region(Region.of(region))
                     .build();
@@ -116,15 +113,6 @@ public class LexServiceImpl implements LexService {
                botId != null && !botId.isEmpty() &&
                botAliasId != null && !botAliasId.isEmpty();
         
-        System.out.println("=== LEX SERVICE AVAILABILITY CHECK ===");
-        System.out.println("LexClient initialized: " + (lexClient != null));
-        System.out.println("Bot ID: '" + botId + "' (empty: " + (botId == null || botId.isEmpty()) + ")");
-        System.out.println("Bot Alias ID: '" + botAliasId + "' (empty: " + (botAliasId == null || botAliasId.isEmpty()) + ")");
-        System.out.println("Locale ID: '" + localeId + "'");
-        System.out.println("Region: '" + region + "'");
-        System.out.println("Use IAM Roles: " + useIamRoles);
-        System.out.println("Service Available: " + available);
-        System.out.println("=======================================");
         
         return available;
     }

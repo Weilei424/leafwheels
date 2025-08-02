@@ -73,7 +73,6 @@ output "ecs_task_role_arn" {
   value       = module.iam.ecs_task_role_arn
 }
 
-# Lex Chatbot Outputs
 output "lex_bot_id" {
   description = "ID of the Lex bot"
   value       = module.lex.bot_id

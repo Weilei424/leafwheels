@@ -72,13 +72,11 @@ public class ChatService {
             String detectedIntent;
             
             if (lexService.isServiceAvailable()) {
-                // Get conversation context for Lex session attributes
-                Map<String, String> sessionAttributes = getConversationContextForLex(session);
+                    Map<String, String> sessionAttributes = getConversationContextForLex(session);
                 
                 // AWS Lex processes natural language and extracts intent + slots
                 LexService.LexResponse lexResponse = lexService.sendMessage(message, sessionId, username, sessionAttributes);
                 
-                // Use Lex-extracted intent and slots to call APIs and generate response with links
                 Map<String, String> enrichedSlots = new HashMap<>(lexResponse.getSlots());
                 enrichedSlots.put("originalMessage", message); // Add original message for fallback detection
                 botResponse = intentHandlerService.handleIntent(lexResponse.getIntent(), enrichedSlots, username);
@@ -154,9 +152,6 @@ public class ChatService {
     public void cleanupInactiveSessions() {
         Instant cutoffTime = Instant.now().minusMillis(maxSessionDuration);
         int deactivatedCount = chatSessionRepository.deactivateInactiveSessions(cutoffTime);
-        if (deactivatedCount > 0) {
-            System.out.println("Deactivated " + deactivatedCount + " inactive chat sessions");
-        }
     }
     
     private ChatSession getOrCreateSession(String sessionId, String username) {
@@ -181,7 +176,6 @@ public class ChatService {
     private Map<String, String> getConversationContextForLex(ChatSession session) {
         Map<String, String> sessionAttributes = new HashMap<>();
         
-        // Get the last few messages to provide context to Lex
         Page<ChatMessage> recentMessagesPage = chatMessageRepository.findByChatSessionOrderByCreatedAtDesc(session, 
                 PageRequest.of(0, 2)); // Get last 2 messages for context
         List<ChatMessage> recentMessages = recentMessagesPage.getContent();
@@ -199,32 +193,25 @@ public class ChatService {
     }
     
     private String detectBasicIntent(String message) {
-        // Enhanced fallback when Lex is unavailable - handle more intents
         String lowerMessage = message.toLowerCase().trim();
         
-        // Basic conversational intents
         if (lowerMessage.matches(".*(hello|hi|hey|good morning|good afternoon|good evening).*")) return "greeting";
         if (lowerMessage.matches(".*(help|what can you do|capabilities).*")) return "help";
         if (lowerMessage.matches(".*(bye|goodbye|thank you|thanks).*")) return "goodbye";
         
-        // Vehicle search intents - include all makes from Make enum
         if (lowerMessage.matches(".*(find|search|show|looking for).*(tesla|nissan|chevrolet|ford|audi|bmw|hyundai|kia|volkswagen|porsche|jaguar|rivian|lucid|mercedes|benz|volvo|polestar|toyota|mazda|alfa|romeo|gmc|land|rover|ram|dodge|mitsubishi|mini|subaru|acura|infiniti|lexus|genesis|cadillac).*")) return "searchvehicles";
         if (lowerMessage.matches(".*(what|do you have|have any).*(models|vehicles|cars).*")) return "searchvehicles";
         if (lowerMessage.matches(".*(tesla|nissan|chevrolet|ford|audi|bmw|hyundai|kia|volkswagen|porsche|jaguar|rivian|lucid|mercedes|benz|volvo|polestar|toyota|mazda|alfa|romeo|gmc|land|rover|ram|dodge|mitsubishi|mini|subaru|acura|infiniti|lexus|genesis|cadillac).*(vehicles|cars|models).*")) return "searchvehicles";
         if (lowerMessage.matches(".*(price|cost|pricing).*(of|for).*(tesla|nissan|chevrolet|ford|audi|bmw|hyundai|kia|volkswagen|porsche|jaguar|rivian|lucid|mercedes|benz|volvo|polestar|toyota|mazda|alfa|romeo|gmc|land|rover|ram|dodge|mitsubishi|mini|subaru|acura|infiniti|lexus|genesis|cadillac).*")) return "searchvehicles";
         
-        // Cart and order intents
         if (lowerMessage.matches("^(cart|my cart|view cart|shopping cart)$")) return "viewcart";
         if (lowerMessage.matches(".*(what.*in.*cart|cart.*content|show.*cart).*")) return "viewcart";
         if (lowerMessage.matches(".*(order|orders|order history|my orders|purchase history).*")) return "vieworders";
         
-        // Loan calculator
         if (lowerMessage.matches(".*(loan|finance|financing|payment|monthly payment|calculate).*")) return "loancalculation";
         
-        // Accessory search
         if (lowerMessage.matches(".*(accessory|accessories|parts|equipment).*")) return "searchaccessories";
         
-        // If we can't determine intent, try to provide helpful response
         return "general_conversation";
     }
     
