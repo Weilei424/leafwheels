@@ -196,6 +196,26 @@ resource "aws_ecs_task_definition" "backend" {
       {
         name  = "JWT_ISSUER"
         value = "leafwheels-aws"
+      },
+      {
+        name  = "AWS_LEX_BOT_ID"
+        value = var.lex_bot_id
+      },
+      {
+        name  = "AWS_LEX_BOT_ALIAS_ID"
+        value = var.lex_bot_alias_id
+      },
+      {
+        name  = "AWS_LEX_LOCALE_ID"
+        value = var.lex_locale_id
+      },
+      {
+        name  = "AWS_REGION"
+        value = var.aws_region
+      },
+      {
+        name  = "USE_IAM_ROLES"
+        value = "true"
       }
     ]
 

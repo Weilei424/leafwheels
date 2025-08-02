@@ -25,6 +25,11 @@ output "test_alias_id" {
   value       = "TSTALIASID"
 }
 
+output "production_alias_id" {
+  description = "The production alias ID (using TSTALIASID for DRAFT)"
+  value       = "TSTALIASID"
+}
+
 output "locale_id" {
   description = "The locale ID for the bot"
   value       = aws_lexv2models_bot_locale.en_us.locale_id
