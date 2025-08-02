@@ -47,19 +47,8 @@ jobs:
       id: terraform-fmt
       run: |
         cd terraform
-        # Check format in smaller batches to avoid argument list limits
         echo "Checking Terraform format..."
-        
-        # Format check for root files
-        if ls *.tf 1> /dev/null 2>&1; then
-          terraform fmt -check *.tf
-        fi
-        
-        # Format check for modules directory by directory
-        find modules -name "*.tf" -type f | while read -r file; do
-          echo "Checking format for: $file"
-          terraform fmt -check "$file"
-        done
+        terraform fmt -check -recursive
       continue-on-error: false
     
     - name: Terraform Init
