@@ -19,6 +19,13 @@ resource "aws_lb_target_group" "backend" {
   vpc_id      = var.vpc_id
   target_type = "ip"
 
+  # Enable sticky sessions for WebSocket connections
+  stickiness {
+    enabled         = true
+    type            = "lb_cookie"
+    cookie_duration = 86400
+  }
+
   health_check {
     enabled             = true
     healthy_threshold   = 2
@@ -166,6 +173,23 @@ resource "aws_lb_listener_rule" "grafana" {
   condition {
     path_pattern {
       values = ["/grafana", "/grafana/*"]
+    }
+  }
+}
+
+# ALB Listener Rule for WebSocket
+resource "aws_lb_listener_rule" "websocket" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 150
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.backend.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/ws/*"]
     }
   }
 }

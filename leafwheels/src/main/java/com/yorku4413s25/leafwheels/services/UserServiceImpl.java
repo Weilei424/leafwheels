@@ -8,7 +8,6 @@ import com.yorku4413s25.leafwheels.web.models.UserDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -18,7 +17,6 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
-    // dev: no email verification, no hashing
     public UserDto signup(String firstName, String lastName, String email, String password) {
         if (userRepository.findByEmail(email).isPresent()) {
             throw new RuntimeException("Email already registered");
@@ -35,7 +33,6 @@ public class UserServiceImpl implements UserService {
         return userMapper.userToUserDto(user);
     }
 
-    // dev: plaintext password
     public UserDto login(String email, String password) {
         return userRepository.findByEmail(email)
                 .filter(user -> user.getPassword().equals(password))

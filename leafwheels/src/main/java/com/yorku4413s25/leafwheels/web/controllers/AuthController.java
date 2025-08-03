@@ -118,42 +118,41 @@ public class AuthController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    // Development endpoints - keep for backward compatibility
-    @Operation(
-            summary = "Login a user (dev only)",
-            description = "Development endpoint - accepts email and password as JSON. Returns user details if successful."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Login successful",
-                    content = @Content(schema = @Schema(implementation = UserDto.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid credentials",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @PostMapping("/dev/login")
-    public ResponseEntity<UserDto> devLogin(@RequestBody LoginRequestDto request) {
-        return new ResponseEntity<>(userService.login(request.getEmail(), request.getPassword()), HttpStatus.OK);
-    }
-
-    @Operation(
-            summary = "Signup a new user (dev only)",
-            description = "Development endpoint - accepts user info as JSON. Returns the created user."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Signup successful",
-                    content = @Content(schema = @Schema(implementation = UserDto.class))),
-            @ApiResponse(responseCode = "400", description = "Email already registered",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @PostMapping("/dev/signup")
-    public ResponseEntity<UserDto> devSignup(@RequestBody UserDto userDto) {
-        return new ResponseEntity<>(
-                userService.signup(
-                        userDto.getFirstName(),
-                        userDto.getLastName(),
-                        userDto.getEmail(),
-                        userDto.getPassword()
-                ),
-                HttpStatus.CREATED
-        );
-    }
+//    @Operation(
+//            summary = "Login a user (dev only)",
+//            description = "Development endpoint - accepts email and password as JSON. Returns user details if successful."
+//    )
+//    @ApiResponses(value = {
+//            @ApiResponse(responseCode = "200", description = "Login successful",
+//                    content = @Content(schema = @Schema(implementation = UserDto.class))),
+//            @ApiResponse(responseCode = "400", description = "Invalid credentials",
+//                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+//    })
+//    @PostMapping("/dev/login")
+//    public ResponseEntity<UserDto> devLogin(@RequestBody LoginRequestDto request) {
+//        return new ResponseEntity<>(userService.login(request.getEmail(), request.getPassword()), HttpStatus.OK);
+//    }
+//
+//    @Operation(
+//            summary = "Signup a new user (dev only)",
+//            description = "Development endpoint - accepts user info as JSON. Returns the created user."
+//    )
+//    @ApiResponses(value = {
+//            @ApiResponse(responseCode = "201", description = "Signup successful",
+//                    content = @Content(schema = @Schema(implementation = UserDto.class))),
+//            @ApiResponse(responseCode = "400", description = "Email already registered",
+//                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+//    })
+//    @PostMapping("/dev/signup")
+//    public ResponseEntity<UserDto> devSignup(@RequestBody UserDto userDto) {
+//        return new ResponseEntity<>(
+//                userService.signup(
+//                        userDto.getFirstName(),
+//                        userDto.getLastName(),
+//                        userDto.getEmail(),
+//                        userDto.getPassword()
+//                ),
+//                HttpStatus.CREATED
+//        );
+//    }
 }

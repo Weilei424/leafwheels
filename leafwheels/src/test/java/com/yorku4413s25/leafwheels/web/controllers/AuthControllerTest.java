@@ -179,61 +179,6 @@ class AuthControllerTest {
         verify(authService).resetPassword(any(PasswordResetDto.class));
     }
 
-    // Legacy dev endpoints tests
-    @Test
-    void devSignupShouldReturnUserWhenValidInput() throws Exception {
-        UserDto inputDto = createSampleUserDto();
-        UserDto createdUser = createSampleUserDto();
-        createdUser.setId(UUID.randomUUID());
-
-        when(userService.signup(
-                eq(inputDto.getFirstName()),
-                eq(inputDto.getLastName()),
-                eq(inputDto.getEmail()),
-                eq(inputDto.getPassword())
-        )).thenReturn(createdUser);
-
-        mockMvc.perform(post("/api/v1/auth/dev/signup")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(inputDto)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.firstName").value(createdUser.getFirstName()))
-                .andExpect(jsonPath("$.lastName").value(createdUser.getLastName()))
-                .andExpect(jsonPath("$.email").value(createdUser.getEmail()));
-
-        verify(userService).signup(
-                eq(inputDto.getFirstName()),
-                eq(inputDto.getLastName()),
-                eq(inputDto.getEmail()),
-                eq(inputDto.getPassword())
-        );
-    }
-
-    @Test
-    void devLoginShouldReturnUserWhenValidCredentials() throws Exception {
-        LoginRequestDto loginRequest = new LoginRequestDto("john.doe@example.com", "password123");
-        UserDto authenticatedUser = createSampleUserDto();
-        authenticatedUser.setId(UUID.randomUUID());
-
-        when(userService.login(
-                eq(loginRequest.getEmail()),
-                eq(loginRequest.getPassword())
-        )).thenReturn(authenticatedUser);
-
-        mockMvc.perform(post("/api/v1/auth/dev/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstName").value(authenticatedUser.getFirstName()))
-                .andExpect(jsonPath("$.lastName").value(authenticatedUser.getLastName()))
-                .andExpect(jsonPath("$.email").value(authenticatedUser.getEmail()));
-
-        verify(userService).login(
-                eq(loginRequest.getEmail()),
-                eq(loginRequest.getPassword())
-        );
-    }
-
     private UserDto createSampleUserDto() {
         return UserDto.builder()
                 .firstName("John")

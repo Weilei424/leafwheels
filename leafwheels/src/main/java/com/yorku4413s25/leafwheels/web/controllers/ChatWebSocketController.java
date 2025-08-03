@@ -109,9 +109,6 @@ public class ChatWebSocketController {
         String username = principal != null ? principal.getName() : null;
         String webSocketSessionId = headerAccessor.getSessionId();
         
-        System.out.println("DEBUG: startSession called");
-        System.out.println("DEBUG: Principal: " + (principal != null ? principal.getName() : "null"));
-        System.out.println("DEBUG: WebSocket Session ID: " + webSocketSessionId);
         
         String sessionId = chatService.startNewSession(username);
         
@@ -120,17 +117,14 @@ public class ChatWebSocketController {
         response.put("message", "Chat session started successfully");
         response.put("timestamp", Instant.now().toString());
         
-        System.out.println("DEBUG: Response prepared: " + response);
         
         if (principal != null) {
-            System.out.println("DEBUG: Sending to user: " + principal.getName());
             messagingTemplate.convertAndSendToUser(
                 principal.getName(),
                 "/queue/session",
                 response
             );
         } else {
-            System.out.println("DEBUG: Sending to session: " + webSocketSessionId);
             // Fallback for unauthenticated users
             messagingTemplate.convertAndSendToUser(
                 webSocketSessionId,
@@ -138,8 +132,6 @@ public class ChatWebSocketController {
                 response
             );
         }
-        
-        System.out.println("DEBUG: Message sent");
     }
     
     @MessageMapping("/chat.endSession")

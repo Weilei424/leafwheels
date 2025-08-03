@@ -32,6 +32,12 @@ public class ChatIntentHandlerService {
     @Autowired
     private UserRepository userRepository;
     
+    @Autowired
+    private AccessoryService accessoryService;
+    
+    @org.springframework.beans.factory.annotation.Value("${app.base-url:http://localhost:3000}")
+    private String baseUrl;
+    
     public String handleIntent(String intent, Map<String, String> slots, String username) {
         if (intent == null) {
             return "I'm not sure how I can help you. Could you please be more specific?";
@@ -51,6 +57,15 @@ public class ChatIntentHandlerService {
             case "getvehicledetails":
                 return handleGetVehicleDetails(slots);
                 
+            case "searchaccessories":
+                return handleAccessorySearch(slots);
+                
+            case "vieworders":
+                return handleViewOrders(username);
+                
+            case "loancalculation":
+                return handleLoanCalculation(slots);
+                
             case "getprice":
             case "pricing":
                 return handlePricing(slots);
@@ -58,6 +73,7 @@ public class ChatIntentHandlerService {
             case "availability":
                 return handleAvailability(slots);
                 
+            case "fallbackintent":
             case "greeting":
                 return handleGreeting();
                 
@@ -67,6 +83,12 @@ public class ChatIntentHandlerService {
             case "goodbye":
                 return handleGoodbye();
                 
+            case "lex_unavailable":
+                return handleLexUnavailable();
+                
+            case "general_conversation":
+                return handleGeneralConversation();
+                
             default:
                 return handleUnknownIntent(intent);
         }
@@ -74,43 +96,57 @@ public class ChatIntentHandlerService {
     
     private String handleVehicleSearch(Map<String, String> slots) {
         try {
-            // Extract search parameters from slots
             Make make = parseMake(slots.get("make"));
             String model = slots.get("model");
             BodyType bodyType = parseBodyType(slots.get("bodyType"));
             BigDecimal minPrice = parsePrice(slots.get("minPrice"));
             BigDecimal maxPrice = parsePrice(slots.get("maxPrice"));
             Integer year = parseYear(slots.get("year"));
-            
-            Pageable pageable = PageRequest.of(0, 10); // Limit to first 10 results
-            
+            if (make == null && slots.containsKey("originalMessage")) {
+                String originalMessage = slots.get("originalMessage").toLowerCase();
+                for (Make possibleMake : Make.values()) {
+                    if (originalMessage.contains(possibleMake.toString().toLowerCase())) {
+                        make = possibleMake;
+                        break;
+                    }
+                }
+            }
+            String storeUrl = buildStoreUrl(make, model, bodyType, year, minPrice, maxPrice);
+            Pageable pageable = PageRequest.of(0, 3); // Just get a few for preview
             Page<VehicleDto> vehicles = vehicleService.filterVehicles(
                 year, make, model, bodyType, null, null, null, null, null, null, null,
                 minPrice, maxPrice, null, null, List.of(VehicleStatus.AVAILABLE), null, pageable
             );
             
+            StringBuilder response = new StringBuilder();
+            
             if (vehicles.isEmpty()) {
-                return "I couldn't find any vehicles matching your criteria. Would you like to try different search parameters?";
+                response.append("I couldn't find any vehicles matching your criteria. ");
+                response.append("You can [browse all available vehicles](").append(baseUrl).append("/store?category=Vehicles) or try different search terms.");
+                return response.toString();
             }
             
-            StringBuilder response = new StringBuilder();
-            response.append("I found ").append(vehicles.getTotalElements()).append(" vehicle(s) for you:\n\n");
-            
+            String searchTerms = buildSearchDescription(make, model, year);
+            response.append("Great! I found ").append(vehicles.getTotalElements())
+                    .append(" ").append(searchTerms).append(" vehicle").append(vehicles.getTotalElements() == 1 ? "" : "s")
+                    .append(" available.\n\n");
+            response.append("Here are some highlights:\n");
             for (VehicleDto vehicle : vehicles.getContent()) {
                 response.append("• ").append(vehicle.getYear()).append(" ")
                         .append(vehicle.getMake()).append(" ").append(vehicle.getModel())
-                        .append(" - $").append(vehicle.getPrice())
-                        .append(" (").append(vehicle.getMileage()).append(" miles)\n");
+                        .append(" - $").append(vehicle.getPrice());
+                if (vehicle.getOnDeal() != null && vehicle.getOnDeal()) {
+                    response.append(" (ON SALE!)");
+                }
+                response.append("\n");
             }
             
-            if (vehicles.getTotalElements() > 10) {
-                response.append("\nShowing first 10 results. Would you like to see more or refine your search?");
-            }
+            response.append("\n\n[View all ").append(searchTerms).append(" vehicles](").append(baseUrl).append(storeUrl).append(")");
             
             return response.toString();
             
         } catch (Exception e) {
-            return "I encountered an error while searching for vehicles. Please try again with different criteria.";
+            return "I encountered an error while searching for vehicles. You can [browse our full inventory](" + baseUrl + "/store?category=Vehicles) instead.";
         }
     }
     
@@ -150,42 +186,56 @@ public class ChatIntentHandlerService {
     
     private String handleViewCart(String username) {
         if (username == null) {
-            return "Please log in to view your cart.";
+            return "Please log in to view your cart. [Go to login](/login)";
         }
         
         try {
             Optional<User> userOpt = userRepository.findByEmail(username);
             if (userOpt.isEmpty()) {
-                return "I couldn't find your user account. Please make sure you're logged in.";
+                return "I couldn't find your user account. Please make sure you're logged in. [Go to login](/login)";
             }
             
             CartDto cart = cartService.getCartByUserId(userOpt.get().getId());
             
             if (cart.getItems().isEmpty()) {
-                return "Your cart is empty. Would you like me to help you find some vehicles?";
+                return "Your cart is empty. You can browse vehicles or accessories in our store to get started!";
             }
             
             StringBuilder response = new StringBuilder();
-            response.append("Here's what's in your cart:\n\n");
+            response.append("You have ").append(cart.getItems().size()).append(" item(s) in your cart:\n\n");
             
             BigDecimal total = BigDecimal.ZERO;
+            int itemCount = 0;
             for (var item : cart.getItems()) {
+                if (itemCount >= 3) break; // Show max 3 items in summary
+                
                 if (item.getVehicle() != null) {
                     VehicleDto vehicle = item.getVehicle();
                     response.append("• ").append(vehicle.getYear()).append(" ")
                             .append(vehicle.getMake()).append(" ").append(vehicle.getModel())
                             .append(" - $").append(vehicle.getPrice()).append("\n");
                     total = total.add(vehicle.getPrice());
+                } else if (item.getAccessory() != null) {
+                    var accessory = item.getAccessory();
+                    response.append("• ").append(accessory.getName())
+                            .append(" (x").append(item.getQuantity()).append(") - $")
+                            .append(accessory.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()))).append("\n");
+                    total = total.add(accessory.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
                 }
+                itemCount++;
             }
             
-            response.append("\nTotal: $").append(total);
-            response.append("\n\nWould you like to proceed to checkout or continue shopping?");
+            if (cart.getItems().size() > 3) {
+                response.append("... and ").append(cart.getItems().size() - 3).append(" more item(s)\n");
+            }
+            
+            response.append("\nEstimated Total: $").append(total);
+            response.append("\n\nYou can [view your full cart](" + baseUrl + "/cart) or proceed to checkout from the cart page.");
             
             return response.toString();
             
         } catch (Exception e) {
-            return "I couldn't retrieve your cart. Please try again.";
+            return "I couldn't retrieve your cart. You can [go to the cart page](" + baseUrl + "/cart) to view it directly.";
         }
     }
     
@@ -193,42 +243,43 @@ public class ChatIntentHandlerService {
         try {
             String vehicleIdStr = slots.get("vehicleId");
             if (vehicleIdStr == null || vehicleIdStr.isEmpty()) {
-                return "I need a vehicle ID to get the details. Which vehicle would you like to know more about?";
+                return "I need a vehicle ID to get the details. You can find vehicle IDs on our [vehicle listings](" + baseUrl + "/store?category=Vehicles).";
             }
             
             UUID vehicleId = UUID.fromString(vehicleIdStr);
             VehicleDto vehicle = vehicleService.getById(vehicleId);
             
             if (vehicle == null) {
-                return "I couldn't find a vehicle with that ID. Please check the ID and try again.";
+                return "I couldn't find a vehicle with that ID. Please check the ID or [browse our vehicles](" + baseUrl + "/store?category=Vehicles).";
             }
             
             StringBuilder response = new StringBuilder();
-            response.append("Here are the details for the ").append(vehicle.getYear())
+            response.append("Here are the key details for the ").append(vehicle.getYear())
                     .append(" ").append(vehicle.getMake()).append(" ").append(vehicle.getModel()).append(":\n\n");
             
-            response.append("Price: $").append(vehicle.getPrice()).append("\n");
-            response.append("Mileage: ").append(vehicle.getMileage()).append(" miles\n");
-            response.append("Body Type: ").append(vehicle.getBodyType()).append("\n");
-            response.append("Color: ").append(vehicle.getExteriorColor()).append("\n");
-            response.append("Condition: ").append(vehicle.getCondition()).append("\n");
+            response.append("• Price: $").append(vehicle.getPrice());
+            if (vehicle.getOnDeal() != null && vehicle.getOnDeal()) {
+                response.append(" (ON SALE!)");
+            }
+            response.append("\n");
+            response.append("• Mileage: ").append(vehicle.getMileage()).append(" miles\n");
+            response.append("• Body Type: ").append(vehicle.getBodyType()).append("\n");
+            response.append("• Color: ").append(vehicle.getExteriorColor()).append("\n");
+            response.append("• Condition: ").append(vehicle.getCondition()).append("\n");
             
             if (vehicle.getBatteryRange() != 0) {
-                response.append("Battery Range: ").append(vehicle.getBatteryRange()).append(" miles\n");
+                response.append("• Battery Range: ").append(vehicle.getBatteryRange()).append(" miles\n");
             }
             
-            if (vehicle.getOnDeal() != null && vehicle.getOnDeal()) {
-                response.append("This vehicle is currently on sale!\n");
-            }
-            
-            response.append("\nWould you like to add this vehicle to your cart?");
+            response.append("\n[View Full Details & Photos](/vehicle/").append(vehicleId).append(")");
+            response.append(" | [Add to Cart](/vehicle/").append(vehicleId).append(")");
             
             return response.toString();
             
         } catch (IllegalArgumentException e) {
-            return "Invalid vehicle ID format. Please provide a valid vehicle ID.";
+            return "Invalid vehicle ID format. Please [browse our vehicles](/store?category=Vehicles) to find the correct ID.";
         } catch (Exception e) {
-            return "I couldn't retrieve the vehicle details. Please try again.";
+            return "I couldn't retrieve the vehicle details. Please [browse our vehicles](/store?category=Vehicles) instead.";
         }
     }
     
@@ -255,25 +306,54 @@ public class ChatIntentHandlerService {
     }
     
     private String handleGreeting() {
-        return "Hello! Welcome to LeafWheels. I'm here to help you find the perfect electric vehicle. " +
-               "I can help you search for vehicles, check pricing, add items to your cart, and answer questions about our inventory. " +
-               "What can I help you with today?";
+        return "Hello! Welcome to LeafWheels. I'm your AI assistant here to help you find the perfect electric vehicle!\n\n" +
+               "I can help you:\n" +
+               "• Search for vehicles and accessories\n" +
+               "• View your cart and order history\n" +
+               "• Get vehicle details and pricing\n" +
+               "• Calculate loan payments\n\n" +
+               "Try saying something like 'Show me Tesla vehicles' or 'What's in my cart?' to get started!";
     }
     
     private String handleHelp() {
-        return "I can help you with:\n\n" +
-               "• Search for vehicles by make, model, year, price, etc.\n" +
-               "• Get detailed information about specific vehicles\n" +
-               "• Add vehicles to your cart\n" +
-               "• View your cart contents\n" +
-               "• Check vehicle availability and pricing\n\n" +
-               "Just tell me what you're looking for! For example, you can say:\n" +
-               "'Show me Tesla Model 3 vehicles under $40,000' or 'Add vehicle ID xyz to my cart'";
+        return "Here's what I can help you with:\n\n" +
+               "Vehicle Search:\n" +
+               "• 'Show me Tesla Model 3 vehicles'\n" +
+               "• 'Find 2023 electric vehicles under $50,000'\n" +
+               "• 'Search for BMW vehicles'\n\n" +
+               "Cart & Orders:\n" +
+               "• 'What's in my cart?'\n" +
+               "• 'Show my order history'\n" +
+               "• 'Add vehicle [ID] to cart'\n\n" +
+               "Information:\n" +
+               "• 'Tell me about vehicle [ID]'\n" +
+               "• 'Show me accessories'\n" +
+               "• 'Calculate loan payments'";
     }
     
     private String handleGoodbye() {
         return "Thank you for visiting LeafWheels! If you need any more help finding the perfect electric vehicle, " +
                "I'll be here. Have a great day!";
+    }
+    
+    private String handleLexUnavailable() {
+        return "I'm experiencing some technical difficulties with my AI processing, but I can still help you!\n\n" +
+               "You can:\n" +
+               "• Browse all vehicles in our store\n" +
+               "• Browse accessories\n" +
+               "• View your cart\n" +
+               "• Check your order history\n\n" +
+               "Or try asking me again in a moment - my systems should be back online shortly.";
+    }
+    
+    private String handleGeneralConversation() {
+        return "I can help you with finding electric vehicles, checking your cart, viewing orders, and calculating loans.\n\n" +
+               "Try asking me something like:\n" +
+               "• 'Show me Tesla vehicles'\n" +
+               "• 'What's in my cart?'\n" +
+               "• 'Do you have BMW models?'\n" +
+               "• 'Calculate loan payment'\n\n" +
+               "What would you like to know about?";
     }
     
     private String handleUnknownIntent(String intent) {
@@ -317,5 +397,89 @@ public class ChatIntentHandlerService {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+    private String handleAccessorySearch(Map<String, String> slots) {
+        try {
+            List<com.yorku4413s25.leafwheels.web.models.AccessoryDto> accessories = accessoryService.getAllAccessories();
+            
+            if (accessories.isEmpty()) {
+                return "We don't have any accessories available right now. Please check back later.";
+            }
+            
+            StringBuilder response = new StringBuilder();
+            response.append("We have ").append(accessories.size()).append(" accessories available!\n\n");
+            int limit = Math.min(3, accessories.size());
+            response.append("Here are some popular items:\n");
+            for (int i = 0; i < limit; i++) {
+                var accessory = accessories.get(i);
+                response.append("• ").append(accessory.getName())
+                        .append(" - $").append(accessory.getPrice());
+                if (accessory.getOnDeal() != null && accessory.getOnDeal()) {
+                    response.append(" (ON SALE!)");
+                }
+                response.append("\n");
+            }
+            
+            response.append("\n\n[Browse all accessories](" + baseUrl + "/store?category=Accessories)");
+            
+            return response.toString();
+            
+        } catch (Exception e) {
+            return "I encountered an error while searching for accessories. You can [browse our accessories](" + baseUrl + "/store?category=Accessories) directly.";
+        }
+    }
+    
+    private String handleViewOrders(String username) {
+        if (username == null) {
+            return "Please log in to view your order history. [Go to login](" + baseUrl + "/login)";
+        }
+        
+        return "You can view your complete order history here: [View Orders](" + baseUrl + "/order-history)";
+    }
+    
+    private String handleLoanCalculation(Map<String, String> slots) {
+        return "I can help you calculate loan payments for your vehicle purchase! " +
+               "Our loan calculator can estimate monthly payments based on the vehicle price, down payment, interest rate, and loan term.\n\n" +
+               "[Use Loan Calculator](" + baseUrl + "/store) (available on vehicle detail pages)";
+    }
+    private String buildStoreUrl(Make make, String model, BodyType bodyType, Integer year, BigDecimal minPrice, BigDecimal maxPrice) {
+        StringBuilder url = new StringBuilder("/store?category=Vehicles");
+        
+        if (make != null) {
+            url.append("&brand=").append(make.toString());
+        }
+        if (model != null && !model.trim().isEmpty()) {
+            url.append("&search=").append(java.net.URLEncoder.encode(model, java.nio.charset.StandardCharsets.UTF_8));
+        }
+        if (bodyType != null) {
+            url.append("&bodyType=").append(bodyType.toString());
+        }
+        if (year != null) {
+            url.append("&year=").append(year);
+        }
+        if (minPrice != null) {
+            url.append("&minPrice=").append(minPrice);
+        }
+        if (maxPrice != null) {
+            url.append("&maxPrice=").append(maxPrice);
+        }
+        
+        return url.toString();
+    }
+    
+    private String buildSearchDescription(Make make, String model, Integer year) {
+        StringBuilder description = new StringBuilder();
+        
+        if (year != null) {
+            description.append(year).append(" ");
+        }
+        if (make != null) {
+            description.append(make.toString().toLowerCase()).append(" ");
+        }
+        if (model != null && !model.trim().isEmpty()) {
+            description.append(model.toLowerCase()).append(" ");
+        }
+        
+        return description.toString().trim().isEmpty() ? "available" : description.toString().trim();
     }
 }

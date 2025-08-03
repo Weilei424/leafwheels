@@ -13,18 +13,3 @@ output "cluster_id" {
   value       = aws_ecs_cluster.main.id
 }
 
-# EC2 outputs not needed for Fargate
-# output "capacity_provider_name" {
-#   description = "Name of the ECS capacity provider"
-#   value       = aws_ecs_capacity_provider.main.name
-# }
-
-# output "autoscaling_group_name" {
-#   description = "Name of the Auto Scaling Group"
-#   value       = aws_autoscaling_group.ecs.name
-# }
-
-# output "autoscaling_group_arn" {
-#   description = "ARN of the Auto Scaling Group"
-#   value       = aws_autoscaling_group.ecs.arn
-# }

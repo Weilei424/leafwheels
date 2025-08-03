@@ -10,6 +10,7 @@ import com.yorku4413s25.leafwheels.web.models.AnalyticsEventDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,8 @@ public class ChatService {
     private final UserRepository userRepository;
     private final ContentFilterService contentFilterService;
     private final AnalyticsService analyticsService;
+    private final LexService lexService;
+    private final ChatIntentHandlerService intentHandlerService;
     
     @Value("${chatbot.max-session-duration:3600000}")
     private long maxSessionDuration;
@@ -64,20 +67,39 @@ public class ChatService {
         chatMessageRepository.save(userMessage);
         
         try {
-            String botResponse = generateSimpleResponse(message, username);
+            // PRIMARY: Use AWS Lex for natural language understanding and intent recognition
+            String botResponse;
+            String detectedIntent;
+            
+            if (lexService.isServiceAvailable()) {
+                    Map<String, String> sessionAttributes = getConversationContextForLex(session);
+                
+                // AWS Lex processes natural language and extracts intent + slots
+                LexService.LexResponse lexResponse = lexService.sendMessage(message, sessionId, username, sessionAttributes);
+                
+                Map<String, String> enrichedSlots = new HashMap<>(lexResponse.getSlots());
+                enrichedSlots.put("originalMessage", message); // Add original message for fallback detection
+                botResponse = intentHandlerService.handleIntent(lexResponse.getIntent(), enrichedSlots, username);
+                detectedIntent = lexResponse.getIntent() != null ? lexResponse.getIntent() : "unknown";
+                
+            } else {
+                // FALLBACK: Only basic intents when Lex is completely unavailable
+                detectedIntent = detectBasicIntent(message);
+                botResponse = intentHandlerService.handleIntent(detectedIntent, new HashMap<>(), username);
+            }
 
             ChatMessage botMessage = new ChatMessage();
             botMessage.setChatSession(session);
             botMessage.setMessageContent(botResponse);
             botMessage.setIsFromUser(false);
-            botMessage.setIntent("general_chat");
+            botMessage.setIntent(detectedIntent);
             botMessage.setMessageType(ChatMessage.MessageType.TEXT);
             botMessage.setTimestamp(java.time.Instant.now());
             chatMessageRepository.save(botMessage);
 
-            trackChatInteraction(username, "general_chat", message, botResponse);
+            trackChatInteraction(username, detectedIntent, message, botResponse);
             
-            return new ChatResponse(botResponse, "general_chat", false);
+            return new ChatResponse(botResponse, detectedIntent, false);
             
         } catch (Exception e) {
             ChatMessage errorMessage = new ChatMessage();
@@ -130,9 +152,6 @@ public class ChatService {
     public void cleanupInactiveSessions() {
         Instant cutoffTime = Instant.now().minusMillis(maxSessionDuration);
         int deactivatedCount = chatSessionRepository.deactivateInactiveSessions(cutoffTime);
-        if (deactivatedCount > 0) {
-            System.out.println("Deactivated " + deactivatedCount + " inactive chat sessions");
-        }
     }
     
     private ChatSession getOrCreateSession(String sessionId, String username) {
@@ -154,36 +173,46 @@ public class ChatService {
         return chatSessionRepository.save(newSession);
     }
     
-    private String generateSimpleResponse(String message, String username) {
+    private Map<String, String> getConversationContextForLex(ChatSession session) {
+        Map<String, String> sessionAttributes = new HashMap<>();
+        
+        Page<ChatMessage> recentMessagesPage = chatMessageRepository.findByChatSessionOrderByCreatedAtDesc(session, 
+                PageRequest.of(0, 2)); // Get last 2 messages for context
+        List<ChatMessage> recentMessages = recentMessagesPage.getContent();
+        
+        if (!recentMessages.isEmpty()) {
+            ChatMessage lastMessage = recentMessages.get(0);
+            if (lastMessage.getIntent() != null) {
+                sessionAttributes.put("lastIntent", lastMessage.getIntent());
+            }
+            sessionAttributes.put("lastMessage", lastMessage.getMessageContent());
+            sessionAttributes.put("username", session.getUser() != null ? session.getUser().getEmail() : "anonymous");
+        }
+        
+        return sessionAttributes;
+    }
+    
+    private String detectBasicIntent(String message) {
         String lowerMessage = message.toLowerCase().trim();
         
-        // Greeting responses
-        if (lowerMessage.contains("hello") || lowerMessage.contains("hi") || lowerMessage.contains("hey")) {
-            return "Hello! I'm the LeafWheels chatbot. How can I help you today?";
-        }
+        if (lowerMessage.matches(".*(hello|hi|hey|good morning|good afternoon|good evening).*")) return "greeting";
+        if (lowerMessage.matches(".*(help|what can you do|capabilities).*")) return "help";
+        if (lowerMessage.matches(".*(bye|goodbye|thank you|thanks).*")) return "goodbye";
         
-        // Help responses  
-        if (lowerMessage.contains("help") || lowerMessage.contains("what can you do")) {
-            return "I can help you with information about our electric vehicles, answer questions about our products, and assist with general inquiries. What would you like to know?";
-        }
+        if (lowerMessage.matches(".*(find|search|show|looking for).*(tesla|nissan|chevrolet|ford|audi|bmw|hyundai|kia|volkswagen|porsche|jaguar|rivian|lucid|mercedes|benz|volvo|polestar|toyota|mazda|alfa|romeo|gmc|land|rover|ram|dodge|mitsubishi|mini|subaru|acura|infiniti|lexus|genesis|cadillac).*")) return "searchvehicles";
+        if (lowerMessage.matches(".*(what|do you have|have any).*(models|vehicles|cars).*")) return "searchvehicles";
+        if (lowerMessage.matches(".*(tesla|nissan|chevrolet|ford|audi|bmw|hyundai|kia|volkswagen|porsche|jaguar|rivian|lucid|mercedes|benz|volvo|polestar|toyota|mazda|alfa|romeo|gmc|land|rover|ram|dodge|mitsubishi|mini|subaru|acura|infiniti|lexus|genesis|cadillac).*(vehicles|cars|models).*")) return "searchvehicles";
+        if (lowerMessage.matches(".*(price|cost|pricing).*(of|for).*(tesla|nissan|chevrolet|ford|audi|bmw|hyundai|kia|volkswagen|porsche|jaguar|rivian|lucid|mercedes|benz|volvo|polestar|toyota|mazda|alfa|romeo|gmc|land|rover|ram|dodge|mitsubishi|mini|subaru|acura|infiniti|lexus|genesis|cadillac).*")) return "searchvehicles";
         
-        // Vehicle-related responses
-        if (lowerMessage.contains("vehicle") || lowerMessage.contains("car") || lowerMessage.contains("electric")) {
-            return "We offer a wide range of electric vehicles! You can browse our inventory on the main page. Each vehicle comes with detailed specifications and history information.";
-        }
+        if (lowerMessage.matches("^(cart|my cart|view cart|shopping cart)$")) return "viewcart";
+        if (lowerMessage.matches(".*(what.*in.*cart|cart.*content|show.*cart).*")) return "viewcart";
+        if (lowerMessage.matches(".*(order|orders|order history|my orders|purchase history).*")) return "vieworders";
         
-        // Price-related responses
-        if (lowerMessage.contains("price") || lowerMessage.contains("cost") || lowerMessage.contains("loan")) {
-            return "You can find pricing information for each vehicle on our store page. We also offer loan calculators to help you estimate monthly payments.";
-        }
+        if (lowerMessage.matches(".*(loan|finance|financing|payment|monthly payment|calculate).*")) return "loancalculation";
         
-        // Goodbye responses
-        if (lowerMessage.contains("bye") || lowerMessage.contains("goodbye") || lowerMessage.contains("thanks")) {
-            return "Thank you for using LeafWheels! Feel free to reach out if you have any more questions.";
-        }
+        if (lowerMessage.matches(".*(accessory|accessories|parts|equipment).*")) return "searchaccessories";
         
-        // Default response
-        return "I understand you're asking about: \"" + message + "\". While I'm a simple chatbot, I'm here to help with basic questions about LeafWheels. Could you please be more specific about what you'd like to know?";
+        return "general_conversation";
     }
     
     private void trackChatInteraction(String username, String intent, String userMessage, String botResponse) {

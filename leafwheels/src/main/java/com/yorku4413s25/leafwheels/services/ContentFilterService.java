@@ -66,19 +66,9 @@ public class ContentFilterService {
             }
         }
 
-        if (!whitelist.isEmpty()) {
-            boolean hasWhitelistedTerm = false;
-            for (String whitelistedWord : whitelist) {
-                if (normalizedContent.contains(whitelistedWord.toLowerCase())) {
-                    hasWhitelistedTerm = true;
-                    break;
-                }
-            }
-            
-            if (!hasWhitelistedTerm) {
-                return new FilterResult(false, content, "Content does not contain any whitelisted terms");
-            }
-        }
+        // Whitelist is now optional - if it exists, it's just for reference
+        // We no longer block content that doesn't contain whitelisted terms
+        // This allows for general conversation while still blocking inappropriate content
         
         return new FilterResult(true, content, null);
     }
@@ -94,7 +84,6 @@ public class ContentFilterService {
                 loadWordsFromResource(resource, whitelist);
             }
         } catch (Exception e) {
-            System.out.println("Warning: Could not load whitelist file: " + e.getMessage());
         }
     }
     
@@ -108,7 +97,6 @@ public class ContentFilterService {
                 loadDefaultBlacklist();
             }
         } catch (Exception e) {
-            System.out.println("Warning: Could not load blacklist file, using defaults: " + e.getMessage());
             loadDefaultBlacklist();
         }
     }

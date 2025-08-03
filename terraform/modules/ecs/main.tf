@@ -11,105 +11,6 @@ resource "aws_ecs_cluster" "main" {
   })
 }
 
-# Launch template not needed for Fargate
-# resource "aws_launch_template" "ecs" {
-#   name_prefix   = "${var.name_prefix}-ecs-"
-#   image_id      = var.ami_id
-#   instance_type = var.instance_type
-#   key_name      = var.key_name
-#
-#   vpc_security_group_ids = [var.ecs_security_group]
-#
-#   iam_instance_profile {
-#     name = var.ecs_instance_profile
-#   }
-#
-#   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-#     cluster_name = aws_ecs_cluster.main.name
-#     aws_region   = var.aws_region
-#   }))
-#
-#   tag_specifications {
-#     resource_type = "instance"
-#     tags = merge(var.tags, {
-#       Name = "${var.name_prefix}-ecs-instance"
-#     })
-#   }
-#
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-# }
-
-# Auto Scaling Group not needed for Fargate
-# resource "aws_autoscaling_group" "ecs" {
-#   name                      = "${var.name_prefix}-ecs-asg"
-#   vpc_zone_identifier       = var.subnet_ids
-#   min_size                  = var.min_capacity
-#   max_size                  = var.max_capacity
-#   desired_capacity          = var.desired_capacity
-#   health_check_type         = "ELB"
-#   health_check_grace_period = 300
-#
-#   launch_template {
-#     id      = aws_launch_template.ecs.id
-#     version = "$Latest"
-#   }
-#
-#   tag {
-#     key                 = "Name"
-#     value               = "${var.name_prefix}-ecs-asg"
-#     propagate_at_launch = false
-#   }
-#
-#   tag {
-#     key                 = "AmazonECSManaged"
-#     value               = true
-#     propagate_at_launch = false
-#   }
-#
-#   dynamic "tag" {
-#     for_each = var.tags
-#     content {
-#       key                 = tag.key
-#       value               = tag.value
-#       propagate_at_launch = false
-#     }
-#   }
-#
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-# }
-
-# Capacity provider not needed for Fargate
-# resource "aws_ecs_capacity_provider" "main" {
-#   name = "${var.name_prefix}-capacity-provider"
-#
-#   auto_scaling_group_provider {
-#     auto_scaling_group_arn         = aws_autoscaling_group.ecs.arn
-#     managed_termination_protection = "DISABLED"
-#
-#     managed_scaling {
-#       maximum_scaling_step_size = 1
-#       minimum_scaling_step_size = 1
-#       status                    = "ENABLED"
-#       target_capacity           = 100
-#     }
-#   }
-# }
-
-# resource "aws_ecs_cluster_capacity_providers" "main" {
-#   cluster_name = aws_ecs_cluster.main.name
-#
-#   capacity_providers = [aws_ecs_capacity_provider.main.name]
-#
-#   default_capacity_provider_strategy {
-#     base              = 1
-#     weight            = 100
-#     capacity_provider = aws_ecs_capacity_provider.main.name
-#   }
-# }
 
 # CloudWatch Log Groups
 resource "aws_cloudwatch_log_group" "cluster" {
@@ -196,6 +97,30 @@ resource "aws_ecs_task_definition" "backend" {
       {
         name  = "JWT_ISSUER"
         value = "leafwheels-aws"
+      },
+      {
+        name  = "AWS_LEX_BOT_ID"
+        value = var.lex_bot_id
+      },
+      {
+        name  = "AWS_LEX_BOT_ALIAS_ID"
+        value = var.lex_bot_alias_id
+      },
+      {
+        name  = "AWS_LEX_LOCALE_ID"
+        value = var.lex_locale_id
+      },
+      {
+        name  = "AWS_REGION"
+        value = var.aws_region
+      },
+      {
+        name  = "USE_IAM_ROLES"
+        value = "true"
+      },
+      {
+        name  = "APP_BASE_URL"
+        value = "http://leafwheels-alb-1205016128.us-east-1.elb.amazonaws.com"
       }
     ]
 
@@ -664,7 +589,6 @@ resource "aws_ecs_task_definition" "prometheus" {
   execution_role_arn       = var.ecs_task_execution_role_arn
   task_role_arn            = var.ecs_task_role_arn
 
-  # Remove EFS volume for now - use container local storage
 
   container_definitions = jsonencode([{
     name      = "prometheus"
@@ -697,7 +621,6 @@ resource "aws_ecs_task_definition" "prometheus" {
       startPeriod = 30
     }
 
-    # Use default prometheus data directory
     mountPoints = []
 
     logConfiguration = {
@@ -725,7 +648,6 @@ resource "aws_ecs_task_definition" "grafana" {
   execution_role_arn       = var.ecs_task_execution_role_arn
   task_role_arn            = var.ecs_task_role_arn
 
-  # Remove EFS volume for now - use container local storage
 
   container_definitions = jsonencode([{
     name      = "grafana"
@@ -769,7 +691,6 @@ resource "aws_ecs_task_definition" "grafana" {
       startPeriod = 60
     }
 
-    # Use default grafana data directory
     mountPoints = []
 
     logConfiguration = {

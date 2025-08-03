@@ -12,7 +12,6 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Data sources
 data "aws_availability_zones" "available" {
   state = "available"
 }
@@ -27,14 +26,12 @@ data "aws_ami" "ecs_optimized" {
   }
 }
 
-# Random string for unique resource names
 resource "random_string" "suffix" {
   length  = 8
   special = false
   upper   = false
 }
 
-# Local values
 locals {
   name_prefix = "leafwheels"
   environment = "prod"
@@ -46,7 +43,6 @@ locals {
   }
 }
 
-# Modules
 module "vpc" {
   source = "./modules/vpc"
 
@@ -98,13 +94,11 @@ module "alb" {
   tags = local.common_tags
 }
 
-# Generate random password for database
 resource "random_password" "db_password" {
   length  = 16
   special = true
 }
 
-# Generate random JWT secret
 resource "random_password" "jwt_secret" {
   length  = 64
   special = false
@@ -160,17 +154,20 @@ module "ecs" {
   ecs_task_execution_role_arn = module.iam.ecs_task_execution_role_arn
   ecs_task_role_arn           = module.iam.ecs_task_role_arn
 
+  # Lex Bot Configuration
+  lex_bot_id       = module.lex.bot_id
+  lex_bot_alias_id = module.lex.production_alias_id
+  lex_locale_id    = module.lex.locale_id
+
   tags = local.common_tags
 }
 
-# AWS Lex Chatbot Module
 module "lex" {
   source = "./modules/lex"
 
   name_prefix = local.name_prefix
   environment = local.environment
 
-  # Bot configuration
   idle_session_ttl_seconds = 300
   enable_code_hook         = true
 

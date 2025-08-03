@@ -18,47 +18,142 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        # Fetch minimal depth to reduce checkout size
+        fetch-depth: 1
+    
+    # Configure git to handle long paths and large repositories
+    - name: Configure Git for Long Paths
+      run: |
+        git config --global core.longpaths true
+        git config --global core.preloadindex true
+        git config --global core.fscache true
+        git config --global gc.auto 0
     
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
       with:
         terraform_version: ~1.0
+        terraform_wrapper: false
+    
+    # Clean up any existing .terraform directories to prevent conflicts
+    - name: Clean Terraform Cache
+      run: |
+        find . -name ".terraform" -type d -exec rm -rf {} + 2>/dev/null || true
+        find . -name ".terraform.lock.hcl" -type f -delete 2>/dev/null || true
+        find . -name "terraform.tfstate*" -type f -delete 2>/dev/null || true
     
     - name: Terraform Format Check
       id: terraform-fmt
       run: |
         cd terraform
+        echo "Checking Terraform format..."
         terraform fmt -check -recursive
       continue-on-error: false
     
     - name: Terraform Init
       run: |
         cd terraform
-        terraform init -backend=false
+        # Initialize with upgrade and reduced verbosity
+        terraform init -backend=false -upgrade -input=false
     
     - name: Terraform Validate
       id: terraform-validate
       run: |
         cd terraform
-        terraform validate
+        echo "Running terraform validate..."
+        terraform validate -no-color
+    
+    # Validate individual modules to avoid large argument lists
+    - name: Validate Terraform Modules
+      id: terraform-modules
+      run: |
+        cd terraform
+        echo "Validating individual Terraform modules..."
+        
+        # Validate each module separately
+        for module_dir in modules/*/; do
+          if [ -d "$module_dir" ]; then
+            module_name=$(basename "$module_dir")
+            echo "Validating module: $module_name"
+            
+            cd "$module_dir"
+            
+            # Skip validation if no .tf files exist
+            if ! ls *.tf 1> /dev/null 2>&1; then
+              echo "  No .tf files found in $module_name, skipping..."
+              cd - > /dev/null
+              continue
+            fi
+            
+            # Initialize and validate the module
+            if terraform init -backend=false -input=false; then
+              if terraform validate -no-color; then
+                echo "  ✅ Module $module_name validated successfully"
+              else
+                echo "  ❌ Module $module_name validation failed"
+                exit 1
+              fi
+            else
+              echo "  ❌ Module $module_name init failed"
+              exit 1
+            fi
+            
+            cd - > /dev/null
+          fi
+        done
+      continue-on-error: false
     
     - name: Terraform Plan (Dry Run)
       id: terraform-plan
       run: |
         cd terraform
+        
+        # Set ulimits to handle large operations
+        ulimit -n 4096
+        ulimit -s 8192
+        
         if [ -n "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
-          terraform plan -input=false -no-color 2>&1 | tee plan_output.txt
+          echo "Running terraform plan..."
+          
+          # Use -compact-warnings to reduce output size
+          # Split plan into smaller operations if needed
+          if ! terraform plan -input=false -no-color -compact-warnings -detailed-exitcode > plan_output.txt 2>&1; then
+            plan_exit_code=$?
+            if [ $plan_exit_code -eq 2 ]; then
+              echo "Plan completed with changes detected" >> plan_output.txt
+            else
+              echo "Plan failed with exit code: $plan_exit_code" >> plan_output.txt
+            fi
+          else
+            echo "Plan completed with no changes" >> plan_output.txt
+          fi
+          
+          # Truncate plan output if it's too large (>50KB)
+          if [ $(wc -c < plan_output.txt) -gt 51200 ]; then
+            echo "Plan output is large, truncating..." > temp_plan.txt
+            head -c 45000 plan_output.txt >> temp_plan.txt
+            echo -e "\n\n[... Plan output truncated due to size limits ...]" >> temp_plan.txt
+            tail -c 5000 plan_output.txt >> temp_plan.txt
+            mv temp_plan.txt plan_output.txt
+          fi
         else
           echo "⚠️ Terraform plan skipped - AWS credentials not configured" > plan_output.txt
           echo "Add AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY to repository secrets to enable plan generation."
         fi
-        echo "plan_output<<EOF" >> $GITHUB_OUTPUT
-        cat plan_output.txt >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+        
+        # Use a more reliable method to set output
+        {
+          echo "plan_output<<TERRAFORM_PLAN_EOF"
+          cat plan_output.txt
+          echo "TERRAFORM_PLAN_EOF"
+        } >> $GITHUB_OUTPUT
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION || 'us-east-1' }}
+        TF_IN_AUTOMATION: true
+        TF_CLI_ARGS: "-no-color"
       continue-on-error: true
     
     - name: Comment PR
@@ -75,15 +170,19 @@ jobs:
           
           const fmtStatus = '${{ steps.terraform-fmt.outcome }}' === 'success' ? '✅ Passed' : '❌ Failed - Run `terraform fmt -recursive` to fix';
           const validateStatus = '${{ steps.terraform-validate.outcome }}' === 'success' ? '✅ Passed' : '❌ Failed';
-          const planStatus = '${{ secrets.AWS_ACCESS_KEY_ID }}' ? '✅ Generated successfully' : '⚠️ Skipped (requires AWS credentials)';
+          const modulesStatus = '${{ steps.terraform-modules.outcome }}' === 'success' ? '✅ Passed' : '❌ Failed';
+          const planStatus = '${{ secrets.AWS_ACCESS_KEY_ID }}' ? ('${{ steps.terraform-plan.outcome }}' === 'success' ? '✅ Generated successfully' : '⚠️ Generated with warnings/errors') : '⚠️ Skipped (requires AWS credentials)';
           
           const summaryComment = `## Terraform Check Results
           
           ### Format Check
           ${fmtStatus}
           
-          ### Validation Check  
+          ### Root Validation Check  
           ${validateStatus}
+          
+          ### Module Validation Check
+          ${modulesStatus}
           
           ### Plan Check
           ${planStatus}
@@ -154,3 +253,22 @@ jobs:
           } catch (error) {
             console.log('Could not create comment:', error.message);
           }
+    
+    # Cleanup step to prevent disk space issues
+    - name: Cleanup Terraform Files
+      if: always()
+      run: |
+        echo "Cleaning up Terraform temporary files..."
+        cd terraform
+        
+        # Remove .terraform directories and lock files
+        find . -name ".terraform" -type d -exec rm -rf {} + 2>/dev/null || true
+        find . -name ".terraform.lock.hcl" -type f -delete 2>/dev/null || true
+        find . -name "terraform.tfstate*" -type f -delete 2>/dev/null || true
+        find . -name "plan_output.txt" -type f -delete 2>/dev/null || true
+        find . -name "temp_plan.txt" -type f -delete 2>/dev/null || true
+        
+        # Clean up any crash logs
+        find . -name "crash.log" -type f -delete 2>/dev/null || true
+        
+        echo "Cleanup completed"

@@ -25,7 +25,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     public void processEvent(AnalyticsEventDto event) {
         log.info("Processing analytics event: {} with properties: {}", event.getEvent(), event.getProperties());
         
-        // Create or get counter for this event type
         Counter counter = eventCounters.computeIfAbsent(event.getEvent(), eventName -> 
             Counter.builder("leafwheels.frontend.events")
                     .tag("event_type", eventName)
@@ -35,7 +34,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         
         counter.increment();
         
-        // Process specific event types with additional metrics
         processSpecificEventType(event);
     }
     
@@ -67,7 +65,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 processPurchaseEvent(event);
                 break;
             default:
-                // Log unknown event types
                 log.debug("Unknown event type: {}", event.getEvent());
         }
     }
