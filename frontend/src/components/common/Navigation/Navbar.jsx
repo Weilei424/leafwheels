@@ -45,14 +45,17 @@ const Navbar = () => {
 
     return (
         <motion.nav
-            initial={{ y: -100 }}
-            animate={{ y: 0 }}
-            className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className={`fixed top-0 left-0 w-full z-10 transition-colors duration-300 ${
                 isScrolled
                     ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100"
                     : "bg-white"
             }`}
         >
+
+
             <div className="max-w-7xl mx-auto px-4">
                 <div className="flex justify-between items-center h-20">
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

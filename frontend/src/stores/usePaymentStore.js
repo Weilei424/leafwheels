@@ -2,7 +2,6 @@
 import { create } from "zustand";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { useCartStore } from "./useCartStore.js";
 import { useUserStore } from "./useUserStore.js";
 
 // =======================
@@ -46,21 +45,7 @@ const handleApiError = (error, fallback, set, loadingKey) => {
     return errorMessage;
 };
 
-const handleSuccessfulPayment = async (paymentResult, paymentData) => {
-    console.log("Payment result:", paymentResult);
 
-    if (paymentResult.status === PAYMENT_STATUS.APPROVED) {
-        try {
-            await useCartStore.getState().clearCart(paymentData.userId);
-            toast.success("Payment approved! Order confirmed.");
-        } catch (orderError) {
-            console.error("Failed to clear cart:", orderError);
-            toast.warning("Payment approved but cart clearing failed. Please contact support.");
-        }
-    } else if (paymentResult.status === PAYMENT_STATUS.DENIED) {
-        toast.error(paymentResult.failureReason || "Payment was declined");
-    }
-};
 
 // =======================
 // STORE DEFINITION
@@ -161,8 +146,6 @@ export const usePaymentStore = create((set, get) => ({
                 processingPayment: false,
             });
 
-            // Handle post-payment actions (cart clearing, notifications)
-            await handleSuccessfulPayment(paymentResult, paymentData);
 
             return paymentResult;
 

@@ -14,14 +14,13 @@ const CartItem = ({ item = {}, onRemove, onUpdateQuantity, isCheckout = false })
             <div className="flex items-center gap-6">
                 {/* Image */}
                 <div className="flex-shrink-0">
-                    <img
-                        className="w-20 h-20 rounded-lg object-cover"
-                        // src={item.imageUrl || '/images/placeholder.jpg'}
-                        alt={item.name}
-                        onError={(e) => {
-                            e.target.src = '/images/placeholder.jpg';
-                        }}
-                    />
+                    <div className="w-20 h-20 bg-gray-50 rounded-lg overflow-hidden">
+                        <img
+                            src={item.imageUrls?.[0]}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
                 </div>
 
                 {/* Content */}
@@ -36,32 +35,36 @@ const CartItem = ({ item = {}, onRemove, onUpdateQuantity, isCheckout = false })
                             ) : (
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm text-gray-500">Qty:</span>
-                                    <div className="flex items-center border border-gray-300 rounded-lg">
+                                    <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
                                         <motion.button
-                                            whileHover={{ scale: 1.1 }}
-                                            whileTap={{ scale: 0.9 }}
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
                                             onClick={() => onUpdateQuantity?.(item.productId, -1)}
                                             disabled={item.quantity <= 1}
-                                            className="px-2 py-1 text-gray-600 hover:text-gray-800 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
+                                            className="px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-50 disabled:text-gray-300 disabled:cursor-not-allowed disabled:hover:bg-white transition-all duration-200 flex items-center justify-center"
                                         >
-                                            −
+                                            <span className="text-lg leading-none">−</span>
                                         </motion.button>
-                                        <motion.span
-                                            key={item.quantity} // Key on quantity for smooth updates
-                                            initial={{ scale: 1.2 }}
-                                            animate={{ scale: 1 }}
-                                            transition={{ duration: 0.1 }}
-                                            className="px-3 py-1 text-sm font-medium min-w-[3rem] text-center"
-                                        >
-                                            {item.quantity}
-                                        </motion.span>
+
+                                        <div className="px-3 py-1 text-center bg-gray-50 border-x border-gray-300">
+                                            <motion.span
+                                                key={item.quantity}
+                                                initial={{ scale: 1.2, color: "#059669" }}
+                                                animate={{ scale: 1, color: "#374151" }}
+                                                transition={{ duration: 0.2 }}
+                                                className="text-sm font-medium"
+                                            >
+                                                {item.quantity}
+                                            </motion.span>
+                                        </div>
+
                                         <motion.button
-                                            whileHover={{ scale: 1.1 }}
-                                            whileTap={{ scale: 0.9 }}
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
                                             onClick={() => onUpdateQuantity?.(item.productId, +1)}
-                                            className="px-2 py-1 text-gray-600 hover:text-gray-800 transition-colors"
+                                            className="px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all duration-200 flex items-center justify-center"
                                         >
-                                            +
+                                            <span className="text-lg leading-none">+</span>
                                         </motion.button>
                                     </div>
                                 </div>
@@ -85,7 +88,7 @@ const CartItem = ({ item = {}, onRemove, onUpdateQuantity, isCheckout = false })
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => onRemove?.(item._id)}
-                            className="text-sm text-red-600 hover:text-red-700 mt-3 transition-colors"
+                            className="text-sm text-red-600 hover:text-red-700 mt-3 transition-colors duration-200"
                         >
                             Remove
                         </motion.button>
@@ -105,10 +108,10 @@ const CartItem = ({ item = {}, onRemove, onUpdateQuantity, isCheckout = false })
                     {isDiscounted ? (
                         <div>
                             <motion.p
-                                key={totalPrice} // Animate price changes
-                                initial={{ scale: 1.1 }}
-                                animate={{ scale: 1 }}
-                                transition={{ duration: 0.2 }}
+                                key={totalPrice}
+                                initial={{ scale: 1.1, color: "#059669" }}
+                                animate={{ scale: 1, color: "#111827" }}
+                                transition={{ duration: 0.3 }}
                                 className="text-lg font-semibold text-gray-900"
                             >
                                 ${totalPrice?.toLocaleString()}
@@ -124,10 +127,10 @@ const CartItem = ({ item = {}, onRemove, onUpdateQuantity, isCheckout = false })
                         </div>
                     ) : (
                         <motion.p
-                            key={totalPrice} // Animate price changes
-                            initial={{ scale: 1.1 }}
-                            animate={{ scale: 1 }}
-                            transition={{ duration: 0.2 }}
+                            key={totalPrice}
+                            initial={{ scale: 1.1, color: "#059669" }}
+                            animate={{ scale: 1, color: "#111827" }}
+                            transition={{ duration: 0.3 }}
                             className="text-lg font-semibold text-gray-900"
                         >
                             ${totalPrice?.toLocaleString()}

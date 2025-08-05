@@ -53,19 +53,16 @@ const AccessoryCard = ({ accessory, onAddToCart }) => {
             )}
 
             <Link to={`/accessory/${accessory.id}`} className="block">
-                {/* Image */}
+                {/* Single Image Display */}
                 <div className="aspect-[4/3] bg-gray-50 flex items-center justify-center p-4">
                     <img
-                        // src={accessory.imageUrls?.[0] || "/placeholder-accessory.jpg"}
+                        src={accessory.imageUrls?.[0]}
                         alt={accessory.name}
-                        className="max-w-full max-h-full object-contain"
-                        onError={(e) => {
-                            e.target.src = "/placeholder-accessory.jpg";
-                        }}
+                        className="w-full h-full object-cover rounded-lg"
                     />
                 </div>
 
-                {/* Info */}
+                {/* Accessory Info */}
                 <div className="p-4 space-y-2">
                     <h3 className="font-medium text-gray-900">
                         {accessory.name}
@@ -92,7 +89,7 @@ const AccessoryCard = ({ accessory, onAddToCart }) => {
                 {accessory.quantity > 0 && (
                     <div className="flex items-center gap-2">
                         <label className="text-sm text-gray-600">Qty:</label>
-                        <div className="flex items-center border rounded-lg">
+                        <div className="flex items-center border border-gray-300 rounded-lg">
                             <button
                                 type="button"
                                 onClick={(e) => {
@@ -101,7 +98,7 @@ const AccessoryCard = ({ accessory, onAddToCart }) => {
                                     setQuantity(Math.max(1, quantity - 1));
                                 }}
                                 disabled={quantity <= 1}
-                                className="px-2 py-1 text-gray-600 hover:text-gray-800 disabled:text-gray-300"
+                                className="px-2 py-1 text-gray-600 hover:text-gray-800 disabled:text-gray-300 disabled:cursor-not-allowed"
                             >
                                 −
                             </button>
@@ -115,7 +112,7 @@ const AccessoryCard = ({ accessory, onAddToCart }) => {
                                     e.preventDefault();
                                     e.stopPropagation();
                                 }}
-                                className="w-16 px-2 py-1 text-center border-0 focus:outline-none"
+                                className="w-16 px-2 py-1 text-center border-0 focus:outline-none text-sm"
                             />
                             <button
                                 type="button"
@@ -125,7 +122,7 @@ const AccessoryCard = ({ accessory, onAddToCart }) => {
                                     setQuantity(Math.min(accessory.quantity, quantity + 1));
                                 }}
                                 disabled={quantity >= accessory.quantity}
-                                className="px-2 py-1 text-gray-600 hover:text-gray-800 disabled:text-gray-300"
+                                className="px-2 py-1 text-gray-600 hover:text-gray-800 disabled:text-gray-300 disabled:cursor-not-allowed"
                             >
                                 +
                             </button>
@@ -137,10 +134,10 @@ const AccessoryCard = ({ accessory, onAddToCart }) => {
                 <button
                     onClick={handleAddToCart}
                     disabled={!canAddToCart}
-                    className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-all
-                        ${canAddToCart
-                        ? "bg-green-600 text-white hover:bg-green-700"
-                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
+                        canAddToCart
+                            ? "bg-green-600 text-white hover:bg-green-700 shadow-sm hover:shadow-md"
+                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
                     }`}
                 >
                     {canAddToCart ? "Add to Cart" : "Out of Stock"}

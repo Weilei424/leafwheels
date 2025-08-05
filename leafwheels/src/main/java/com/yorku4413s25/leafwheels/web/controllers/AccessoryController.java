@@ -134,6 +134,9 @@ public class AccessoryController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
+
+
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AccessoryDto> updateAccessory(@PathVariable UUID id, @RequestBody AccessoryRequestDto requestDto) {
