@@ -40,8 +40,15 @@ export const useUserStore = create(
                         confirmPassword
                     });
 
-                    const { user, accessToken, refreshToken } = response.data;
+                    const { user, accessToken, refreshToken } = response.data||{};
 
+                    // If backend returns no user/tokens, treat as failure
+                        if (!user || !accessToken || !refreshToken) {
+                            set({ loading: false });
+                            toast.error("Incomplete signup response.");
+                            return { success: false, error: "Incomplete signup response." };
+                        }
+  
                     // Store tokens and user data
                     set({
                         user,
@@ -71,7 +78,14 @@ export const useUserStore = create(
                         password,
                     });
 
-                    const { user, accessToken, refreshToken } = response.data;
+                    const { user, accessToken, refreshToken } = response.data || {};
+
+                            // If backend returns no user/tokens, treat as failure
+                            if (!user || !accessToken || !refreshToken) {
+                            set({ loading: false });
+                            toast.error("Incomplete login response.");
+                            return { success: false, error: "Incomplete login response." };
+                            }
 
                     // Store tokens and user data
                     set({

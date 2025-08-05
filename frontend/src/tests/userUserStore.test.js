@@ -1,10 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
+
 import { useUserStore } from "../stores/useUserStore";
-import axios from "../lib/axios.js";
+import axios from "axios";
+
 import { toast } from "react-toastify";
 
 
-//  Mock toast so it doesn't pop up in tests
+// Mock the toast API so that no real UI notifications are triggered during tests
 vi.mock("react-toastify", () => ({
   toast: {
     success: vi.fn(),
@@ -12,333 +14,347 @@ vi.mock("react-toastify", () => ({
   },
 }));
 
-vi.mock("../lib/axios.js", () => ({
+// Mock axios globally. The store under test imports axios directly, so we need
+// to intercept its calls. Provide stubbed post/get methods and a response
+// interceptor chain so the store can register interceptors without error.
+vi.mock("axios", () => ({
   default: {
     post: vi.fn(),
     get: vi.fn(),
-
     interceptors: {
       response: {
-        use: vi.fn()
-      }
-    }
-  }
+        use: vi.fn(),
+      },
+    },
+  },
 }));
 
 
 
-  describe("useUserStore - signup", () => {
-    beforeEach(() => {
-      useUserStore.setState({
-        user: null,
-        loading: false,
-        checkingAuth: false,
-      });
-      vi.clearAllMocks();
+// Provide a basic localStorage implementation. The Zustand `persist` middleware
+// tries to access `localStorage` when saving state. In a Node/Vitest environment
+// there is no window or localStorage available by default, so define minimal
+// stubbed methods to avoid warnings or runtime errors.
+beforeAll(() => {
+  Object.defineProperty(globalThis, "localStorage", {
+    value: {
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    },
+  });
+});
+
+describe("useUserStore - signup", () => {
+  beforeEach(() => {
+    // Reset Zustand store state to a clean slate before each test.
+    useUserStore.setState({
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      loading: false,
+      checkingAuth: false,
+    });
+    // Clear all previous mock calls
+    vi.clearAllMocks();
+  });
+
+  it("sets user and shows success toast on successful signup", async () => {
+    const userData = {
+      id: 1,
+      firstName: "Test",
+      lastName: "User",
+      email: "test@example.com",
+    };
+    const accessToken = "test-access-token";
+    const refreshToken = "test-refresh-token";
+    // Stub axios.post to resolve with the structure returned by the current
+    // signup implementation: an object with `user`, `accessToken` and
+    // `refreshToken` fields nested inside `data`.
+    axios.post.mockResolvedValueOnce({
+      data: {
+        user: userData,
+        accessToken,
+        refreshToken,
+      },
     });
 
-  //first
-    it("sets user on successful signup", async () => {
-      // test body 
-      const userData = {
-        id: 1,
-        name: "Test User",
-        email: "test@example.com"
-      };
-      
-      // Simulate a successful axios response
-      axios.post.mockResolvedValueOnce({ data: userData });
-      
-      // Call the store’s signup action
-      await useUserStore.getState().signup({
-        name: "Test User",
+    await useUserStore.getState().signup(
+      "Test",
+      "User",
+      "test@example.com",
+      "abc123",
+      "abc123"
+    );
+
+    const state = useUserStore.getState();
+    expect(state.user).toEqual(userData);
+    expect(state.accessToken).toEqual(accessToken);
+    expect(state.refreshToken).toEqual(refreshToken);
+    expect(state.loading).toBe(false);
+    expect(toast.success).toHaveBeenCalledWith("Account created successfully!");
+    // Ensure axios.post was called with the correct endpoint and payload
+    expect(axios.post).toHaveBeenCalledWith(
+      "/api/v1/auth/signup",
+      {
+        firstName: "Test",
+        lastName: "User",
         email: "test@example.com",
         password: "abc123",
-        confirmPassword: "abc123"
-      });
-      
-      // Check final state
-      const state = useUserStore.getState();
-      expect(state.user).toEqual(userData);
-      expect(state.loading).toBe(false);
-      
+        confirmPassword: "abc123",
+      }
+    );
+  });
 
+  it("shows error toast when backend reports passwords do not match", async () => {
+    // Simulate a backend rejection where the password and confirmPassword do not match.
+    const errorMessage = "Passwords do not match";
+    axios.post.mockRejectedValueOnce({
+      response: {
+        data: { message: errorMessage },
+      },
+    });
 
+    await useUserStore.getState().signup(
+      "Mismatch",
+      "User",
+      "mismatch@example.com",
+      "abc123",
+      "wrong123"
+    );
+
+    const state = useUserStore.getState();
+    expect(state.user).toBeNull();
+    expect(state.loading).toBe(false);
+    // The store should surface the error returned by the backend via toast.error
+    expect(toast.error).toHaveBeenCalledWith(errorMessage);
+    expect(axios.post).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows error toast and does not set user on backend failure", async () => {
+    const errorMessage = "Email already exists";
+    // Reject with an error payload containing a message
+    axios.post.mockRejectedValueOnce({
+      response: {
+        data: { message: errorMessage },
+      },
     });
-    //second
-    it("shows error toast and aborts when passwords do not match", async () => {
-      // Act: call signup with mismatched passwords
-      await useUserStore.getState().signup({
-        name: "Mismatch Test",
-        email: "mismatch@example.com",
-        password: "abc123",
-        confirmPassword: "wrong123",
-      });
-    
-      const state = useUserStore.getState();
-    
-      // Assert: no user should be set
-      expect(state.user).toBe(null);
-    
-      // Assert: loading should be false
-      expect(state.loading).toBe(false);
-    
-      // Assert: toast.error should be called with correct message
-      expect(toast.error).toHaveBeenCalledWith("Passwords do not match");
-    
-      // Assert: backend should not be called
-      expect(axios.post).not.toHaveBeenCalled();
-    });
-    
-    //third
-    it("shows error toast and does not set user on backend failure", async () => {
-      // Arrange: simulate backend error by rejecting the promise
-      const errorMessage = "Email already exists";
-      axios.post.mockRejectedValueOnce({
-        response: {
-          data: { message: errorMessage }
-        }
-      });
-  
-      // Act: call signup with valid passwords
-      await useUserStore.getState().signup({
-        name: "Error Test",
+    await useUserStore.getState().signup(
+      "Error",
+      "Test",
+      "fail@example.com",
+      "abc123",
+      "abc123"
+    );
+    const state = useUserStore.getState();
+    expect(state.user).toBeNull();
+    expect(state.loading).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith(errorMessage);
+    expect(axios.post).toHaveBeenCalledWith(
+      "/api/v1/auth/signup",
+      {
+        firstName: "Error",
+        lastName: "Test",
         email: "fail@example.com",
         password: "abc123",
-        confirmPassword: "abc123"
-      });
-  
-      const state = useUserStore.getState();
-  
-      // Assert: user should remain null and loading should stop
-      expect(state.user).toBe(null);
-      expect(state.loading).toBe(false);
-  
-      // Assert: error toast should show correct backend message
-      expect(toast.error).toHaveBeenCalledWith(errorMessage);
-  
-      // Assert: backend was called once
-      expect(axios.post).toHaveBeenCalledTimes(1);
-    });
-    
-  // fourth
-  /**
- * This test fails because the store calls toast.success("Signup successful!")
- * even when the backend response contains no `data` field.
- * 
- * The test simulates a successful HTTP response with an empty object ({}),
- * but the store doesn't validate `data` before updating state or showing toast.
- */
+        confirmPassword: "abc123",
+      }
+    );
+  });
 
   it("handles empty response gracefully (no data returned)", async () => {
-    // Arrange: simulate backend response with no 'data' field
-    axios.post.mockResolvedValueOnce({});
-  
-    // Act: call signup with valid inputs
-    await useUserStore.getState().signup({
-      name: "Edge User",
-      email: "edge@example.com",
-      password: "abc123",
-      confirmPassword: "abc123",
-    });
-  
+    // Simulate an empty response from the backend. The store should not
+    // erroneously treat the operation as successful.
+    axios.post.mockResolvedValueOnce({ data: {} });
+    await useUserStore.getState().signup(
+      "Edge",
+      "Case",
+      "edge@example.com",
+      "abc123",
+      "abc123"
+    );
     const state = useUserStore.getState();
-  
-    // Assert: user should remain null or undefined
-    expect(state.user).toBe(undefined);
-  
-    // Assert: loading should still reset
+    expect(state.user).toBeNull();
+    expect(state.accessToken).toBeNull();
+    expect(state.refreshToken).toBeNull();
     expect(state.loading).toBe(false);
-  
-    // Assert: success toast should NOT be called
     expect(toast.success).not.toHaveBeenCalled();
-  
-    
   });
-  
+});
 
-
-
+describe("useUserStore - login", () => {
+  beforeEach(() => {
+    useUserStore.setState({
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      loading: false,
+      checkingAuth: false,
+    });
+    vi.clearAllMocks();
   });
- 
 
-  describe("useUserStore - login", () => {
-    beforeEach(() => {
-      useUserStore.setState({
-        user: null,
-        loading: false,
-        checkingAuth: false,
-      });
-      vi.clearAllMocks();
+  it("sets user and shows toast on successful login", async () => {
+    const userData = {
+      id: 2,
+      firstName: "Login",
+      lastName: "User",
+      email: "login@example.com",
+    };
+    const accessToken = "login-access";
+    const refreshToken = "login-refresh";
+    axios.post.mockResolvedValueOnce({
+      data: {
+        user: userData,
+        accessToken,
+        refreshToken,
+      },
     });
-  
-    //  First: Successful login
-    it("sets user and shows toast on successful login", async () => {
-      // Arrange: mock successful backend response
-      const userData = {
-        id: 42,
-        name: "Login User",
-        email: "login@example.com",
-      };
-      axios.post.mockResolvedValueOnce({ data: userData });
-  
-      // Act: call login with correct credentials
-      await useUserStore.getState().login("login@example.com", "abc123");
-  
-      const state = useUserStore.getState();
-  
-      // Assert: user should be set
-      expect(state.user).toEqual(userData);
-  
-      // Assert: loading should be false
-      expect(state.loading).toBe(false);
-  
-      // Assert: success toast called
-      expect(toast.success).toHaveBeenCalledWith("Login successful!");
-  
-      // Assert: axios call was made correctly
-      expect(axios.post).toHaveBeenCalledWith("/api/v1/auth/login", {
-        email: "login@example.com",
-        password: "abc123",
-      });
-    });
-  
-    //  Second: Backend rejects login 
-    it("shows error toast and does not set user on failed login", async () => {
-      // Arrange: simulate backend failure
-      axios.post.mockRejectedValueOnce({
-        response: {
-          data: { message: "Invalid credentials" },
-        },
-      });
-  
-      // Act: call login with bad credentials
-      await useUserStore.getState().login("login@example.com", "wrongpassword");
-  
-      const state = useUserStore.getState();
-  
-      // Assert: user should still be null
-      expect(state.user).toBe(null);
-  
-      // Assert: loading is off
-      expect(state.loading).toBe(false);
-  
-      // Assert: error toast shown
-      expect(toast.error).toHaveBeenCalledWith("Invalid credentials");
-  
-      // Assert: axios was called with correct args
-      expect(axios.post).toHaveBeenCalledWith("/api/v1/auth/login", {
-        email: "login@example.com",
-        password: "wrongpassword",
-      });
-    });
-  
-    /**
-     * This test simulates a successful HTTP response
-     * where the backend returns `{}` without a `data` field.
-     * The current store logic still sets user to `undefined`
-     * and shows a success toast, which is logically flawed.
-     */
-    it("handles empty response gracefully (no data returned)", async () => {
-      // Arrange: backend sends empty object
-      axios.post.mockResolvedValueOnce({});
-  
-      // Act: call login
-      await useUserStore.getState().login("login@example.com", "abc123");
-  
-      const state = useUserStore.getState();
-  
-      // Assert: user is undefined (due to missing backend data)
-      expect(state.user).toBe(undefined);
-  
-      // Assert: loading turned off
-      expect(state.loading).toBe(false);
-  
-      // Assert: toast still shown (but shouldn't be ideally)
-      expect(toast.success).toHaveBeenCalledWith("Login successful!");
+    await useUserStore.getState().login("login@example.com", "abc123");
+    const state = useUserStore.getState();
+    expect(state.user).toEqual(userData);
+    expect(state.accessToken).toEqual(accessToken);
+    expect(state.refreshToken).toEqual(refreshToken);
+    expect(state.loading).toBe(false);
+    expect(toast.success).toHaveBeenCalledWith(`Welcome back, ${userData.firstName}!`);
+    expect(axios.post).toHaveBeenCalledWith("/api/v1/auth/signin", {
+      email: "login@example.com",
+      password: "abc123",
     });
   });
-  
-//logout
-  describe("useUserStore - logout", () => {
-    beforeEach(() => {
-      // Clear any prior mocks and reset Zustand state
-      vi.clearAllMocks();
-      useUserStore.setState({
-        user: { id: 99, name: "Test User" },
-        loading: false,
-      });
-    });
-  
-    it("clears user and shows success toast on logout", async () => {
-      // Mock the backend logout API call to succeed
-      axios.post.mockResolvedValueOnce({});
-  
-      // Act: Call the logout function
-      await useUserStore.getState().logout();
-  
-      const state = useUserStore.getState();
-  
-      //  Assert: user should now be null
-      expect(state.user).toBeNull();
-  
-      // Assert: success toast should be called with logout message
-      expect(toast.success).toHaveBeenCalledWith("Logged out successfully!");
-  
-      //  Assert: backend API was called correctly
-      expect(axios.post).toHaveBeenCalledWith("/auth/logout");
-    });
-  });
-  
 
-  describe("useUserStore - checkAuth", () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
-      useUserStore.setState({
-        user: null,
-        loading: false,
-        checkingAuth: false,
-      });
+  it("shows error toast and does not set user on failed login (message)", async () => {
+    const errorMessage = "Invalid credentials";
+    axios.post.mockRejectedValueOnce({
+      response: {
+        data: { message: errorMessage },
+      },
     });
-  
-    //  Test: successful check sets user and clears checkingAuth
-    it("sets user and clears checkingAuth on successful auth check", async () => {
-      const userData = { id: 1, name: "Authenticated User" };
-  
-      axios.get.mockResolvedValueOnce({ data: userData });
-  
-      // Act
-      await useUserStore.getState().checkAuth();
-  
-      const state = useUserStore.getState();
-  
-      expect(state.checkingAuth).toBe(false);
-      expect(state.user).toEqual(userData);
-      expect(axios.get).toHaveBeenCalledWith("/auth/profile");
+    await useUserStore.getState().login("login@example.com", "wrongpassword");
+    const state = useUserStore.getState();
+    expect(state.user).toBeNull();
+    expect(state.loading).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith(errorMessage);
+    expect(axios.post).toHaveBeenCalledWith("/api/v1/auth/signin", {
+      email: "login@example.com",
+      password: "wrongpassword",
     });
-  
-    //  Test: failed check clears checkingAuth but keeps user null
-    it("clears checkingAuth and keeps user null on failed auth check", async () => {
-      axios.get.mockRejectedValueOnce(new Error("401 Unauthorized"));
-  
-      // Act
-      await useUserStore.getState().checkAuth();
-  
-      const state = useUserStore.getState();
-  
-      expect(state.checkingAuth).toBe(false);
-      expect(state.user).toBe(null);
-      expect(axios.get).toHaveBeenCalledWith("/auth/profile");
-    });
-    it("handles empty user response (no data) gracefully", async () => {
-      axios.get.mockResolvedValueOnce({}); // empty success
-    
-      await useUserStore.getState().checkAuth();
-      const state = useUserStore.getState();
-    
-      expect(state.user).toBe(undefined); // it will be undefined unless handled explicitly
-      expect(state.checkingAuth).toBe(false);
-    });
-    
   });
-  
+
+  it("shows error toast and does not set user on failed login (error)", async () => {
+    const errorMessage = "User not found";
+    axios.post.mockRejectedValueOnce({
+      response: {
+        data: { error: errorMessage },
+      },
+    });
+    await useUserStore.getState().login("missing@example.com", "badpass");
+    const state = useUserStore.getState();
+    expect(state.user).toBeNull();
+    expect(state.loading).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith(errorMessage);
+  });
+
+  it("handles empty response gracefully (no data returned)", async () => {
+    axios.post.mockResolvedValueOnce({ data: {} });
+    await useUserStore.getState().login("empty@example.com", "abc123");
+    const state = useUserStore.getState();
+    expect(state.user).toBeNull();
+    expect(state.accessToken).toBeNull();
+    expect(state.refreshToken).toBeNull();
+    expect(state.loading).toBe(false);
+    // Without a user object, the store cannot derive a firstName to personalize the toast.
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+});
+
+describe("useUserStore - logout", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useUserStore.setState({
+      user: { id: 99, firstName: "Test", lastName: "User" },
+      accessToken: "oldAccess",
+      refreshToken: "oldRefresh",
+      loading: false,
+      checkingAuth: false,
+    });
+  });
+
+  it("clears user and tokens and shows success toast on logout when refresh token exists", async () => {
+    axios.post.mockResolvedValueOnce({});
+    await useUserStore.getState().logout();
+    const state = useUserStore.getState();
+    expect(state.user).toBeNull();
+    expect(state.accessToken).toBeNull();
+    expect(state.refreshToken).toBeNull();
+    expect(toast.success).toHaveBeenCalledWith("Logged out successfully!");
+    expect(axios.post).toHaveBeenCalledWith("/api/v1/auth/signout", {
+      refreshToken: "oldRefresh",
+    });
+  });
+
+  it("clears auth and shows toast without calling backend when refresh token is missing", async () => {
+    // Set up a store state without a refresh token
+    useUserStore.setState({
+      user: { id: 1, firstName: "No", lastName: "Token" },
+      accessToken: "someAccess",
+      refreshToken: null,
+      loading: false,
+      checkingAuth: false,
+    });
+    await useUserStore.getState().logout();
+    const state = useUserStore.getState();
+    expect(state.user).toBeNull();
+    expect(state.accessToken).toBeNull();
+    expect(state.refreshToken).toBeNull();
+    expect(toast.success).toHaveBeenCalledWith("Logged out successfully!");
+    expect(axios.post).not.toHaveBeenCalled();
+  });
+});
+
+describe("useUserStore - checkAuth", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useUserStore.setState({
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      loading: false,
+      checkingAuth: true,
+    });
+  });
+
+  it("keeps existing user and clears checkingAuth when tokens exist", async () => {
+    // Initialize store with a user and valid tokens
+    const existingUser = { id: 10, firstName: "Auth", lastName: "User" };
+    useUserStore.setState({
+      user: existingUser,
+      accessToken: "access",
+      refreshToken: "refresh",
+      checkingAuth: true,
+    });
+    await useUserStore.getState().checkAuth();
+    const state = useUserStore.getState();
+    // checkAuth should not override the existing user when tokens are present
+    expect(state.user).toEqual(existingUser);
+    expect(state.checkingAuth).toBe(false);
+    // checkAuth no longer calls axios.get; it simply inspects tokens
+    expect(axios.get).not.toHaveBeenCalled();
+  });
+
+  it("clears user and sets checkingAuth false when tokens are absent", async () => {
+    // Start with a user but no tokens
+    useUserStore.setState({
+      user: { id: 20, firstName: "Old", lastName: "User" },
+      accessToken: null,
+      refreshToken: null,
+      checkingAuth: true,
+    });
+    await useUserStore.getState().checkAuth();
+    const state = useUserStore.getState();
+    expect(state.user).toBeNull();
+    expect(state.checkingAuth).toBe(false);
+    expect(axios.get).not.toHaveBeenCalled();
+  });
+});
