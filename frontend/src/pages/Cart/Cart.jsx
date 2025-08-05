@@ -31,6 +31,8 @@ const CartPage = () => {
     const transformedCart = useCartTransformation(cart);
 
     const handleUpdateQuantity = useCallback((accessoryId, change) => {
+        if (!user?.id) return;
+
         if (change > 0) {
             incrementAccessoryInCart(user.id, accessoryId);
         } else if (change < 0) {
@@ -117,14 +119,14 @@ const CartPage = () => {
                     {/* Cart Items */}
                     <div className="lg:col-span-2">
                         <div className="space-y-4">
-                                {transformedCart.map((item) => (
-                                    <CartItem
-                                        key={item._id}
-                                        item={item}
-                                        onRemove={handleRemove}
-                                        onUpdateQuantity={handleUpdateQuantity}
-                                    />
-                                ))}
+                            {transformedCart.map((item) => (
+                                <CartItem
+                                    key={item._id}
+                                    item={item}
+                                    onRemove={handleRemove}
+                                    onUpdateQuantity={handleUpdateQuantity}
+                                />
+                            ))}
                         </div>
                     </div>
 

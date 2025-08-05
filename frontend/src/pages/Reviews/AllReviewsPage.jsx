@@ -2,6 +2,7 @@ import {Link} from "react-router-dom";
 import {useEffect} from "react";
 import {motion, AnimatePresence} from "framer-motion";
 import {useReviewStore} from "../../stores/useReviewsStore.js";
+import StarRating from "../../components/reviews/StarRating.jsx";
 
 export const AllReviewsPage = () => {
     const { reviews, getAllReviews, loading } = useReviewStore();

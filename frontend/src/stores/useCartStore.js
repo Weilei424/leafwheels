@@ -3,7 +3,6 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { useUserStore } from "./useUserStore";
 
-// Helper function to get auth headers for cart operations only
 const getAuthHeaders = () => {
     const { accessToken } = useUserStore.getState();
     return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
@@ -16,25 +15,27 @@ export const useCartStore = create((set, get) => ({
     savings: 0,
     loading: false,
 
+    // Helper to update cart state from backend response
+    updateCartState: (cartData) => {
+        const items = cartData?.items || [];
+        set({ cart: items, total: cartData.totalPrice });
+        get().computeSubtotalAndSavings();
+    },
+
     getCartItems: async (userId) => {
         if (!userId) return;
-
         set({ loading: true });
+
         try {
             const response = await axios.get(`/api/v1/carts/${userId}`, {
-                headers: getAuthHeaders()
+                headers: getAuthHeaders(),
             });
-            const cartData = response.data;
-            const items = cartData?.items || [];
-
-            set({ cart: items, loading: false });
-            set({ total: cartData.totalPrice });
-            get().calculateOtherTotals();
-
+            get().updateCartState(response.data);
         } catch (error) {
-            const errorMessage = error.response?.data?.message || "Failed to load cart.";
-            set({ cart: [], loading: false });
-            toast.error(errorMessage);
+            set({ cart: [] });
+            toast.error(error.response?.data?.message || "Failed to load cart.");
+        } finally {
+            set({ loading: false });
         }
     },
 
@@ -46,30 +47,19 @@ export const useCartStore = create((set, get) => ({
 
         set({ loading: true });
         try {
-            let payload = { type };
-
-            if (type === "VEHICLE") {
-                payload.vehicleId = id;
-            } else if (type === "ACCESSORY") {
-                payload.accessoryId = id;
-                payload.quantity = quantity;
-            }
+            const payload = { type };
+            if (type === "VEHICLE") payload.vehicleId = id;
+            if (type === "ACCESSORY") Object.assign(payload, { accessoryId: id, quantity });
 
             const response = await axios.post(`/api/v1/carts/${userId}/items`, payload, {
-                headers: getAuthHeaders()
+                headers: getAuthHeaders(),
             });
-            const cartData = response.data;
-            const items = cartData?.items || [];
-
-            set({ cart: items, loading: false });
-            set({ total: cartData.totalPrice });
-            get().calculateOtherTotals();
-
-            toast.success(`${quantity > 1 ? `${quantity} items` : 'Item'} added to cart.`);
+            get().updateCartState(response.data);
+            toast.success(`${quantity > 1 ? `${quantity} items` : "Item"} added to cart.`);
         } catch (error) {
-            const errorMessage = error.response?.data?.message || "Failed to add item.";
+            toast.error(error.response?.data?.message || "Failed to add item.");
+        } finally {
             set({ loading: false });
-            toast.error(errorMessage);
         }
     },
 
@@ -82,20 +72,14 @@ export const useCartStore = create((set, get) => ({
         set({ loading: true });
         try {
             const response = await axios.delete(`/api/v1/carts/${userId}/items/${itemId}`, {
-                headers: getAuthHeaders()
+                headers: getAuthHeaders(),
             });
-            const cartData = response.data;
-            const items = cartData?.items || [];
-
-            set({ cart: items, loading: false });
-            set({ total: cartData.totalPrice });
-            get().calculateOtherTotals();
-
+            get().updateCartState(response.data);
             toast.success("Item removed.");
         } catch (error) {
-            const errorMessage = error.response?.data?.message || "Failed to remove item.";
+            toast.error(error.response?.data?.message || "Failed to remove item.");
+        } finally {
             set({ loading: false });
-            toast.error(errorMessage);
         }
     },
 
@@ -107,29 +91,47 @@ export const useCartStore = create((set, get) => ({
 
         set({ loading: true });
         try {
-            await axios.delete(`/api/v1/carts/${userId}`, {
-                headers: getAuthHeaders()
+            const response = await axios.delete(`/api/v1/carts/${userId}`, {
+                headers: getAuthHeaders(),
             });
-
-            set({
-                cart: [],
-                subtotal: 0,
-                total: 0,
-                savings: 0,
-                loading: false
-            });
-
+            get().updateCartState(response.data);
+            set({ subtotal: 0, savings: 0 });
             toast.success("Cart cleared.");
         } catch (error) {
-            const errorMessage = error.response?.data?.message || "Failed to clear cart.";
+            toast.error(error.response?.data?.message || "Failed to clear cart.");
+        } finally {
             set({ loading: false });
-            toast.error(errorMessage);
         }
     },
 
-    calculateOtherTotals: () => {
-        let { cart, total } = get();
+    incrementAccessoryInCart: async (userId, accessoryId) => {
+        try {
+            const response = await axios.put(
+                `/api/v1/carts/${userId}/accessories/${accessoryId}/increment`,
+                { userId, accessoryId },
+                { headers: getAuthHeaders() }
+            );
+            get().updateCartState(response.data);
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to increment quantity");
+        }
+    },
 
+    decrementAccessoryInCart: async (userId, accessoryId) => {
+        try {
+            const response = await axios.put(
+                `/api/v1/carts/${userId}/accessories/${accessoryId}/decrement`,
+                { userId, accessoryId },
+                { headers: getAuthHeaders() }
+            );
+            get().updateCartState(response.data);
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to decrement quantity");
+        }
+    },
+
+    computeSubtotalAndSavings: () => {
+        const { cart } = get();
         let subtotal = 0;
         let savings = 0;
 
@@ -139,58 +141,15 @@ export const useCartStore = create((set, get) => ({
 
             if (!product) return;
 
-            const finalPrice = product.discountPrice
+            const finalPrice = product.discountPrice || 0;
             const originalPrice = product.price || 0;
 
             subtotal += finalPrice * quantity;
-
             if (originalPrice > finalPrice) {
                 savings += (originalPrice - finalPrice) * quantity;
             }
         });
 
-        set({ subtotal, savings, total });
-    },
-
-    updateAccessoryQuantity: async (userId, accessoryId, change) => {
-        const { cart } = get();
-        const cartItem = cart.find(item =>
-            item.type === "ACCESSORY" && item.accessory?.id === accessoryId
-        );
-
-        const newQuantity = cartItem.quantity + change;
-        if (newQuantity < 1) return;
-
-        try {
-            await axios.delete(`/api/v1/carts/${userId}/items/${cartItem.id}`, {
-                headers: getAuthHeaders()
-            });
-
-            const response = await axios.post(`/api/v1/carts/${userId}/items`, {
-                type: "ACCESSORY",
-                accessoryId,
-                quantity: newQuantity
-            }, {
-                headers: getAuthHeaders()
-            });
-
-            const cartData = response.data;
-            const items = cartData?.items || [];
-
-            set({ cart: items });
-            set({ total: cartData.totalPrice });
-            get().calculateOtherTotals();
-
-        } catch (error) {
-            toast.error(error.response?.data?.message || "Failed to update quantity");
-        }
-    },
-
-    incrementAccessoryInCart: async (userId, accessoryId) => {
-        await get().updateAccessoryQuantity(userId, accessoryId, 1);
-    },
-
-    decrementAccessoryInCart: async (userId, accessoryId) => {
-        await get().updateAccessoryQuantity(userId, accessoryId, -1);
+        set({ subtotal, savings });
     },
 }));

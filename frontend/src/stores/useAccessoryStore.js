@@ -73,7 +73,7 @@ export const useAccessoryStore = create((set, get) => ({
         }
     },
 
-    // REQUIRES AUTH - PUT operation
+
     updateAccessory: async (accessoryId, accessoryData) => {
         set({ loading: true, error: null });
         try {

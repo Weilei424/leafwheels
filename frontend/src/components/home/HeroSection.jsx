@@ -114,7 +114,7 @@ import { motion } from "framer-motion";
             transition={{ duration: 0.6, delay: 0.3 }}
             className="relative"
           >
-            <div className="bg-white rounded-2xl shadow-xl p-3">
+            <div className="bg-white rounded-2xl shadow-xl">
               <img
                  src="/car-images/bmw-car.jpg"
                 alt="Electric Vehicle"

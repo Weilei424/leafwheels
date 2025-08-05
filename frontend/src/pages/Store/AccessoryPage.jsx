@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAccessoryStore } from "../../stores/useAccessoryStore.js";
 import { handleAddToCart } from "../../hooks/handleAddToCart.js";
@@ -35,6 +35,8 @@ const AccessoryPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [quantity, setQuantity] = useState(1);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [imageLoading, setImageLoading] = useState(true);
 
     const {
         accessory,
@@ -43,6 +45,24 @@ const AccessoryPage = () => {
         addingToCart,
         setAddingToCart,
     } = useAccessoryLogic(id);
+
+    // Image handling logic
+    const imageUrls = accessory?.imageUrls || [];
+    const hasMultipleImages = imageUrls.length > 1;
+
+    const nextImage = () => {
+        if (hasMultipleImages) {
+            setCurrentImageIndex((prev) => (prev + 1) % imageUrls.length);
+            setImageLoading(true);
+        }
+    };
+
+    const prevImage = () => {
+        if (hasMultipleImages) {
+            setCurrentImageIndex((prev) => (prev - 1 + imageUrls.length) % imageUrls.length);
+            setImageLoading(true);
+        }
+    };
 
     // Check if accessory is available for purchase
     const canAddToCart = accessory?.quantity > 0 && quantity <= accessory?.quantity;
@@ -59,9 +79,11 @@ const AccessoryPage = () => {
         setAddingToCart(false);
     };
 
-    // Reset quantity when accessory changes
+    // Reset quantity and image index when accessory changes
     useEffect(() => {
         setQuantity(1);
+        setCurrentImageIndex(0);
+        setImageLoading(true);
     }, [accessory?.id]);
 
     if (loading || error || !accessory) {
@@ -133,18 +155,90 @@ const AccessoryPage = () => {
             </motion.nav>
 
             <div className="grid lg:grid-cols-2 gap-12">
-                {/* Image */}
+                {/* Image Carousel */}
                 <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="bg-white p-6 rounded-2xl shadow-sm"
+                    className="bg-white p-6 rounded-2xl shadow-sm relative overflow-hidden"
                 >
-                    <img
-                        // src={accessory.imageUrls?.[0] || "/placeholder-accessory.jpg"}
-                        alt={accessory.name}
-                        onError={(e) => (e.target.src = "/placeholder-accessory.jpg")}
-                        className="w-full max-h-[500px] object-cover rounded-xl"
-                    />
+                    {/* Loading overlay */}
+                    {imageLoading && (
+                        <div className="absolute inset-6 bg-gray-100 flex items-center justify-center rounded-xl z-10">
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                                className="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full"
+                            />
+                        </div>
+                    )}
+
+                    {/* Main image */}
+                    <div className="relative group">
+                        <img
+                            src={imageUrls[currentImageIndex]}
+                            alt={`${accessory.name} - Image ${currentImageIndex + 1}`}
+                            onLoad={() => setImageLoading(false)}
+                            className="w-full max-h-[500px] object-cover rounded-xl transition-opacity duration-300"
+                            style={{ opacity: imageLoading ? 0.3 : 1 }}
+                        />
+
+                        {/* Navigation arrows - only show if multiple images */}
+                        {hasMultipleImages && !imageLoading && (
+                            <>
+                                <button
+                                    onClick={prevImage}
+                                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-20"
+                                    aria-label="Previous image"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                                <button
+                                    onClick={nextImage}
+                                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-20"
+                                    aria-label="Next image"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </>
+                        )}
+
+                        {/* Image counter */}
+                        {hasMultipleImages && (
+                            <div className="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                {currentImageIndex + 1} / {imageUrls.length}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Thumbnail strip - only show if multiple images */}
+                    {hasMultipleImages && (
+                        <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+                            {imageUrls.map((url, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => {
+                                        setCurrentImageIndex(index);
+                                        setImageLoading(true);
+                                    }}
+                                    className={`flex-shrink-0 w-16 h-12 rounded border-2 overflow-hidden transition-all duration-200 ${
+                                        index === currentImageIndex
+                                            ? 'border-green-500 ring-2 ring-green-200'
+                                            : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                                >
+                                    <img
+                                        src={url}
+                                        alt={`Thumbnail ${index + 1}`}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </motion.div>
 
                 {/* Info */}
@@ -346,36 +440,6 @@ const AccessoryPage = () => {
                     </p>
                 </DetailsSection>
             </motion.div>
-
-            {/* Additional Images */}
-            {accessory.imageUrls && accessory.imageUrls.length > 1 && (
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="mt-16"
-                >
-                    <h2 className="text-2xl font-light text-gray-900 mb-6">More Images</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {accessory.imageUrls.slice(1).map((url, index) => (
-                            <motion.div
-                                key={index}
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: 0.5 + index * 0.1 }}
-                                className="bg-white p-2 rounded-lg shadow-sm"
-                            >
-                                <img
-                                    src={url}
-                                    alt={`${accessory.name} ${index + 2}`}
-                                    className="w-full h-32 object-cover rounded-md"
-                                    onError={(e) => (e.target.src = "/placeholder-accessory.jpg")}
-                                />
-                            </motion.div>
-                        ))}
-                    </div>
-                </motion.div>
-            )}
         </motion.div>
     );
 };

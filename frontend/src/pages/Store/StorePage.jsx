@@ -1,25 +1,28 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
+import { toast } from "react-toastify";
 
 import Pagination from "../../components/common/Pagination/Pagination.jsx";
 import { SearchBar } from "../../components/common/SearchBar/SearchBar.jsx";
 import SortDropDown from "../../components/common/SortDropDown/SortDropDown.jsx";
 import CategoryFilter from "../../components/common/CategoryFilter/CategoryFilter.jsx";
-import StatusFilter from "../../components/common/StatusFilter/StatusFilter.jsx";
 import VehicleCard from "../../components/vehicle/VehicleCard.jsx";
 import AccessoryCard from "../../components/accessory/AccessoryCard.jsx";
 import categories from "../../data/categories.js";
 import { useVehicleStore } from "../../stores/useVehicleStore.js";
 import { useAccessoryStore } from "../../stores/useAccessoryStore.js";
 import { handleAddToCart } from "../../hooks/handleAddToCart.js";
+import FloatingComparison from "../../components/vehicle/FloatingComparison.jsx";
+
+
 
 // Configuration
 const PRODUCTS_PER_PAGE = 8;
 const DEFAULT_SEARCH_TERM = "";
 const DEFAULT_CATEGORY = "All";
 const DEFAULT_SORT_ORDER = "newest";
-const DEFAULT_STATUS_FILTER = "available";
+
 const DEFAULT_BRAND_FILTER = "all";
 const DEFAULT_BODY_TYPE_FILTER = "all";
 const DEFAULT_YEAR_FILTER = "all";
@@ -167,14 +170,7 @@ function buildVehicleFilterParameters(filters, sortOrder) {
     params.maxMileage = parseInt(filters.maxMileage);
   }
 
-  // Handle status filter
-  if (filters.statusFilter && filters.statusFilter !== DEFAULT_STATUS_FILTER) {
-    if (filters.statusFilter === "pending") {
-      params.statuses = ["PENDING"];
-    } else if (filters.statusFilter === "available") {
-      params.statuses = ["AVAILABLE", "DEMO", "INCOMING"];
-    }
-  }
+
 
   // Add sorting parameters for Spring Boot Pageable
   const backendSort = mapSortOrderToBackendSort(sortOrder);
@@ -344,7 +340,6 @@ function useBackendFiltering(accessoryStore) {
   const currentSearchTerm = searchParams.get("search") || DEFAULT_SEARCH_TERM;
   const currentSelectedCategory = searchParams.get("category") || DEFAULT_CATEGORY;
   const currentSortOrder = searchParams.get("sort") || DEFAULT_SORT_ORDER;
-  const currentStatusFilter = searchParams.get("status") || DEFAULT_STATUS_FILTER;
   const currentBrandFilter = searchParams.get("brand") || DEFAULT_BRAND_FILTER;
   const currentBodyTypeFilter = searchParams.get("bodyType") || DEFAULT_BODY_TYPE_FILTER;
   const currentYearFilter = searchParams.get("year") || DEFAULT_YEAR_FILTER;
@@ -420,7 +415,6 @@ function useBackendFiltering(accessoryStore) {
   const hasActiveFilters = (
       currentSearchTerm !== DEFAULT_SEARCH_TERM ||
       currentSelectedCategory !== DEFAULT_CATEGORY ||
-      currentStatusFilter !== DEFAULT_STATUS_FILTER ||
       currentBrandFilter !== DEFAULT_BRAND_FILTER ||
       currentBodyTypeFilter !== DEFAULT_BODY_TYPE_FILTER ||
       currentYearFilter !== DEFAULT_YEAR_FILTER ||
@@ -437,19 +431,17 @@ function useBackendFiltering(accessoryStore) {
     bodyTypeFilter: currentBodyTypeFilter,
     yearFilter: currentYearFilter,
     accidentHistoryFilter: currentAccidentHistoryFilter,
-    statusFilter: currentStatusFilter,
     minPrice: currentMinPrice,
     maxPrice: currentMaxPrice,
     minMileage: currentMinMileage,
     maxMileage: currentMaxMileage
-  }), [currentBrandFilter, currentBodyTypeFilter, currentYearFilter, currentAccidentHistoryFilter, currentStatusFilter, currentMinPrice, currentMaxPrice, currentMinMileage, currentMaxMileage]);
+  }), [currentBrandFilter, currentBodyTypeFilter, currentYearFilter, currentAccidentHistoryFilter, currentMinPrice, currentMaxPrice, currentMinMileage, currentMaxMileage]);
 
   const sortOrder = currentSortOrder;
 
   return {
     searchTerm: currentSearchTerm,
     selectedCategory: currentSelectedCategory,
-    statusFilter: currentStatusFilter,
     brandFilter: currentBrandFilter,
     bodyTypeFilter: currentBodyTypeFilter,
     yearFilter: currentYearFilter,
@@ -465,7 +457,6 @@ function useBackendFiltering(accessoryStore) {
     setSearchTerm: (value) => updateUrlParameter("search", value, DEFAULT_SEARCH_TERM),
     setSelectedCategory: (value) => updateUrlParameter("category", value, DEFAULT_CATEGORY),
     setSortOrder: (value) => updateUrlParameter("sort", value, DEFAULT_SORT_ORDER),
-    setStatusFilter: (value) => updateUrlParameter("status", value, DEFAULT_STATUS_FILTER),
     setBrandFilter: (value) => updateUrlParameter("brand", value, DEFAULT_BRAND_FILTER),
     setBodyTypeFilter: (value) => updateUrlParameter("bodyType", value, DEFAULT_BODY_TYPE_FILTER),
     setYearFilter: (value) => updateUrlParameter("year", value, DEFAULT_YEAR_FILTER),
@@ -571,11 +562,50 @@ function StorePage() {
   const accessoryStore = useAccessoryStore();
   const [currentPageProducts, setCurrentPageProducts] = useState([]);
 
+  // Comparison state and functions
+  const [comparisonVehicles, setComparisonVehicles] = useState([]);
+  const MAX_COMPARISON_VEHICLES = 4;
+
+  const addToComparison = (vehicle) => {
+    // Check if vehicle is already in comparison
+    if (comparisonVehicles.some(v => v.id === vehicle.id)) {
+      // Remove if already in comparison
+      removeFromComparison(vehicle.id);
+      return;
+    }
+
+    // Check if we've reached the maximum
+    if (comparisonVehicles.length >= MAX_COMPARISON_VEHICLES) {
+      toast.warning(`You can only compare up to ${MAX_COMPARISON_VEHICLES} vehicles`);
+      return;
+    }
+
+    setComparisonVehicles(prev => [...prev, vehicle]);
+    toast.success("Vehicle added to comparison");
+  };
+
+  const removeFromComparison = (vehicleId) => {
+    setComparisonVehicles(prev => prev.filter(v => v.id !== vehicleId));
+    toast.success("Vehicle removed from comparison");
+  };
+
+  const clearComparison = () => {
+    setComparisonVehicles([]);
+    toast.success("Comparison cleared");
+  };
+
+  const isInComparison = (vehicleId) => {
+    return comparisonVehicles.some(v => v.id === vehicleId);
+  };
+
+  const isComparisonFull = () => {
+    return comparisonVehicles.length >= MAX_COMPARISON_VEHICLES;
+  };
+
   const {
     searchTerm,
     selectedCategory,
     sortOrder,
-    statusFilter,
     brandFilter,
     bodyTypeFilter,
     yearFilter,
@@ -590,7 +620,6 @@ function StorePage() {
     setSearchTerm,
     setSelectedCategory,
     setSortOrder,
-    setStatusFilter,
     setBrandFilter,
     setBodyTypeFilter,
     setYearFilter,
@@ -601,6 +630,10 @@ function StorePage() {
     setMaxMileage,
     clearAllFilters
   } = useBackendFiltering(accessoryStore);
+
+  // Check if vehicle-specific filters should be shown
+  const isVehicleCategory = selectedCategory === "All" || selectedCategory === "Vehicles" ||
+      selectedCategory === "Hot Deal Vehicles" || selectedCategory === "Hot Deals";
 
   // Fetch data using smart endpoint selection
   useEffect(() => {
@@ -626,11 +659,7 @@ function StorePage() {
           await vehicleStore.filterVehicles(filterParams);
         } else {
           // Use original endpoints when no filters (your working approach)
-          if (vehicleFilters.statusFilter === "pending") {
-            await vehicleStore.getVehiclesByStatus(["PENDING"]);
-          } else {
-            await vehicleStore.getAvailableVehicles();
-          }
+          await vehicleStore.getAvailableVehicles();
         }
 
         // Always fetch all accessories (they'll be filtered on frontend)
@@ -679,11 +708,7 @@ function StorePage() {
         filterParams.size = 1000; // Large number to get all results
         await vehicleStore.filterVehicles(filterParams);
       } else {
-        if (vehicleFilters.statusFilter === "pending") {
-          await vehicleStore.getVehiclesByStatus(["PENDING"]);
-        } else {
-          await vehicleStore.getAvailableVehicles();
-        }
+        await vehicleStore.getAvailableVehicles();
       }
 
       await accessoryStore.getAllAccessories();
@@ -737,10 +762,6 @@ function StorePage() {
               selectedCategory={selectedCategory}
               onChangeCategory={setSelectedCategory}
           />
-          <StatusFilter
-              value={statusFilter}
-              onChange={setStatusFilter}
-          />
           <SortDropDown
               value={sortOrder}
               onChange={(event) => setSortOrder(event.target.value)}
@@ -748,71 +769,75 @@ function StorePage() {
           />
         </motion.div>
 
-        {/* Electric vehicle specific filters */}
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex flex-wrap gap-4 mb-6 justify-center"
-        >
-          <FilterDropdown
-              label="Brand"
-              value={brandFilter}
-              onChange={setBrandFilter}
-              options={VEHICLE_BRANDS}
-          />
-          <FilterDropdown
-              label="Body Type"
-              value={bodyTypeFilter}
-              onChange={setBodyTypeFilter}
-              options={VEHICLE_BODY_TYPES}
-          />
-          <FilterDropdown
-              label="Model Year"
-              value={yearFilter}
-              onChange={setYearFilter}
-              options={MODEL_YEARS}
-          />
-          <FilterDropdown
-              label="Accident History"
-              value={accidentHistoryFilter}
-              onChange={setAccidentHistoryFilter}
-              options={ACCIDENT_HISTORY_OPTIONS}
-          />
-        </motion.div>
+        {/* Vehicle-specific filters - only show for vehicle categories */}
+        {isVehicleCategory && (
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="flex flex-wrap gap-4 mb-6 justify-center"
+            >
+              <FilterDropdown
+                  label="Brand"
+                  value={brandFilter}
+                  onChange={setBrandFilter}
+                  options={VEHICLE_BRANDS}
+              />
+              <FilterDropdown
+                  label="Body Type"
+                  value={bodyTypeFilter}
+                  onChange={setBodyTypeFilter}
+                  options={VEHICLE_BODY_TYPES}
+              />
+              <FilterDropdown
+                  label="Model Year"
+                  value={yearFilter}
+                  onChange={setYearFilter}
+                  options={MODEL_YEARS}
+              />
+              <FilterDropdown
+                  label="Accident History"
+                  value={accidentHistoryFilter}
+                  onChange={setAccidentHistoryFilter}
+                  options={ACCIDENT_HISTORY_OPTIONS}
+              />
+            </motion.div>
+        )}
 
-        {/* Price and Mileage range filters */}
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="flex flex-wrap gap-4 mb-8 justify-center"
-        >
-          <FilterInput
-              label="Min Price ($)"
-              value={minPrice}
-              onChange={setMinPrice}
-              placeholder="0"
-          />
-          <FilterInput
-              label="Max Price ($)"
-              value={maxPrice}
-              onChange={setMaxPrice}
-              placeholder="100000"
-          />
-          <FilterInput
-              label="Min Mileage"
-              value={minMileage}
-              onChange={setMinMileage}
-              placeholder="0"
-          />
-          <FilterInput
-              label="Max Mileage"
-              value={maxMileage}
-              onChange={setMaxMileage}
-              placeholder="200000"
-          />
-        </motion.div>
+        {/* Price and Mileage range filters - only show for vehicle categories */}
+        {isVehicleCategory && (
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="flex flex-wrap gap-4 mb-8 justify-center"
+            >
+              <FilterInput
+                  label="Min Price ($)"
+                  value={minPrice}
+                  onChange={setMinPrice}
+                  placeholder="0"
+              />
+              <FilterInput
+                  label="Max Price ($)"
+                  value={maxPrice}
+                  onChange={setMaxPrice}
+                  placeholder="100000"
+              />
+              <FilterInput
+                  label="Min Mileage"
+                  value={minMileage}
+                  onChange={setMinMileage}
+                  placeholder="0"
+              />
+              <FilterInput
+                  label="Max Mileage"
+                  value={maxMileage}
+                  onChange={setMaxMileage}
+                  placeholder="200000"
+              />
+            </motion.div>
+        )}
 
         {/* Active filters display */}
         <AnimatePresence>
@@ -832,11 +857,6 @@ function StorePage() {
                   {selectedCategory !== DEFAULT_CATEGORY && (
                       <ActiveFilterTag onRemoveFilter={() => setSelectedCategory(DEFAULT_CATEGORY)}>
                         {selectedCategory}
-                      </ActiveFilterTag>
-                  )}
-                  {statusFilter !== DEFAULT_STATUS_FILTER && (
-                      <ActiveFilterTag onRemoveFilter={() => setStatusFilter(DEFAULT_STATUS_FILTER)}>
-                        {statusFilter}
                       </ActiveFilterTag>
                   )}
                   {brandFilter !== DEFAULT_BRAND_FILTER && (
@@ -923,6 +943,9 @@ function StorePage() {
                             <VehicleCard
                                 vehicle={product}
                                 onAddToCart={() => addVehicleToCart(product)}
+                                onAddToComparison={addToComparison}
+                                isInComparison={isInComparison(product.id)}
+                                isComparisonFull={isComparisonFull()}
                             />
                         ) : (
                             <AccessoryCard
@@ -943,6 +966,13 @@ function StorePage() {
               />
             </>
         )}
+
+        {/* Floating Comparison Component */}
+        <FloatingComparison
+            comparisonVehicles={comparisonVehicles}
+            onRemoveVehicle={removeFromComparison}
+            onClearAll={clearComparison}
+        />
       </motion.div>
   );
 }

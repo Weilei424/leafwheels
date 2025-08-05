@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
-const VehicleCard = ({ vehicle, onAddToCart }) => {
+const VehicleCard = ({ vehicle, onAddToCart, onAddToComparison, isInComparison, isComparisonFull }) => {
     if (!vehicle) return null;
 
     const originalPrice = Number(vehicle.price || 0);
@@ -27,6 +27,12 @@ const VehicleCard = ({ vehicle, onAddToCart }) => {
 
     const canAddToCart = vehicle.status === "AVAILABLE" || vehicle.status === "DEMO";
 
+    const handleComparisonClick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onAddToComparison(vehicle);
+    };
+
     return (
         <motion.div
             whileHover={{ y: -4 }}
@@ -40,20 +46,41 @@ const VehicleCard = ({ vehicle, onAddToCart }) => {
                 </div>
             )}
 
+            {/* Comparison Button */}
+            <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={handleComparisonClick}
+                disabled={!isInComparison && isComparisonFull}
+                className={`absolute top-3 left-3 z-10 w-9 h-9 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${
+                    isInComparison
+                        ? "bg-green-500 text-white hover:bg-green-600 shadow-md"
+                        : isComparisonFull
+                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                            : "bg-white text-gray-600 hover:bg-gray-100 shadow-md border border-gray-200 hover:border-gray-300"
+                }`}
+                title={
+                    isInComparison
+                        ? "Remove from comparison"
+                        : isComparisonFull
+                            ? "Comparison full (max 4)"
+                            : "Add to comparison"
+                }
+            >
+                {isInComparison ? "✓" : "⚖️"}
+            </motion.button>
+
             <Link to={`/vehicle/${vehicle.id}`} className="block">
-                {/* Image */}
+                {/* Single Image Display */}
                 <div className="aspect-[4/3] bg-gray-50 flex items-center justify-center p-4">
                     <img
-                        // src={vehicle.imageUrls?.[0] || "/placeholder-vehicle.jpg"}
+                        src={vehicle.imageUrls?.[0]}
                         alt={`${vehicle.make} ${vehicle.model}`}
-                        className="max-w-full max-h-full object-contain"
-                        onError={(e) => {
-                            e.target.src = "/placeholder-vehicle.jpg";
-                        }}
+                        className="w-full h-full object-cover rounded-lg"
                     />
                 </div>
 
-                {/* Info */}
+                {/* Vehicle Info */}
                 <div className="p-4 space-y-2">
                     <h3 className="font-medium text-gray-900">
                         {vehicle.year} {vehicle.make} {vehicle.model}
@@ -74,17 +101,17 @@ const VehicleCard = ({ vehicle, onAddToCart }) => {
                 </div>
             </Link>
 
-            {/* Button */}
+            {/* Add to Cart Button */}
             <div className="p-4 pt-0">
                 <button
                     onClick={() => {
                         if (canAddToCart) onAddToCart();
                     }}
                     disabled={!canAddToCart}
-                    className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-all
-                        ${canAddToCart
-                        ? "bg-green-600 text-white hover:bg-green-700"
-                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    className={`w-full py-3 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
+                        canAddToCart
+                            ? "bg-green-600 text-white hover:bg-green-700 shadow-sm hover:shadow-md"
+                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
                     }`}
                 >
                     {canAddToCart ? "Add to Cart" : "Unavailable"}
