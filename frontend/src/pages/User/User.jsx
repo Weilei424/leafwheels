@@ -88,8 +88,18 @@ const ProfilePage = () => {
                         </div>
                     </div>
 
-                    {/* Logout Button Only */}
-                    <div className="flex mt-8 pt-6 border-t border-gray-100 justify-center">
+                    {/* Action Buttons */}
+                    <div className={`flex mt-8 pt-6 border-t border-gray-100 ${user?.role?.toLowerCase() === 'admin' ? 'justify-between' : 'justify-center'}`}>
+                        {user?.role?.toLowerCase() === 'admin' && (
+                            <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => window.open('http://leafwheels-alb-1205016128.us-east-1.elb.amazonaws.com/grafana', '_blank')}
+                                className="py-3 px-6 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                            >
+                                Open Grafana Dashboard
+                            </motion.button>
+                        )}
                         <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
