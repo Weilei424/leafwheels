@@ -62,6 +62,17 @@ The complete startup process takes approximately **2-3 minutes**:
 
 ## Accessing Services
 
+### Login
+
+You can signup or use our preconfigured accounts:
+| Account Type | Username | Password |
+|-------|-------|--------|
+| Regular User | alice@example.com | password123 |
+| Admin User | admin1@example.com | adminpass |
+
+To access the distinguished feature **Monitoring**, please use the admin account, and there will be a button for monitoring in the profile page.
+> Please note this feature is only avaliable on the cloud deployment. Local Grafana does not have dashboards setup.
+
 ### Application Services
 
 | Service | URL | Purpose | Credentials |
